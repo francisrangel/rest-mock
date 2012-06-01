@@ -10,6 +10,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import br.com.frs.server.response.Html;
+import br.com.frs.server.response.JSON;
+import br.com.frs.server.response.TextPlain;
+
 public class RestServerTest {
 
 	private final int port = 8080;
@@ -35,7 +39,7 @@ public class RestServerTest {
 
 	@Test
 	public void requestPlainText() throws Exception {
-		subject.when("/test").thenReturn("Hello World!").withType(MediaType.TEXT_PLAIN);
+		subject.when("/test").thenReturn(new TextPlain("Hello World!"));
 		subject.start();
 
 		requestGetWithResultString("Hello World!");
@@ -43,7 +47,7 @@ public class RestServerTest {
 
 	@Test
 	public void requestHtml() throws Exception {
-		subject.when("/test").thenReturn("<h1>Mock rules</h1>").withType(MediaType.TEXT_HTML);;
+		subject.when("/test").thenReturn(new Html("<h1>Mock rules</h1>"));
 		subject.start();
 
 		requestGetWithResultString("<h1>Mock rules</h1>");
@@ -53,7 +57,7 @@ public class RestServerTest {
 	public void requestJSON() throws Exception {
 		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
 		
-		subject.when("/test").thenReturn(simpleJSON).withType(MediaType.APPLICATION_JSON);
+		subject.when("/test").thenReturn(new JSON(simpleJSON));
 		subject.start();
 
 		requestGetWithResultString(simpleJSON);

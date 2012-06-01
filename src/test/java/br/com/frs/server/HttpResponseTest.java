@@ -15,6 +15,10 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.junit.Before;
 import org.junit.Test;
 
+import br.com.frs.server.response.JSON;
+import br.com.frs.server.response.Html;
+import br.com.frs.server.response.TextPlain;
+
 public class HttpResponseTest {
 
 	private Request baseRequest;
@@ -39,7 +43,7 @@ public class HttpResponseTest {
 
 	@Test
 	public void testPlainTextResponse() throws Exception {
-		subject.thenReturn("Hello World!").withType(MediaType.TEXT_PLAIN);
+		subject.thenReturn(new TextPlain("Hello World!"));
 		subject.handle("", baseRequest, request, response);
 
 		verify(baseRequest).setHandled(true);
@@ -51,7 +55,7 @@ public class HttpResponseTest {
 
 	@Test
 	public void testHtmlResponse() throws Exception {
-		subject.thenReturn("<h1>Mock rules</h1>").withType(MediaType.TEXT_HTML);
+		subject.thenReturn(new Html("<h1>Mock rules</h1>"));
 		subject.handle("", baseRequest, request, response);
 
 		verify(response).setContentType("text/html");
@@ -62,7 +66,7 @@ public class HttpResponseTest {
 	public void testJSONResponse() throws Exception {
 		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
 		
-		subject.thenReturn(simpleJSON).withType(MediaType.APPLICATION_JSON);
+		subject.thenReturn(new JSON(simpleJSON));
 		subject.handle("", baseRequest, request, response);
 
 		verify(response).setContentType("application/json");

@@ -10,10 +10,11 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
-public class HttpResponse extends AbstractHandler implements Response {
+import br.com.frs.server.response.Response;
 
-	private String body;
-	private MediaType type = MediaType.TEXT_HTML;
+public class HttpResponse extends AbstractHandler implements MockResponse {
+
+	private Response body;
 
 	public HttpResponse(ContextHandler context) {
 		context.setHandler(this);
@@ -23,9 +24,9 @@ public class HttpResponse extends AbstractHandler implements Response {
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		baseRequest.setHandled(true);
 		
-		response.setContentType(type.getType());
+		response.setContentType(body.getMediaType().getType());
 		response.setStatus(HttpServletResponse.SC_OK);
-		response.getWriter().println(body);
+		response.getWriter().println(body.getContent());
 		
 		allowCrossDomainAccess(response);
 	}
@@ -39,14 +40,8 @@ public class HttpResponse extends AbstractHandler implements Response {
 	}
 
 	@Override
-	public Response thenReturn(String body) {
+	public MockResponse thenReturn(Response body) {
 		this.body = body;
-		return this;
-	}
-	
-	@Override
-	public Response withType(MediaType type) {
-		this.type = type;
 		return this;
 	}
 	

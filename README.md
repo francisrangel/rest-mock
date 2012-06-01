@@ -8,13 +8,14 @@ A tiny test-framework to provide mock-responses for REST requests.
 
 ### Talk is cheap, show me the code!
 
-
-  `String data = "{ \"name\": \"Bob\", \"age\": \"25\" }";`<br />
+  `Developer bob = new Developer("Bob", 25);`
   `RestServer restServer = new RestServer(8080);`
   
-  `restServer.when("/developer").thenReturn(new JSON(data));`<br />
+  `restServer.when("/developer").thenReturn(new JSON(bob));`<br />
   `restServer.start();`
 
 
 *Ready!* 
-Now you can access http://localhost:8080/developer/
+Now you can access http://localhost:8080/developer/ and get a follow JSON:
+
+  `{ "name": "Bob", "age": "25" }`

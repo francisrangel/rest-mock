@@ -1,7 +1,5 @@
 package br.com.frs.server.response;
 
-import br.com.frs.server.MediaType;
-
 public class Html extends Response {
 
 	public Html(String body) {
@@ -9,8 +7,8 @@ public class Html extends Response {
 	}
 
 	@Override
-	public MediaType getMediaType() {
-		return MediaType.TEXT_HTML;
+	public ContentType getContentType() {
+		return ContentType.TEXT_HTML;
 	}
 
 }

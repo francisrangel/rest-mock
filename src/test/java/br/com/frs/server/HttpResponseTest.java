@@ -73,4 +73,35 @@ public class HttpResponseTest {
 		verify(printWriter).println(simpleJSON);
 	}
 	
+	@Test
+	public void testJSONObjectResponse() throws Exception {
+		class Developer {
+			private String name;
+			private int age;
+			
+			Developer(String name, int age) {
+				this.name = name;
+				this.age = age;
+			}
+
+			@SuppressWarnings("unused")
+			public String getName() {
+				return name;
+			}
+
+			@SuppressWarnings("unused")
+			public int getAge() {
+				return age;
+			}
+		}
+		
+		subject.thenReturn(new JSON(new Developer("Bob", 25)));
+		subject.handle("", baseRequest, request, response);
+		
+		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";
+
+		verify(response).setContentType("application/json");
+		verify(printWriter).println(expectedJSON);
+	}
+	
 }

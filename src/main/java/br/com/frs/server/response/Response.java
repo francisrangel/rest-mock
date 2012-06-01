@@ -1,7 +1,5 @@
 package br.com.frs.server.response;
 
-import br.com.frs.server.MediaType;
-
 public abstract class Response {
 	
 	private String content;
@@ -10,7 +8,7 @@ public abstract class Response {
 		this.content = body;
 	}
 
-	public abstract MediaType getMediaType();
+	public abstract ContentType getContentType();
 
 	public String getContent() {
 		return content;

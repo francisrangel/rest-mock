@@ -15,14 +15,14 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PlainTextResponseTest {
+public class HttpResponseText {
 
 	private Request baseRequest;
 	private HttpServletRequest request;
 	private HttpServletResponse response;
 	private PrintWriter printWriter;
 	private ContextHandler context;
-	private PlainTextResponse subject;
+	private HttpResponse subject;
 
 	@Before
 	public void setUp() throws IOException {
@@ -34,28 +34,28 @@ public class PlainTextResponseTest {
 
 		when(response.getWriter()).thenReturn(printWriter);
 
-		subject = new PlainTextResponse(context);
+		subject = new HttpResponse(context);
 	}
 
 	@Test
-	public void createDesiredResponse() throws Exception {
-		subject.thenReturn("Hello World!");
-
+	public void testPlainTextResponse() throws Exception {
+		subject.thenReturn("Hello World!").withType(MediaType.TEXT_PLAIN);
 		subject.handle("", baseRequest, request, response);
 
 		verify(baseRequest).setHandled(true);
-		verify(response).setContentType("text/html;charset=utf-8");
+		verify(response).setContentType("text/plain");
 		verify(response).setStatus(HttpServletResponse.SC_OK);
 		verify(response).getWriter();
 		verify(printWriter).println("Hello World!");
 	}
 
 	@Test
-	public void createDesiredResponseWithDifferentResultString() throws Exception {
-		subject.thenReturn("Mock rules");
-
+	public void testHtmlResponse() throws Exception {
+		subject.thenReturn("<h1>Mock rules</h1>").withType(MediaType.TEXT_HTML);
 		subject.handle("", baseRequest, request, response);
 
-		verify(printWriter).println("Mock rules");
+		verify(response).setContentType("text/html");
+		verify(printWriter).println("<h1>Mock rules</h1>");
 	}
+	
 }

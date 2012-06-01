@@ -11,7 +11,7 @@ public class RestServer {
 		server = new Server(port);
 	}
 
-	public Reponse when(String path) {
+	public Response when(String path) {
 		ContextHandler context = new ContextHandler();
 		context.setContextPath(path);
 		context.setResourceBase(".");
@@ -19,7 +19,7 @@ public class RestServer {
 
 		server.setHandler(context);
 
-		return new PlainTextResponse(context);
+		return new HttpResponse(context);
 	}
 
 	public void start() {

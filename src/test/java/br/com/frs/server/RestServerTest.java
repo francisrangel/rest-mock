@@ -2,9 +2,6 @@ package br.com.frs.server;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-
 import org.eclipse.jetty.client.ContentExchange;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpExchange;
@@ -15,8 +12,9 @@ import org.junit.Test;
 
 public class RestServerTest {
 
-	int port = 8080;
-	String baseUrl = "http://localhost:" + port;
+	private final int port = 8080;
+	private final String baseUrl = "http://localhost:" + port;
+	
 	private RestServer subject;
 	private HttpClient client;
 
@@ -40,30 +38,28 @@ public class RestServerTest {
 		subject.when("/test").thenReturn("Hello World!");
 		subject.start();
 
-		requestGetWithResultString("Hello World!\r\n");
+		requestGetWithResultString("Hello World!");
 	}
 
 	@Test
 	public void requestDifferentText() throws Exception {
-		subject.when("/test").thenReturn("Mock rules");
+		subject.when("/test").thenReturn("<h1>Mock rules</h1>");
 		subject.start();
 
-		requestGetWithResultString("Mock rules\r\n");
+		requestGetWithResultString("<h1>Mock rules</h1>");
 	}
 
-	private void requestGetWithResultString(String expectedText) throws Exception, IOException, InterruptedException,
-			UnsupportedEncodingException {
-
+	private void requestGetWithResultString(String expectedBody) throws Exception {
 		ContentExchange exchange = new ContentExchange(false);
 		exchange.setURL(baseUrl + "/test/");
 		exchange.setMethod(HttpMethods.GET);
-		exchange.setRequestContentType("text/html;charset=utf-8");
 
 		client.send(exchange);
 
 		int exchangeState = exchange.waitForDone();
 
 		assertEquals(HttpExchange.STATUS_COMPLETED, exchangeState);
-		assertEquals(expectedText, exchange.getResponseContent());
+		assertEquals(expectedBody + "\r\n", exchange.getResponseContent());
 	}
+	
 }

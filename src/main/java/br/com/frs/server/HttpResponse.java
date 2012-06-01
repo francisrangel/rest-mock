@@ -12,9 +12,9 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 
 import br.com.frs.server.response.Response;
 
-public class HttpResponse extends AbstractHandler implements MockResponse {
+public class HttpResponse extends AbstractHandler implements RestMockResponse {
 
-	private Response body;
+	private Response data;
 
 	public HttpResponse(ContextHandler context) {
 		context.setHandler(this);
@@ -24,9 +24,9 @@ public class HttpResponse extends AbstractHandler implements MockResponse {
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		baseRequest.setHandled(true);
 		
-		response.setContentType(body.getMediaType().getType());
+		response.setContentType(data.getContentType().getType());
 		response.setStatus(HttpServletResponse.SC_OK);
-		response.getWriter().println(body.getContent());
+		response.getWriter().println(data.getContent());
 		
 		allowCrossDomainAccess(response);
 	}
@@ -40,8 +40,8 @@ public class HttpResponse extends AbstractHandler implements MockResponse {
 	}
 
 	@Override
-	public MockResponse thenReturn(Response body) {
-		this.body = body;
+	public RestMockResponse thenReturn(Response body) {
+		this.data = body;
 		return this;
 	}
 	

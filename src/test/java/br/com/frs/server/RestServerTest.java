@@ -62,6 +62,36 @@ public class RestServerTest {
 
 		requestGetWithResultString(simpleJSON);
 	}
+	
+	@Test
+	public void requestJSONObject() throws Exception {
+		class Developer {
+			private String name;
+			private int age;
+			
+			Developer(String name, int age) {
+				this.name = name;
+				this.age = age;
+			}
+
+			@SuppressWarnings("unused")
+			public String getName() {
+				return name;
+			}
+
+			@SuppressWarnings("unused")
+			public int getAge() {
+				return age;
+			}
+		}
+		
+		subject.when("/test").thenReturn(new JSON(new Developer("Bob", 25)));
+		subject.start();
+		
+		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";
+
+		requestGetWithResultString(expectedJSON);
+	}
 
 	private void requestGetWithResultString(String expectedBody) throws Exception {
 		ContentExchange exchange = new ContentExchange(false);

@@ -11,7 +11,7 @@ public class RestServer {
 		server = new Server(port);
 	}
 
-	public MockResponse when(String path) {
+	public RestMockResponse when(String path) {
 		ContextHandler context = new ContextHandler();
 		context.setContextPath(path);
 		context.setResourceBase(".");

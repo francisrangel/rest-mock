@@ -1,7 +1,5 @@
 package br.com.frs.server.response;
 
-import br.com.frs.server.MediaType;
-
 public class TextPlain extends Response {
 
 	public TextPlain(String body) {
@@ -9,8 +7,8 @@ public class TextPlain extends Response {
 	}
 
 	@Override
-	public MediaType getMediaType() {
-		return MediaType.TEXT_PLAIN;
+	public ContentType getContentType() {
+		return ContentType.TEXT_PLAIN;
 	}
 
 }

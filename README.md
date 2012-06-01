@@ -9,7 +9,7 @@ A mock for http requests to test restful webservices
 ### Talk is cheap, show me the code!
 
 
-  `String myJSONData = "{ \"name\": \"Bob\", \"age\": \"25\" }";`<br />
+  `String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";`<br />
   `RestServer restServer = new RestServer(8080);`
   
   `restServer.when("/developer").thenReturn(simpleJSON).withType(MediaType.APPLICATION_JSON);`<br />

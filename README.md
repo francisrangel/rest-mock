@@ -9,10 +9,10 @@ A tiny test-framework to provide mock-responses for REST requests.
 ### Talk is cheap, show me the code!
 
 
-  `String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";`<br />
+  `String data = "{ \"name\": \"Bob\", \"age\": \"25\" }";`<br />
   `RestServer restServer = new RestServer(8080);`
   
-  `restServer.when("/developer").thenReturn(simpleJSON).withType(MediaType.APPLICATION_JSON);`<br />
+  `restServer.when("/developer").thenReturn(new JSON(data));`<br />
   `restServer.start();`
 
 

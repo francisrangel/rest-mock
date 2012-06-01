@@ -17,4 +17,4 @@ A mock for http requests to test restful webservices
 
 
 *Ready!* 
-Now you can access http://localhost:8080/developer
+Now you can access http://localhost:8080/developer/

@@ -26,6 +26,16 @@ public class HttpResponse extends AbstractHandler implements Response {
 		response.setContentType(type.getType());
 		response.setStatus(HttpServletResponse.SC_OK);
 		response.getWriter().println(body);
+		
+		allowCrossDomainAccess(response);
+	}
+
+	private void allowCrossDomainAccess(HttpServletResponse response) {
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+		response.setHeader("Access-Control-Max-Age", "360");
+		response.setHeader("Access-Control-Allow-Headers", "x-requested-with");
+		response.setHeader("Access-Control-Allow-Credentials", "true");
 	}
 
 	@Override

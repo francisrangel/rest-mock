@@ -15,7 +15,7 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.junit.Before;
 import org.junit.Test;
 
-public class HttpResponseText {
+public class HttpResponseTest {
 
 	private Request baseRequest;
 	private HttpServletRequest request;
@@ -56,6 +56,17 @@ public class HttpResponseText {
 
 		verify(response).setContentType("text/html");
 		verify(printWriter).println("<h1>Mock rules</h1>");
+	}
+	
+	@Test
+	public void testJSONResponse() throws Exception {
+		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
+		
+		subject.thenReturn(simpleJSON).withType(MediaType.APPLICATION_JSON);
+		subject.handle("", baseRequest, request, response);
+
+		verify(response).setContentType("application/json");
+		verify(printWriter).println(simpleJSON);
 	}
 	
 }

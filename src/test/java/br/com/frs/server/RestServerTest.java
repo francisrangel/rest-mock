@@ -34,19 +34,29 @@ public class RestServerTest {
 	}
 
 	@Test
-	public void helloWorldTest() throws Exception {
-		subject.when("/test").thenReturn("Hello World!");
+	public void requestPlainText() throws Exception {
+		subject.when("/test").thenReturn("Hello World!").withType(MediaType.TEXT_PLAIN);
 		subject.start();
 
 		requestGetWithResultString("Hello World!");
 	}
 
 	@Test
-	public void requestDifferentText() throws Exception {
-		subject.when("/test").thenReturn("<h1>Mock rules</h1>");
+	public void requestHtml() throws Exception {
+		subject.when("/test").thenReturn("<h1>Mock rules</h1>").withType(MediaType.TEXT_HTML);;
 		subject.start();
 
 		requestGetWithResultString("<h1>Mock rules</h1>");
+	}
+	
+	@Test
+	public void requestJSON() throws Exception {
+		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
+		
+		subject.when("/test").thenReturn(simpleJSON).withType(MediaType.APPLICATION_JSON);
+		subject.start();
+
+		requestGetWithResultString(simpleJSON);
 	}
 
 	private void requestGetWithResultString(String expectedBody) throws Exception {

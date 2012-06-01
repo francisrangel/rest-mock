@@ -1,7 +1,7 @@
 rest-mock
 =========
 
-A mock for http requests to test restful webservices
+A tiny test-framework to provide mock-responses for REST requests.
 <br />
 
 

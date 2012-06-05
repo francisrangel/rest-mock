@@ -11,13 +11,15 @@ import restmock.request.RouteManager;
 public class RestServer {
 
 	private Server server;
+	private RouteManager routeManager;
 
 	public RestServer(int port) {
 		server = new Server(port);
+		routeManager = RouteManager.getInstance();
 	}
 
 	public RestMockResponse whenGet(String uri) {
-		return new HttpResponse(RouteManager.getInstance(), new Route(HttpMethod.GET, uri));
+		return new HttpResponse(routeManager, new Route(HttpMethod.GET, uri));
 	}
 
 	public void start() {
@@ -54,7 +56,7 @@ public class RestServer {
 	public void stop() {
 		try {
 			server.stop();
-			RouteManager.getInstance().clean();
+			routeManager.clean();
 		} catch (Exception e) {
 			throw new RuntimeException("Could not stop the server!", e);
 		}

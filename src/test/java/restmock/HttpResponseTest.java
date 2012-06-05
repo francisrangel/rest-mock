@@ -8,6 +8,7 @@ import org.junit.Test;
 import restmock.request.HttpMethod;
 import restmock.request.Route;
 import restmock.request.RouteManager;
+import restmock.request.RouteRegister;
 import restmock.response.ContentType;
 import restmock.response.Html;
 import restmock.response.JSON;
@@ -16,13 +17,13 @@ import restmock.response.TextPlain;
 
 public class HttpResponseTest {
 
-	private HttpResponse subject;
+	private RouteRegister subject;
 	private Route route;
 
 	@Before
 	public void setUp() {
 		route = new Route(HttpMethod.GET, "/teste/");
-		subject = new HttpResponse(RouteManager.getInstance(), route);
+		subject = new RouteRegister(RouteManager.getInstance(), route);
 	}
 
 	@Test

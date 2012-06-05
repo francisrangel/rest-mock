@@ -18,4 +18,4 @@ A tiny test-framework to provide mock-responses for REST requests.
 *Ready!* 
 Now you can access http://localhost:8080/developer/ and get the following JSON:
 
-  `{ "name": "Bob", "age": "25" }`
+  `{ "name": "Bob", "age": 25 }`

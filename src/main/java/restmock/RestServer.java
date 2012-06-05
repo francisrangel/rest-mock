@@ -7,6 +7,7 @@ import restmock.request.FrontController;
 import restmock.request.HttpMethod;
 import restmock.request.Route;
 import restmock.request.RouteManager;
+import restmock.request.RouteRegister;
 
 public class RestServer {
 
@@ -19,7 +20,7 @@ public class RestServer {
 	}
 
 	public RestMockResponse whenGet(String uri) {
-		return new HttpResponse(routeManager, new Route(HttpMethod.GET, uri));
+		return new RouteRegister(routeManager, new Route(HttpMethod.GET, uri));
 	}
 
 	public void start() {

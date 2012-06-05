@@ -1,15 +1,14 @@
-package restmock;
+package restmock.request;
 
-import restmock.request.Route;
-import restmock.request.RouteManager;
+import restmock.RestMockResponse;
 import restmock.response.Response;
 
-public class HttpResponse implements RestMockResponse {
+public class RouteRegister implements RestMockResponse {
 
 	private final RouteManager routeManager;
 	private final Route route;
 
-	public HttpResponse(RouteManager routeManager, Route route) {
+	public RouteRegister(RouteManager routeManager, Route route) {
 		this.routeManager = routeManager;
 		this.route = route;
 	}

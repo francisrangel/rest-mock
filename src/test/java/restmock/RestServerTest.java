@@ -10,6 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import restmock.mock.Developer;
 import restmock.response.Html;
 import restmock.response.JSON;
 import restmock.response.TextPlain;
@@ -65,26 +66,6 @@ public class RestServerTest {
 	
 	@Test
 	public void requestJSONObject() throws Exception {
-		class Developer {
-			private String name;
-			private int age;
-			
-			Developer(String name, int age) {
-				this.name = name;
-				this.age = age;
-			}
-
-			@SuppressWarnings("unused")
-			public String getName() {
-				return name;
-			}
-
-			@SuppressWarnings("unused")
-			public int getAge() {
-				return age;
-			}
-		}
-		
 		subject.whenGet("/test/").thenReturn(new JSON(new Developer("Bob", 25)));
 		subject.start();
 		

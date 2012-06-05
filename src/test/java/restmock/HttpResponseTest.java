@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
+import restmock.mock.Developer;
 import restmock.request.HttpMethod;
 import restmock.request.Route;
 import restmock.request.RouteManager;
@@ -14,6 +15,7 @@ import restmock.response.Html;
 import restmock.response.JSON;
 import restmock.response.Response;
 import restmock.response.TextPlain;
+import restmock.response.XML;
 
 public class HttpResponseTest {
 
@@ -59,26 +61,6 @@ public class HttpResponseTest {
 	
 	@Test
 	public void testJSONObjectResponse() throws Exception {
-		class Developer {
-			private String name;
-			private int age;
-			
-			Developer(String name, int age) {
-				this.name = name;
-				this.age = age;
-			}
-
-			@SuppressWarnings("unused")
-			public String getName() {
-				return name;
-			}
-
-			@SuppressWarnings("unused")
-			public int getAge() {
-				return age;
-			}
-		}
-		
 		subject.thenReturn(new JSON(new Developer("Bob", 25)));
 		
 		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";
@@ -86,6 +68,28 @@ public class HttpResponseTest {
 
 		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
 		assertEquals(expectedJSON, response.getContent());
+	}
+	
+	@Test
+	public void testXMLStringResponse() {
+		String simpleXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
+		subject.thenReturn(new XML(simpleXML));
+		
+		Response response = RouteManager.getInstance().get(route);
+		
+		assertEquals(ContentType.TEXT_XML, response.getContentType());
+		assertEquals(simpleXML, response.getContent());
+	}
+	
+	@Test
+	public void testXMLObjectResponse() {
+		subject.thenReturn(new XML(new Developer("Bob", 25)));
+		
+		String expectedXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
+		Response response = RouteManager.getInstance().get(route);
+		
+		assertEquals(ContentType.TEXT_XML, response.getContentType());
+		assertEquals(expectedXML, response.getContent());		
 	}
 	
 }

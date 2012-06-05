@@ -22,14 +22,14 @@ public class HttpResponseTest {
 	@Before
 	public void setUp() {
 		route = new Route(HttpMethod.GET, "/teste/");
-		subject = new HttpResponse(route);
+		subject = new HttpResponse(RouteManager.getInstance(), route);
 	}
 
 	@Test
 	public void testPlainTextResponse() throws Exception {
 		subject.thenReturn(new TextPlain("Hello World!"));
 		
-		Response response = RouteManager.get(route);
+		Response response = RouteManager.getInstance().get(route);
 
 		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
 		assertEquals("Hello World!", response.getContent());
@@ -39,7 +39,7 @@ public class HttpResponseTest {
 	public void testHtmlResponse() throws Exception {
 		subject.thenReturn(new Html("<h1>Mock rules</h1>"));
 		
-		Response response = RouteManager.get(route);
+		Response response = RouteManager.getInstance().get(route);
 
 		assertEquals(ContentType.TEXT_HTML, response.getContentType());
 		assertEquals("<h1>Mock rules</h1>", response.getContent());
@@ -50,7 +50,7 @@ public class HttpResponseTest {
 		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
 		subject.thenReturn(new JSON(simpleJSON));
 		
-		Response response = RouteManager.get(route);
+		Response response = RouteManager.getInstance().get(route);
 
 		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
 		assertEquals(simpleJSON, response.getContent());
@@ -81,7 +81,7 @@ public class HttpResponseTest {
 		subject.thenReturn(new JSON(new Developer("Bob", 25)));
 		
 		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";
-		Response response = RouteManager.get(route);
+		Response response = RouteManager.getInstance().get(route);
 
 		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
 		assertEquals(expectedJSON, response.getContent());

@@ -13,9 +13,9 @@ public class FrontController extends HttpServlet {
 
 	private static final long serialVersionUID = -8762086840436163410L;
 	
-	protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	public void processRequest(HttpServletRequest request, HttpServletResponse response, RouteManager routeManager) throws ServletException, IOException {
 		Route route = new Route(request.getMethod(), request.getRequestURI());
-		Response content = RouteManager.get(route);
+		Response content = routeManager.get(route);
 		
 		if (content == null) {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -37,12 +37,12 @@ public class FrontController extends HttpServlet {
 		response.setHeader("Access-Control-Allow-Credentials", "true");
 	}
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		processRequest(request, response);
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		processRequest(request, response, RouteManager.getInstance());
 	}
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		processRequest(request, response);
+	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		processRequest(request, response, RouteManager.getInstance());
 	}
 
 }

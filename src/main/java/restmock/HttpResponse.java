@@ -6,15 +6,17 @@ import restmock.response.Response;
 
 public class HttpResponse implements RestMockResponse {
 
+	private RouteManager routeManager;
 	private Route route;
 
-	public HttpResponse(Route route) {
+	public HttpResponse(RouteManager routeManager, Route route) {
+		this.routeManager = routeManager;
 		this.route = route;
 	}
 
 	@Override
 	public RestMockResponse thenReturn(Response body) {
-		RouteManager.registerRoute(route, body);
+		routeManager.registerRoute(route, body);
 		return this;
 	}
 	

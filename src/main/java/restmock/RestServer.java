@@ -6,6 +6,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import restmock.request.FrontController;
 import restmock.request.HttpMethod;
 import restmock.request.Route;
+import restmock.request.RouteManager;
 
 public class RestServer {
 
@@ -16,7 +17,7 @@ public class RestServer {
 	}
 
 	public RestMockResponse whenGet(String uri) {
-		return new HttpResponse(new Route(HttpMethod.GET, uri));
+		return new HttpResponse(RouteManager.getInstance(), new Route(HttpMethod.GET, uri));
 	}
 
 	public void start() {
@@ -41,16 +42,19 @@ public class RestServer {
 
 	private void initContext() {
 		ServletContextHandler context = new ServletContextHandler();
+		
 		context.setContextPath("/");
 		context.setResourceBase(".");
 		context.setClassLoader(Thread.currentThread().getContextClassLoader());
-		server.setHandler(context);
 		context.addServlet(FrontController.class, "/");
+		
+		server.setHandler(context);
 	}
 
 	public void stop() {
 		try {
 			server.stop();
+			RouteManager.getInstance().clean();
 		} catch (Exception e) {
 			throw new RuntimeException("Could not stop the server!", e);
 		}

@@ -11,7 +11,7 @@ A tiny test-framework to provide mock-responses for REST requests.
   `Developer bob = new Developer("Bob", 25);`<br />
   `RestServer restServer = new RestServer(8080);`
   
-  `restServer.when("/developer").thenReturn(new JSON(bob));`<br />
+  `restServer.whenGet("/developer/").thenReturn(new JSON(bob));`<br />
   `restServer.start();`
 
 

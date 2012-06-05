@@ -1,4 +1,4 @@
-package br.com.frs.server.response;
+package restmock.response;
 
 public class Html extends Response {
 

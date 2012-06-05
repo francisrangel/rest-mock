@@ -1,7 +1,11 @@
-package br.com.frs.server;
+package restmock;
 
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+
+import restmock.request.FrontController;
+import restmock.request.HttpMethod;
+import restmock.request.Route;
 
 public class RestServer {
 
@@ -11,18 +15,13 @@ public class RestServer {
 		server = new Server(port);
 	}
 
-	public RestMockResponse when(String path) {
-		ContextHandler context = new ContextHandler();
-		context.setContextPath(path);
-		context.setResourceBase(".");
-		context.setClassLoader(Thread.currentThread().getContextClassLoader());
-
-		server.setHandler(context);
-
-		return new HttpResponse(context);
+	public RestMockResponse whenGet(String uri) {
+		return new HttpResponse(new Route(HttpMethod.GET, uri));
 	}
 
 	public void start() {
+		initContext();
+		
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
@@ -38,6 +37,15 @@ public class RestServer {
 		Thread thread = new Thread(runnable);
 		thread.setDaemon(true);
 		thread.start();
+	}
+
+	private void initContext() {
+		ServletContextHandler context = new ServletContextHandler();
+		context.setContextPath("/");
+		context.setResourceBase(".");
+		context.setClassLoader(Thread.currentThread().getContextClassLoader());
+		server.setHandler(context);
+		context.addServlet(FrontController.class, "/");
 	}
 
 	public void stop() {

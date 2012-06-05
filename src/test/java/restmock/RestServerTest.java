@@ -1,4 +1,4 @@
-package br.com.frs.server;
+package restmock;
 
 import static org.junit.Assert.assertEquals;
 
@@ -10,9 +10,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import br.com.frs.server.response.Html;
-import br.com.frs.server.response.JSON;
-import br.com.frs.server.response.TextPlain;
+import restmock.response.Html;
+import restmock.response.JSON;
+import restmock.response.TextPlain;
 
 public class RestServerTest {
 
@@ -39,7 +39,7 @@ public class RestServerTest {
 
 	@Test
 	public void requestPlainText() throws Exception {
-		subject.when("/test").thenReturn(new TextPlain("Hello World!"));
+		subject.whenGet("/test/").thenReturn(new TextPlain("Hello World!"));
 		subject.start();
 
 		requestGetWithResultString("Hello World!");
@@ -47,7 +47,7 @@ public class RestServerTest {
 
 	@Test
 	public void requestHtml() throws Exception {
-		subject.when("/test").thenReturn(new Html("<h1>Mock rules</h1>"));
+		subject.whenGet("/test/").thenReturn(new Html("<h1>Mock rules</h1>"));
 		subject.start();
 
 		requestGetWithResultString("<h1>Mock rules</h1>");
@@ -57,7 +57,7 @@ public class RestServerTest {
 	public void requestJSON() throws Exception {
 		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
 		
-		subject.when("/test").thenReturn(new JSON(simpleJSON));
+		subject.whenGet("/test/").thenReturn(new JSON(simpleJSON));
 		subject.start();
 
 		requestGetWithResultString(simpleJSON);
@@ -85,7 +85,7 @@ public class RestServerTest {
 			}
 		}
 		
-		subject.when("/test").thenReturn(new JSON(new Developer("Bob", 25)));
+		subject.whenGet("/test/").thenReturn(new JSON(new Developer("Bob", 25)));
 		subject.start();
 		
 		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";

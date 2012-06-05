@@ -1,4 +1,4 @@
-package br.com.frs.server.response;
+package restmock.response;
 
 import java.io.IOException;
 

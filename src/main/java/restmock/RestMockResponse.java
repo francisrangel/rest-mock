@@ -1,6 +1,6 @@
-package br.com.frs.server;
+package restmock;
 
-import br.com.frs.server.response.Response;
+import restmock.response.Response;
 
 public interface RestMockResponse {
 

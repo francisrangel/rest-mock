@@ -22,6 +22,10 @@ public class RestServer {
 	public RestMockResponse whenGet(String uri) {
 		return new RouteRegister(routeManager, new Route(HttpMethod.GET, uri));
 	}
+	
+	public RestMockResponse whenPost(String uri) {
+		return new RouteRegister(routeManager, new Route(HttpMethod.POST, uri));
+	}
 
 	public void start() {
 		initContext();
@@ -62,5 +66,5 @@ public class RestServer {
 			throw new RuntimeException("Could not stop the server!", e);
 		}
 	}
-
+	
 }

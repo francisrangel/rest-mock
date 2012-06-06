@@ -17,7 +17,7 @@ import restmock.response.Response;
 import restmock.response.TextPlain;
 import restmock.response.XML;
 
-public class HttpResponseTest {
+public class HttpResponseForGETMethodTest {
 
 	private RouteRegister subject;
 	private Route route;

@@ -73,10 +73,26 @@ public class RestServerTest {
 
 		requestGetWithResultString(expectedJSON);
 	}
+	
+	@Test
+	public void requestPlainTextGetWithParameters() throws Exception {
+		subject.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}!"));
+		subject.start();
 
-	private void requestGetWithResultString(String expectedBody) throws Exception {
+		requestGetWithResultString(baseUrl + "/test/?name=Bob", "Hello Bob!");
+	}
+	
+	@Test
+	public void requestPlainTextGetWithManyParameters() throws Exception {
+		subject.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}, you are the number #${number}!"));
+		subject.start();
+
+		requestGetWithResultString(baseUrl + "/test/?name=Bob&number=1", "Hello Bob, you are the number #1!");
+	}
+	
+	private void requestGetWithResultString(String url, String expectedBody) throws Exception {
 		ContentExchange exchange = new ContentExchange(false);
-		exchange.setURL(baseUrl + "/test/");
+		exchange.setURL(url);
 		exchange.setMethod(HttpMethods.GET);
 
 		client.send(exchange);
@@ -85,6 +101,10 @@ public class RestServerTest {
 
 		assertEquals(HttpExchange.STATUS_COMPLETED, exchangeState);
 		assertEquals(expectedBody + "\r\n", exchange.getResponseContent());
+	}
+
+	private void requestGetWithResultString(String expectedBody) throws Exception {
+		requestGetWithResultString(baseUrl + "/test/", expectedBody);
 	}
 	
 }

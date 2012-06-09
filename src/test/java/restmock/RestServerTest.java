@@ -124,4 +124,22 @@ public class RestServerTest {
 		requestMethodWithResultString("Post succeed", HttpMethods.POST);
 	}
 	
+	@Test
+	public void postWithOneParameter() throws Exception {
+		subject.whenPost("/test/").thenReturn(new TextPlain("Hello ${name}!"));
+		subject.start();
+		
+		ContentExchange exchange = new ContentExchange();
+		exchange.setURL(baseUrl + "/test/");
+		exchange.setMethod(HttpMethods.POST);
+		exchange.getRequestFields().add("name", "Bob");
+		
+		client.send(exchange);
+		
+		int exchangeState = exchange.waitForDone();
+		
+		assertEquals(HttpExchange.STATUS_COMPLETED, exchangeState);
+		assertEquals("Hello Bob!", exchange.getResponseContent());
+	}
+	
 }

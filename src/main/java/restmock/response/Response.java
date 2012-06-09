@@ -1,5 +1,7 @@
 package restmock.response;
 
+import restmock.response.visitor.ReplacerParametersVisitor;
+
 public abstract class Response {
 	
 	private String content;
@@ -14,9 +16,17 @@ public abstract class Response {
 		return content;
 	}
 	
+	public void setContent(String content) {
+		this.content = content;
+	}
+	
 	@Override
 	public String toString() {
 		return content;
+	}
+	
+	public void accept(ReplacerParametersVisitor visitor) {
+		visitor.visit(this);
 	}
 
 }

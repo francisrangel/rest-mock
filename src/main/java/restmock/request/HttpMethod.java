@@ -8,7 +8,7 @@ public enum HttpMethod {
 		for (HttpMethod value : HttpMethod.values())
 			if (value.toString().equals(method)) return value;
 		
-		throw new RuntimeException(method + " isn´t a HttpMethod");
+		throw new RuntimeException(method + " isn't a HttpMethod");
 	}
 
 }

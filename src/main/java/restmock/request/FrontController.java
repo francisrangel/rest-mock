@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import restmock.response.Response;
+import restmock.response.visitor.ReplacerParametersVisitor;
 
 public class FrontController extends HttpServlet {
 
@@ -21,6 +22,8 @@ public class FrontController extends HttpServlet {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
+		
+		new ReplacerParametersVisitor(request).visit(content);
 		
 		response.setStatus(HttpServletResponse.SC_OK);
 		response.setContentType(content.getContentType().getType());

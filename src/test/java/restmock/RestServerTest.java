@@ -98,23 +98,23 @@ public class RestServerTest {
 		requestGetWithResultString(simpleXML);
 	}
 
-	private void requestGetWithResultString(String expectedBody) throws Exception {
-		requestMethodWithResultString(expectedBody, HttpMethods.GET);
+
+	@Test
+	public void requestPlainTextGetWithParameters() throws Exception {
+		subject.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}!"));
+		subject.start();
+
+		requestGetWithResultString(baseUrl + "/test/?name=Bob", "Hello Bob!");
 	}
+	
+	@Test
+	public void requestPlainTextGetWithManyParameters() throws Exception {
+		subject.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}, you are the number #${number}!"));
+		subject.start();
 
-	private void requestMethodWithResultString(String expectedBody, String method) throws IOException, InterruptedException,
-			UnsupportedEncodingException {
-		ContentExchange exchange = new ContentExchange(false);
-		exchange.setURL(baseUrl + "/test/");
-		exchange.setMethod(method);
-
-		client.send(exchange);
-
-		int exchangeState = exchange.waitForDone();
-
-		assertEquals(HttpExchange.STATUS_COMPLETED, exchangeState);
-		assertEquals(expectedBody + "\r\n", exchange.getResponseContent());
+		requestGetWithResultString(baseUrl + "/test/?name=Bob&number=1", "Hello Bob, you are the number #1!");
 	}
+	
 	
 	@Test
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
@@ -124,22 +124,30 @@ public class RestServerTest {
 		requestMethodWithResultString("Post succeed", HttpMethods.POST);
 	}
 	
-	@Test
-	public void postWithOneParameter() throws Exception {
-		subject.whenPost("/test/").thenReturn(new TextPlain("Hello ${name}!"));
-		subject.start();
-		
-		ContentExchange exchange = new ContentExchange();
-		exchange.setURL(baseUrl + "/test/");
-		exchange.setMethod(HttpMethods.POST);
-		exchange.getRequestFields().add("name", "Bob");
+	private void requestMethodWithResultString(String expectedBody, String method) throws Exception {
+		requestMethodWithResultString(baseUrl + "/test/", expectedBody, method);		
+	}
+
+	private void requestGetWithResultString(String url, String expectedBody) throws Exception {
+		requestMethodWithResultString(url, expectedBody, HttpMethods.GET);
+	}
+
+	private void requestGetWithResultString(String expectedBody) throws Exception {
+		requestMethodWithResultString(baseUrl + "/test/", expectedBody, HttpMethods.GET);		
+	}
+	
+	private void requestMethodWithResultString(String url, String expectedBody, String method) throws IOException, InterruptedException,
+			UnsupportedEncodingException {
+		ContentExchange exchange = new ContentExchange(false);
+		exchange.setURL(url);
+		exchange.setMethod(method);
 		
 		client.send(exchange);
 		
 		int exchangeState = exchange.waitForDone();
 		
 		assertEquals(HttpExchange.STATUS_COMPLETED, exchangeState);
-		assertEquals("Hello Bob!", exchange.getResponseContent());
+		assertEquals(expectedBody + "\r\n", exchange.getResponseContent());
 	}
 	
 }

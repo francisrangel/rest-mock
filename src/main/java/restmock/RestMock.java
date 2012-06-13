@@ -9,12 +9,16 @@ import restmock.request.Route;
 import restmock.request.RouteManager;
 import restmock.request.RouteRegister;
 
-public class RestServer {
+public class RestMock {
 
-	private Server server;
-	private RouteManager routeManager;
+	private final Server server;
+	private final RouteManager routeManager;
+	
+	public RestMock() {
+		this(8080);
+	}
 
-	public RestServer(int port) {
+	public RestMock(int port) {
 		server = new Server(port);
 		routeManager = RouteManager.getInstance();
 	}
@@ -27,7 +31,7 @@ public class RestServer {
 		return new RouteRegister(routeManager, new Route(HttpMethod.POST, uri));
 	}
 
-	public void start() {
+	public void startServer() {
 		initContext();
 		
 		Runnable runnable = new Runnable() {
@@ -58,7 +62,7 @@ public class RestServer {
 		server.setHandler(context);
 	}
 
-	public void stop() {
+	public void stopServer() {
 		try {
 			server.stop();
 			routeManager.clean();

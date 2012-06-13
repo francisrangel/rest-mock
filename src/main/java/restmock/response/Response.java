@@ -1,8 +1,9 @@
 package restmock.response;
 
-import restmock.response.visitor.ReplacerParametersVisitor;
+import restmock.response.visitor.Visitable;
+import restmock.response.visitor.Visitor;
 
-public abstract class Response {
+public abstract class Response implements Visitable<Response> {
 	
 	private String content;
 	
@@ -25,7 +26,7 @@ public abstract class Response {
 		return content;
 	}
 	
-	public void accept(ReplacerParametersVisitor visitor) {
+	public void accept(Visitor<Response> visitor) {
 		visitor.visit(this);
 	}
 

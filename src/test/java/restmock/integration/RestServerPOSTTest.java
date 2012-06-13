@@ -15,7 +15,7 @@ public class RestServerPOSTTest extends IntegrationTestBase {
 	@Test
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
 		subject.whenPost("/test/").thenReturn(new TextPlain("Post succeed"));
-		subject.start();
+		subject.startServer();
 
 		requestPostWithResultString("Post succeed");
 	}
@@ -23,7 +23,7 @@ public class RestServerPOSTTest extends IntegrationTestBase {
 	@Test
 	public void postWithOneParameter() throws Exception {
 		subject.whenPost("/test/").thenReturn(new TextPlain("Hello ${name}!"));
-		subject.start();
+		subject.startServer();
 
 		requestPostWithParameters(baseUrl + "/test/", "name=Bob", "Hello Bob!");
 	}
@@ -31,7 +31,7 @@ public class RestServerPOSTTest extends IntegrationTestBase {
 	@Test
 	public void postWithManyParamters() throws Exception {
 		subject.whenPost("/test/").thenReturn(new TextPlain("Hello ${name}! You are the number #${number} of #${total}."));
-		subject.start();
+		subject.startServer();
 
 		requestPostWithParameters(baseUrl + "/test/", "name=Bob&number=1&total=10", "Hello Bob! You are the number #1 of #10.");
 	}

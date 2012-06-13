@@ -9,10 +9,10 @@ A tiny test-framework to provide mock-responses for REST requests.
 ### Talk is cheap, show me the code!
 
   `Developer bob = new Developer("Bob", 25);`<br />
-  `RestServer restServer = new RestServer(8080);`
+  `RestMock restMock = new RestMock();`
   
-  `restServer.whenGet("/developer/").thenReturn(new JSON(bob));`<br />
-  `restServer.start();`
+  `restMock.whenGet("/developer/").thenReturn(new JSON(bob));`<br />
+  `restMock.startServer();`
 
 
 *Ready!* 

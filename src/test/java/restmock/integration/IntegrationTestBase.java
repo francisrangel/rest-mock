@@ -8,14 +8,14 @@ import org.eclipse.jetty.client.HttpExchange;
 import org.junit.After;
 import org.junit.Before;
 
-import restmock.RestServer;
+import restmock.RestMock;
 
 public class IntegrationTestBase {
 
 	private final int port = 8080;
 	protected final String baseUrl = "http://localhost:" + port;
 
-	protected RestServer subject;
+	protected RestMock subject;
 	protected HttpClient client;
 
 	@Before
@@ -24,13 +24,13 @@ public class IntegrationTestBase {
 		client.start();
 		client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
 
-		subject = new RestServer(port);
+		subject = new RestMock(port);
 	}
 
 	@After
 	public void cleanUp() throws Exception {
 		client.stop();
-		subject.stop();
+		subject.stopServer();
 	}
 
 	protected void requestMethodWithResultString(String url, String expectedBody, String method) throws Exception {

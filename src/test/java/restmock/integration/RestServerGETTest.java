@@ -14,7 +14,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 	@Test
 	public void requestPlainText() throws Exception {
 		subject.whenGet("/test/").thenReturn(new TextPlain("Hello World!"));
-		subject.start();
+		subject.startServer();
 
 		requestGetWithResultString("Hello World!");
 	}
@@ -22,7 +22,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 	@Test
 	public void requestHtml() throws Exception {
 		subject.whenGet("/test/").thenReturn(new Html("<h1>Mock rules</h1>"));
-		subject.start();
+		subject.startServer();
 
 		requestGetWithResultString("<h1>Mock rules</h1>");
 	}
@@ -32,7 +32,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
 
 		subject.whenGet("/test/").thenReturn(new JSON(simpleJSON));
-		subject.start();
+		subject.startServer();
 
 		requestGetWithResultString(simpleJSON);
 	}
@@ -40,7 +40,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 	@Test
 	public void requestJSONObject() throws Exception {
 		subject.whenGet("/test/").thenReturn(new JSON(new Developer("Bob", 25)));
-		subject.start();
+		subject.startServer();
 
 		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";
 
@@ -51,7 +51,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 	public void requestXML() throws Exception {
 		String simpleXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
 		subject.whenGet("/test/").thenReturn(new XML(simpleXML));
-		subject.start();
+		subject.startServer();
 
 		requestGetWithResultString(simpleXML);
 	}
@@ -60,7 +60,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 	public void requestXMLObject() throws Exception {
 		Developer developerMock = new Developer("Bob", 25);
 		subject.whenGet("/test/").thenReturn(new XML(developerMock));
-		subject.start();
+		subject.startServer();
 
 		String simpleXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
 
@@ -70,7 +70,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 	@Test
 	public void requestPlainTextGetWithParameters() throws Exception {
 		subject.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}!"));
-		subject.start();
+		subject.startServer();
 
 		requestGetWithResultString(baseUrl + "/test/?name=Bob", "Hello Bob!");
 	}
@@ -78,7 +78,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 	@Test
 	public void requestPlainTextGetWithManyParameters() throws Exception {
 		subject.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}, you are the number #${number}!"));
-		subject.start();
+		subject.startServer();
 
 		requestGetWithResultString(baseUrl + "/test/?name=Bob&number=1", "Hello Bob, you are the number #1!");
 	}

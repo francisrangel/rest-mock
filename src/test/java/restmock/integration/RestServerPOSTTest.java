@@ -8,30 +8,31 @@ import org.eclipse.jetty.http.HttpMethods;
 import org.eclipse.jetty.io.ByteArrayBuffer;
 import org.junit.Test;
 
+import restmock.RestMock;
 import restmock.response.TextPlain;
 
 public class RestServerPOSTTest extends IntegrationTestBase {
 
 	@Test
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
-		subject.whenPost("/test/").thenReturn(new TextPlain("Post succeed"));
-		subject.startServer();
+		RestMock.whenPost("/test/").thenReturn(new TextPlain("Post succeed"));
+		RestMock.startServer();
 
 		requestPostWithResultString("Post succeed");
 	}
 
 	@Test
 	public void postWithOneParameter() throws Exception {
-		subject.whenPost("/test/").thenReturn(new TextPlain("Hello ${name}!"));
-		subject.startServer();
+		RestMock.whenPost("/test/").thenReturn(new TextPlain("Hello ${name}!"));
+		RestMock.startServer();
 
 		requestPostWithParameters(baseUrl + "/test/", "name=Bob", "Hello Bob!");
 	}
 
 	@Test
 	public void postWithManyParamters() throws Exception {
-		subject.whenPost("/test/").thenReturn(new TextPlain("Hello ${name}! You are the number #${number} of #${total}."));
-		subject.startServer();
+		RestMock.whenPost("/test/").thenReturn(new TextPlain("Hello ${name}! You are the number #${number} of #${total}."));
+		RestMock.startServer();
 
 		requestPostWithParameters(baseUrl + "/test/", "name=Bob&number=1&total=10", "Hello Bob! You are the number #1 of #10.");
 	}

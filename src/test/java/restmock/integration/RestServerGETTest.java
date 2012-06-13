@@ -3,6 +3,7 @@ package restmock.integration;
 import org.eclipse.jetty.http.HttpMethods;
 import org.junit.Test;
 
+import restmock.RestMock;
 import restmock.mock.Developer;
 import restmock.response.Html;
 import restmock.response.JSON;
@@ -13,16 +14,16 @@ public class RestServerGETTest extends IntegrationTestBase {
 
 	@Test
 	public void requestPlainText() throws Exception {
-		subject.whenGet("/test/").thenReturn(new TextPlain("Hello World!"));
-		subject.startServer();
+		RestMock.whenGet("/test/").thenReturn(new TextPlain("Hello World!"));
+		RestMock.startServer();
 
 		requestGetWithResultString("Hello World!");
 	}
 
 	@Test
 	public void requestHtml() throws Exception {
-		subject.whenGet("/test/").thenReturn(new Html("<h1>Mock rules</h1>"));
-		subject.startServer();
+		RestMock.whenGet("/test/").thenReturn(new Html("<h1>Mock rules</h1>"));
+		RestMock.startServer();
 
 		requestGetWithResultString("<h1>Mock rules</h1>");
 	}
@@ -31,16 +32,16 @@ public class RestServerGETTest extends IntegrationTestBase {
 	public void requestJSON() throws Exception {
 		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
 
-		subject.whenGet("/test/").thenReturn(new JSON(simpleJSON));
-		subject.startServer();
+		RestMock.whenGet("/test/").thenReturn(new JSON(simpleJSON));
+		RestMock.startServer();
 
 		requestGetWithResultString(simpleJSON);
 	}
 
 	@Test
 	public void requestJSONObject() throws Exception {
-		subject.whenGet("/test/").thenReturn(new JSON(new Developer("Bob", 25)));
-		subject.startServer();
+		RestMock.whenGet("/test/").thenReturn(new JSON(new Developer("Bob", 25)));
+		RestMock.startServer();
 
 		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";
 
@@ -50,8 +51,8 @@ public class RestServerGETTest extends IntegrationTestBase {
 	@Test
 	public void requestXML() throws Exception {
 		String simpleXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
-		subject.whenGet("/test/").thenReturn(new XML(simpleXML));
-		subject.startServer();
+		RestMock.whenGet("/test/").thenReturn(new XML(simpleXML));
+		RestMock.startServer();
 
 		requestGetWithResultString(simpleXML);
 	}
@@ -59,8 +60,8 @@ public class RestServerGETTest extends IntegrationTestBase {
 	@Test
 	public void requestXMLObject() throws Exception {
 		Developer developerMock = new Developer("Bob", 25);
-		subject.whenGet("/test/").thenReturn(new XML(developerMock));
-		subject.startServer();
+		RestMock.whenGet("/test/").thenReturn(new XML(developerMock));
+		RestMock.startServer();
 
 		String simpleXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
 
@@ -69,16 +70,16 @@ public class RestServerGETTest extends IntegrationTestBase {
 
 	@Test
 	public void requestPlainTextGetWithParameters() throws Exception {
-		subject.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}!"));
-		subject.startServer();
+		RestMock.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}!"));
+		RestMock.startServer();
 
 		requestGetWithResultString(baseUrl + "/test/?name=Bob", "Hello Bob!");
 	}
 
 	@Test
 	public void requestPlainTextGetWithManyParameters() throws Exception {
-		subject.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}, you are the number #${number}!"));
-		subject.startServer();
+		RestMock.whenGet("/test/").thenReturn(new TextPlain("Hello ${name}, you are the number #${number}!"));
+		RestMock.startServer();
 
 		requestGetWithResultString(baseUrl + "/test/?name=Bob&number=1", "Hello Bob, you are the number #1!");
 	}

@@ -15,7 +15,6 @@ public class IntegrationTestBase {
 	private final int port = 8080;
 	protected final String baseUrl = "http://localhost:" + port;
 
-	protected RestMock subject;
 	protected HttpClient client;
 
 	@Before
@@ -23,14 +22,12 @@ public class IntegrationTestBase {
 		client = new HttpClient();
 		client.start();
 		client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
-
-		subject = new RestMock(port);
 	}
 
 	@After
 	public void cleanUp() throws Exception {
 		client.stop();
-		subject.stopServer();
+		RestMock.stopServer();
 	}
 
 	protected void requestMethodWithResultString(String url, String expectedBody, String method) throws Exception {

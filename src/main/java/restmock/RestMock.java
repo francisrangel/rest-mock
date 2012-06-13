@@ -11,29 +11,23 @@ import restmock.request.RouteRegister;
 
 public class RestMock {
 
-	private final Server server;
-	private final RouteManager routeManager;
-	
-	public RestMock() {
-		this(8080);
+	private static Server server;
+
+	public static RestMockResponse whenGet(String uri) {
+		return new RouteRegister(RouteManager.getInstance(), new Route(HttpMethod.GET, uri));
 	}
 
-	public RestMock(int port) {
-		server = new Server(port);
-		routeManager = RouteManager.getInstance();
+	public static RestMockResponse whenPost(String uri) {
+		return new RouteRegister(RouteManager.getInstance(), new Route(HttpMethod.POST, uri));
 	}
 
-	public RestMockResponse whenGet(String uri) {
-		return new RouteRegister(routeManager, new Route(HttpMethod.GET, uri));
-	}
-	
-	public RestMockResponse whenPost(String uri) {
-		return new RouteRegister(routeManager, new Route(HttpMethod.POST, uri));
+	public static void startServer() {
+		startServer(8080);
 	}
 
-	public void startServer() {
-		initContext();
-		
+	public static void startServer(int port) {
+		initContext(port);
+
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
@@ -51,24 +45,25 @@ public class RestMock {
 		thread.start();
 	}
 
-	private void initContext() {
+	private static void initContext(int port) {
+		server = new Server(port);
 		ServletContextHandler context = new ServletContextHandler();
-		
+
 		context.setContextPath("/");
 		context.setResourceBase(".");
 		context.setClassLoader(Thread.currentThread().getContextClassLoader());
 		context.addServlet(FrontController.class, "/");
-		
+
 		server.setHandler(context);
 	}
 
-	public void stopServer() {
+	public static void stopServer() {
 		try {
 			server.stop();
-			routeManager.clean();
+			RouteManager.getInstance().clean();
 		} catch (Exception e) {
 			throw new RuntimeException("Could not stop the server!", e);
 		}
 	}
-	
+
 }

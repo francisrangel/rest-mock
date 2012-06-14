@@ -20,7 +20,7 @@ public class HttpResponseForPOSTMethodTest {
 	@Before
 	public void setUp() {
 		route = new Route(HttpMethod.POST, "/teste/");
-		subject = new RouteRegister(RouteManager.getInstance(), route);
+		subject = new RouteRegister(route);
 	}
 	
 	@Test

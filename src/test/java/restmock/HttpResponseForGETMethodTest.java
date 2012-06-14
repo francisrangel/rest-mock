@@ -25,7 +25,7 @@ public class HttpResponseForGETMethodTest {
 	@Before
 	public void setUp() {
 		route = new Route(HttpMethod.GET, "/teste/");
-		subject = new RouteRegister(RouteManager.getInstance(), route);
+		subject = new RouteRegister(route);
 	}
 
 	@Test

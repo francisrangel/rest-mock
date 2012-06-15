@@ -20,7 +20,8 @@ Now you can access http://localhost:8080/developer/ and get the following JSON:
   `{ "name": "Bob", "age": 25 }`
 
 
-*Alternatives:*
+### Alternatives:
+
 Do you preferer XML? What about:
 
   `RestMock.whenGet("/developer/").thenReturnXML(bob);`

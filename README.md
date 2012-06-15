@@ -26,18 +26,18 @@ Do you preferer XML? What about:
 
   `RestMock.whenGet("/developer/").thenReturnXML(bob);`
   
-*Ready!*
-	`<?xml version=\"1.0\" ?>`
-	`<developer>`
-	  `<name>Bob</name>`
-	  `<age>25</age>`
-	`</developer>`
+*Ready!*<p>
+	`<?xml version="1.0" ?>`<br />
+	`<developer>`<br />
+	`<name>Bob</name>`<br />
+	`<age>25</age>`<br />
+	`</developer>`<br /></p>
 	
 
-And more, you can define your return as a String using:
-	a) `RestMock.whenGet("/developer/").thenReturnJSON("yourJSON");`
-	b) `RestMock.whenGet("/developer/").thenReturnXML("yourXML");`
-	c) `RestMock.whenGet("/developer/").thenReturnHtml("yourHTML");`
-	d) `RestMock.whenGet("/developer/").thenReturnText("yourTxt");`
+And more, you can define your return as a String using:<p>
+	a) `RestMock.whenGet("/developer/").thenReturnJSON("yourJSON");`<br />
+	b) `RestMock.whenGet("/developer/").thenReturnXML("yourXML");`<br />
+	c) `RestMock.whenGet("/developer/").thenReturnHtml("yourHTML");`<br />
+	d) `RestMock.whenGet("/developer/").thenReturnText("yourTxt");`</p>
 
 rest-mock will set the correct content type in http response.

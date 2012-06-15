@@ -1,9 +1,15 @@
 package restmock;
 
-import restmock.response.Response;
-
 public interface RestMockResponse {
 
-	void thenReturn(Response response);
-
+	void thenReturnJSON(Object object);
+	void thenReturnJSON(String json);
+	
+	void thenReturnXML(Object object);
+	void thenReturnXML(String xml);
+	
+	void thenReturnHtml(String html);
+	
+	void thenReturnText(String html);
+	
 }

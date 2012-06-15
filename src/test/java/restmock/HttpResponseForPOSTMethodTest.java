@@ -10,7 +10,6 @@ import restmock.request.RouteManager;
 import restmock.request.RouteRegister;
 import restmock.response.ContentType;
 import restmock.response.Response;
-import restmock.response.TextPlain;
 
 public class HttpResponseForPOSTMethodTest {
 	
@@ -25,7 +24,7 @@ public class HttpResponseForPOSTMethodTest {
 	
 	@Test
 	public void testSimpleTextResponse() {
-		subject.thenReturn(new TextPlain("Test succeed"));
+		subject.thenReturnText("Test succeed");
 		
 		Response response = RouteManager.getInstance().get(route);
 		

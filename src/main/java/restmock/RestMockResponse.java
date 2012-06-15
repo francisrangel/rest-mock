@@ -10,6 +10,6 @@ public interface RestMockResponse {
 	
 	void thenReturnHtml(String html);
 	
-	void thenReturnText(String html);
+	void thenReturnText(String txt);
 	
 }

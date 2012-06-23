@@ -48,8 +48,10 @@ Want to test a Forbidden error request?
 
 	`RestMock.whenGet("/developer/").thenReturnErroCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");`
 	
-When you send a GET request do this address you got:
+When you send a GET request do this address you get:
 
 	`Forbidden GET`
 	
-	and a HTTP 403 status response.
+... and a HTTP 403 status.
+
+You can use any http status to mock different behaviour.

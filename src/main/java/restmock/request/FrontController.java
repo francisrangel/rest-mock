@@ -25,7 +25,7 @@ public class FrontController extends HttpServlet {
 		
 		new ReplacerParametersVisitor(request).visit(content);
 		
-		response.setStatus(HttpServletResponse.SC_OK);
+		response.setStatus(content.getResponseStatus());
 		response.setContentType(content.getContentType().getType());
 		response.getWriter().println(content.getContent());
 		

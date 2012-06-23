@@ -12,4 +12,6 @@ public interface RestMockResponse {
 	
 	void thenReturnText(String txt);
 	
+	void thenReturnErroCodeWithMessage(int errorCode, String message);
+	
 }

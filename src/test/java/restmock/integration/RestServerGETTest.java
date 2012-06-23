@@ -1,10 +1,10 @@
 package restmock.integration;
 
-import org.eclipse.jetty.http.HttpMethods;
 import org.junit.Test;
 
 import restmock.RestMock;
 import restmock.mock.Developer;
+import restmock.request.HttpMethod;
 
 public class RestServerGETTest extends IntegrationTestBase {
 
@@ -81,11 +81,11 @@ public class RestServerGETTest extends IntegrationTestBase {
 	}
 
 	private void requestGetWithResultString(String url, String expectedBody) throws Exception {
-		requestMethodWithResultString(url, expectedBody, HttpMethods.GET);
+		requestMethodWithResultString(url, expectedBody, HttpMethod.GET);
 	}
 
 	private void requestGetWithResultString(String expectedBody) throws Exception {
-		requestMethodWithResultString(baseUrl + "/test/", expectedBody, HttpMethods.GET);
+		requestMethodWithResultString(baseUrl + "/test/", expectedBody, HttpMethod.GET);
 	}
 
 }

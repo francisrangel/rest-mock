@@ -4,11 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import org.eclipse.jetty.client.ContentExchange;
 import org.eclipse.jetty.client.HttpExchange;
-import org.eclipse.jetty.http.HttpMethods;
 import org.eclipse.jetty.io.ByteArrayBuffer;
 import org.junit.Test;
 
 import restmock.RestMock;
+import restmock.request.HttpMethod;
 
 public class RestServerPOSTTest extends IntegrationTestBase {
 
@@ -37,13 +37,13 @@ public class RestServerPOSTTest extends IntegrationTestBase {
 	}
 
 	private void requestPostWithResultString(String expectedBody) throws Exception {
-		requestMethodWithResultString(baseUrl + "/test/", expectedBody, HttpMethods.POST);
+		requestMethodWithResultString(baseUrl + "/test/", expectedBody, HttpMethod.POST);
 	}
 
 	private void requestPostWithParameters(String url, String requestParamtersString, String resultString) throws Exception {
 		ContentExchange exchange = new ContentExchange();
 		exchange.setURL(url);
-		exchange.setMethod(HttpMethods.POST);
+		exchange.setMethod(HttpMethod.POST.name());
 
 		exchange.setRequestContent(new ByteArrayBuffer(requestParamtersString));
 		exchange.setRequestContentType("application/x-www-form-urlencoded; charset=UTF-8");

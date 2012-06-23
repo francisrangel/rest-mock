@@ -49,6 +49,14 @@ public class RouteRegister implements RestMockResponse {
 		}
 	}
 	
+	@Override
+	public void thenReturnErroCodeWithMessage(int errorCode, String message) {
+		Response response = new TextPlain(message);
+		response.setResponseStatus(errorCode);
+		
+		registerRoute(response);
+	}
+	
 	private void registerRoute(Response body) {
 		RouteManager.getInstance().registerRoute(route, body);
 	}

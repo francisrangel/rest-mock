@@ -41,3 +41,15 @@ And more, you can define your return as a String using:<p>
 	d) `RestMock.whenGet("/developer/").thenReturnText("yourTxt");`</p>
 
 rest-mock will set the correct content type in http response.
+
+### Testing error handling
+
+Want to test a Forbidden error request?
+
+	`RestMock.whenGet("/developer/").thenReturnErroCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");`
+	
+When you send a GET request do this address you got:
+
+	`Forbidden GET`
+	
+	and a HTTP 403 status response.

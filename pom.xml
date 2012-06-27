@@ -3,10 +3,15 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
+
 	<groupId>org</groupId>
 	<artifactId>restmock</artifactId>
 	<version>0.0.1</version>
 	<name>Rest Mock</name>
+	
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -56,5 +61,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>

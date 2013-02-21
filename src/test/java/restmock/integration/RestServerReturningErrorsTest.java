@@ -24,7 +24,7 @@ public class RestServerReturningErrorsTest extends IntegrationTestBase {
 	
 	@Test
 	public void returningBadRequestForGETMethod() throws Exception {
-		RestMock.whenGet("/test").thenReturnErroCodeWithMessage(HttpServletResponse.SC_BAD_REQUEST, "Message for error 500 GET");
+		RestMock.whenGet("/test").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_BAD_REQUEST, "Message for error 500 GET");
 		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.GET);
@@ -35,7 +35,7 @@ public class RestServerReturningErrorsTest extends IntegrationTestBase {
 	
 	@Test
 	public void returningBadRequestForPOSTMethod() throws Exception {
-		RestMock.whenPost("/test").thenReturnErroCodeWithMessage(HttpServletResponse.SC_BAD_REQUEST, "Message for error 500 POST");
+		RestMock.whenPost("/test").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_BAD_REQUEST, "Message for error 500 POST");
 		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.POST);
@@ -46,7 +46,7 @@ public class RestServerReturningErrorsTest extends IntegrationTestBase {
 	
 	@Test
 	public void returningForbiddenForGETMethod() throws Exception {
-		RestMock.whenGet("/test").thenReturnErroCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");
+		RestMock.whenGet("/test").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");
 		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.GET);
@@ -57,7 +57,7 @@ public class RestServerReturningErrorsTest extends IntegrationTestBase {
 	
 	@Test
 	public void returningForbiddenForPOSTMethod() throws Exception {
-		RestMock.whenPost("/test").thenReturnErroCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden POST");
+		RestMock.whenPost("/test").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden POST");
 		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.POST);

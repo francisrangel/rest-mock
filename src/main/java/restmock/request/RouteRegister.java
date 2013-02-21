@@ -50,7 +50,7 @@ public class RouteRegister implements RestMockResponse {
 	}
 	
 	@Override
-	public void thenReturnErroCodeWithMessage(int errorCode, String message) {
+	public void thenReturnErrorCodeWithMessage(int errorCode, String message) {
 		Response response = new TextPlain(message);
 		response.setResponseStatus(errorCode);
 		

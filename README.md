@@ -46,7 +46,7 @@ rest-mock will set the correct content type in http response.
 
 Want to test a Forbidden error request?
 
-	`RestMock.whenGet("/developer/").thenReturnErroCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");`
+	`RestMock.whenGet("/developer/").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");`
 	
 When you send a GET request do this address you get:
 
@@ -54,4 +54,4 @@ When you send a GET request do this address you get:
 	
 ... and a HTTP 403 status.
 
-You can use any http status to mock different behaviour.
+You can use any HTTP status to mock different behaviour.

@@ -14,7 +14,7 @@ public class RestServerPOSTTest extends IntegrationTestBase {
 
 	@Test
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
-		RestMock.whenPost("/test/").thenReturnText("Post succeed");
+		RestMock.whenPost("/test").thenReturnText("Post succeed");
 		RestMock.startServer();
 
 		requestPostWithResultString("Post succeed");
@@ -22,22 +22,22 @@ public class RestServerPOSTTest extends IntegrationTestBase {
 
 	@Test
 	public void postWithOneParameter() throws Exception {
-		RestMock.whenPost("/test/").thenReturnText("Hello ${name}!");
+		RestMock.whenPost("/test").thenReturnText("Hello ${name}!");
 		RestMock.startServer();
 
-		requestPostWithParameters(baseUrl + "/test/", "name=Bob", "Hello Bob!");
+		requestPostWithParameters(baseUrl + "/test", "name=Bob", "Hello Bob!");
 	}
 
 	@Test
 	public void postWithManyParamters() throws Exception {
-		RestMock.whenPost("/test/").thenReturnText("Hello ${name}! You are the number #${number} of #${total}.");
+		RestMock.whenPost("/test").thenReturnText("Hello ${name}! You are the number #${number} of #${total}.");
 		RestMock.startServer();
 
-		requestPostWithParameters(baseUrl + "/test/", "name=Bob&number=1&total=10", "Hello Bob! You are the number #1 of #10.");
+		requestPostWithParameters(baseUrl + "/test", "name=Bob&number=1&total=10", "Hello Bob! You are the number #1 of #10.");
 	}
 
 	private void requestPostWithResultString(String expectedBody) throws Exception {
-		requestMethodWithResultString(baseUrl + "/test/", expectedBody, HttpMethod.POST);
+		requestMethodWithResultString(baseUrl + "/test", expectedBody, HttpMethod.POST);
 	}
 
 	private void requestPostWithParameters(String url, String requestParamtersString, String resultString) throws Exception {

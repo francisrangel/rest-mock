@@ -20,7 +20,7 @@ public class HttpResponseForGETMethodTest {
 
 	@Before
 	public void setUp() {
-		route = new Route(HttpMethod.GET, "/teste/");
+		route = new Route(HttpMethod.GET, "/test");
 		subject = new RouteRegister(route);
 	}
 

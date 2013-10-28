@@ -49,7 +49,7 @@ And paste all the file inside a String doesn't look good as well.
 Ok my friend. What about save the files inside your resources test folder and keep your code clean?
 
 Just use the fromResource methods:<p>
-	a) `RestMock.whenGet("/reallyComplexEnterpriseCall/").thenReturnXMLFromResource("enterprise-answer.xml");`<br />
+	a) `RestMock.whenGet("/reallyComplexEnterprise/").thenReturnXMLFromResource("enterprise-answer.xml");`<br />
 	b) `RestMock.whenGet("/hugeHTML/").thenReturnHtml("my-super-index.html");`</p>
 
 

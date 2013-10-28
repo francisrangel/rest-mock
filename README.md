@@ -57,11 +57,11 @@ Just use the fromResource methods:<p>
 
 Want to test a Forbidden error request?
 
-	`RestMock.whenGet("/developer/").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");`
+	RestMock.whenGet("/developer/").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");
 	
 When you send a GET request do this address you get:
 
-	`Forbidden GET`
+	Forbidden GET
 	
 ... and a HTTP 403 status.
 

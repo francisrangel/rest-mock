@@ -1,6 +1,7 @@
 package restmock.integration;
 
 import static org.junit.Assert.assertEquals;
+import static restmock.utils.Resource.LINE_SEPARATOR;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -10,7 +11,7 @@ import org.junit.Test;
 import restmock.RestMock;
 import restmock.request.HttpMethod;
 
-public class RestServerReturningErrorsTest extends IntegrationTestBase {
+public class MockHttpErrorsTestCase extends IntegrationTestBase {
 	
 	@Test
 	public void returningError404() throws Exception {
@@ -30,7 +31,7 @@ public class RestServerReturningErrorsTest extends IntegrationTestBase {
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.GET);
 		
 		assertEquals(HttpServletResponse.SC_BAD_REQUEST, exchange.getResponseStatus());
-		assertEquals("Message for error 500 GET\r\n", exchange.getResponseContent());
+		assertEquals("Message for error 500 GET" + LINE_SEPARATOR, exchange.getResponseContent());
 	}
 	
 	@Test
@@ -41,7 +42,7 @@ public class RestServerReturningErrorsTest extends IntegrationTestBase {
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.POST);
 		
 		assertEquals(HttpServletResponse.SC_BAD_REQUEST, exchange.getResponseStatus());
-		assertEquals("Message for error 500 POST\r\n", exchange.getResponseContent());
+		assertEquals("Message for error 500 POST" + LINE_SEPARATOR, exchange.getResponseContent());
 	}
 	
 	@Test
@@ -52,7 +53,7 @@ public class RestServerReturningErrorsTest extends IntegrationTestBase {
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.GET);
 		
 		assertEquals(HttpServletResponse.SC_FORBIDDEN, exchange.getResponseStatus());
-		assertEquals("Forbidden GET\r\n", exchange.getResponseContent());
+		assertEquals("Forbidden GET" + LINE_SEPARATOR, exchange.getResponseContent());
 	}
 	
 	@Test
@@ -63,7 +64,7 @@ public class RestServerReturningErrorsTest extends IntegrationTestBase {
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.POST);
 		
 		assertEquals(HttpServletResponse.SC_FORBIDDEN, exchange.getResponseStatus());
-		assertEquals("Forbidden POST\r\n", exchange.getResponseContent());
+		assertEquals("Forbidden POST" + LINE_SEPARATOR, exchange.getResponseContent());
 	}
 
 }

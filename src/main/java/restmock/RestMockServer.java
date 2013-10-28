@@ -9,28 +9,22 @@ import restmock.request.RouteManager;
 public class RestMockServer {
 
 	private Server server;
+	private boolean started;
 
 	protected RestMockServer() {
 	}
 
 	public void start(int port) {
+		if (started) return;
 		initContext(port);
 
-		Runnable runnable = new Runnable() {
-			@Override
-			public void run() {
-				try {
-					server.start();
-					server.join();
-				} catch (Exception e) {
-					throw new RuntimeException("Could not start the server!", e);
-				}
-			}
-		};
-
-		Thread thread = new Thread(runnable);
-		thread.setDaemon(true);
-		thread.start();
+		try {
+			server.start();
+		} catch (Exception e) {
+			throw new RuntimeException("Could not start the server!", e);
+		}
+		
+		started = true;
 	}
 
 	private void initContext(int port) {
@@ -40,7 +34,7 @@ public class RestMockServer {
 		context.setContextPath("/");
 		context.setResourceBase(".");
 		context.setClassLoader(Thread.currentThread().getContextClassLoader());
-		context.addServlet(FrontController.class, "/");
+		context.addServlet(FrontController.class, "/*");
 
 		server.setHandler(context);
 	}
@@ -52,6 +46,8 @@ public class RestMockServer {
 		} catch (Exception e) {
 			throw new RuntimeException("Could not stop the server!", e);
 		}
+		
+		started = false;
 	}
 
 }

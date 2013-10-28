@@ -6,7 +6,7 @@ import restmock.RestMock;
 import restmock.mock.Developer;
 import restmock.request.HttpMethod;
 
-public class RestServerGETTest extends IntegrationTestBase {
+public class WhenGetTestCase extends IntegrationTestBase {
 
 	@Test
 	public void requestPlainText() throws Exception {
@@ -18,7 +18,7 @@ public class RestServerGETTest extends IntegrationTestBase {
 
 	@Test
 	public void requestHtml() throws Exception {
-		RestMock.whenGet("/test").thenReturnHtml("<h1>Mock rules</h1>");
+		RestMock.whenGet("/test").thenReturnHTML("<h1>Mock rules</h1>");
 		RestMock.startServer();
 
 		requestGetWithResultString("<h1>Mock rules</h1>");

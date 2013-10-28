@@ -10,7 +10,9 @@ import org.junit.Test;
 import restmock.RestMock;
 import restmock.request.HttpMethod;
 
-public class RestServerPOSTTest extends IntegrationTestBase {
+public class WhenPostTestCase extends IntegrationTestBase {
+	
+	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
 	@Test
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
@@ -53,7 +55,7 @@ public class RestServerPOSTTest extends IntegrationTestBase {
 		int exchangeState = exchange.waitForDone();
 
 		assertEquals(HttpExchange.STATUS_COMPLETED, exchangeState);
-		assertEquals(resultString + "\r\n", exchange.getResponseContent());
+		assertEquals(resultString + LINE_SEPARATOR, exchange.getResponseContent());
 	}
 
 }

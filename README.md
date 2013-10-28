@@ -1,9 +1,8 @@
 rest-mock
 =========
 
-A tiny test-framework to provide mock-responses for REST requests.
+A tiny test-framework to provide stub-responses for REST calls.
 <br />
-
 
 
 ### Talk is cheap, show me the code!
@@ -41,6 +40,18 @@ And more, you can define your return as a String using:<p>
 	d) `RestMock.whenGet("/developer/").thenReturnText("yourTxt");`</p>
 
 rest-mock will set the correct content type in http response.
+
+### External files responses
+
+Well, sometimes you have complex answers. So, you don't want create an Object.
+And paste all the file inside a String doesn't look good as well.
+
+Ok my friend. What about save the files inside your resources test folder and keep your code clean?
+
+Just use the fromResource methods:<p>
+	a) `RestMock.whenGet("/reallyComplexEnterpriseCall/").thenReturnXMLFromResource("enterprise-answer.xml");`<br />
+	b) `RestMock.whenGet("/hugeHTML/").thenReturnHtml("my-super-index.html");`</p>
+
 
 ### Testing error handling
 

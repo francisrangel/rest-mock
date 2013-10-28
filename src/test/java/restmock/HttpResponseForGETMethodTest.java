@@ -36,7 +36,7 @@ public class HttpResponseForGETMethodTest {
 
 	@Test
 	public void testHtmlResponse() throws Exception {
-		subject.thenReturnHtml("<h1>Mock rules</h1>");
+		subject.thenReturnHTML("<h1>Mock rules</h1>");
 		
 		Response response = RouteManager.getInstance().get(route);
 

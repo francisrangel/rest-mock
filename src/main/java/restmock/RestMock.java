@@ -21,7 +21,7 @@ public class RestMock {
 	}
 
 	public static void startServer() {
-		startServer(8080);
+		startServer(9080);
 	}
 
 	public static void startServer(int port) {

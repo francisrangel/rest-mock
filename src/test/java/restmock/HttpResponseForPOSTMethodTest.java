@@ -1,6 +1,7 @@
 package restmock;
 
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -18,7 +19,7 @@ public class HttpResponseForPOSTMethodTest {
 	
 	@Before
 	public void setUp() {
-		route = new Route(HttpMethod.POST, "/teste/");
+		route = new Route(HttpMethod.POST, "/teste");
 		subject = new RouteRegister(route);
 	}
 	
@@ -28,8 +29,8 @@ public class HttpResponseForPOSTMethodTest {
 		
 		Response response = RouteManager.getInstance().get(route);
 		
-		Assert.assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
-		Assert.assertEquals("Test succeed", response.getContent());
+		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
+		assertEquals("Test succeed", response.getContent());
 	}
 
 }

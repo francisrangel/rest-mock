@@ -67,3 +67,13 @@ When you send a GET request do this address you get:
 ... and a HTTP 403 status.
 
 You can use any HTTP status to mock different behaviour.
+
+### Dynamic Response
+
+Sometimes you expect a result based on your request parameters.
+For those purpose you can use the wildtag ${parameter}.
+
+	RestMock.whenGet("/hello").thenReturnText("Hello ${name}!");
+    RestMock.startServer();
+
+When you access /test?name=Bob, you got: Hello Bob!

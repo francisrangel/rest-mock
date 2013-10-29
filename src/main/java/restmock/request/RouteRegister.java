@@ -71,7 +71,7 @@ public class RouteRegister implements RestMockResponse {
 
 	@Override
 	public void thenReturnXMLFromResource(String path) throws FileNotFoundException {
-		thenReturnXMLFromResource(Resource.dataFromResource(path));
+		thenReturnXML(Resource.dataFromResource(path));
 	}
 
 	@Override

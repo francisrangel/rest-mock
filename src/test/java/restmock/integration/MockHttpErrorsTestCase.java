@@ -16,7 +16,6 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 	@Test
 	public void returningError404() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("Hello World!");
-		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test1", HttpMethod.GET);
 		
@@ -26,7 +25,6 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 	@Test
 	public void returningBadRequestForGETMethod() throws Exception {
 		RestMock.whenGet("/test").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_BAD_REQUEST, "Message for error 500 GET");
-		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.GET);
 		
@@ -37,7 +35,6 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 	@Test
 	public void returningBadRequestForPOSTMethod() throws Exception {
 		RestMock.whenPost("/test").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_BAD_REQUEST, "Message for error 500 POST");
-		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.POST);
 		
@@ -48,7 +45,6 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 	@Test
 	public void returningForbiddenForGETMethod() throws Exception {
 		RestMock.whenGet("/test").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");
-		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.GET);
 		
@@ -59,7 +55,6 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 	@Test
 	public void returningForbiddenForPOSTMethod() throws Exception {
 		RestMock.whenPost("/test").thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden POST");
-		RestMock.startServer();
 		
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.POST);
 		

@@ -17,7 +17,6 @@ public class WhenPostTestCase extends IntegrationTestBase {
 	@Test
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("Post succeed");
-		RestMock.startServer();
 
 		requestPostWithResultString("Post succeed");
 	}
@@ -25,7 +24,6 @@ public class WhenPostTestCase extends IntegrationTestBase {
 	@Test
 	public void postWithOneParameter() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("Hello ${name}!");
-		RestMock.startServer();
 
 		requestPostWithParameters(baseUrl + "/test", "name=Bob", "Hello Bob!");
 	}
@@ -33,7 +31,6 @@ public class WhenPostTestCase extends IntegrationTestBase {
 	@Test
 	public void postWithManyParamters() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("Hello ${name}! You are the number #${number} of #${total}.");
-		RestMock.startServer();
 
 		requestPostWithParameters(baseUrl + "/test", "name=Bob&number=1&total=10", "Hello Bob! You are the number #1 of #10.");
 	}

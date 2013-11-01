@@ -42,12 +42,16 @@ public class RestMockServer {
 	public void stop() {
 		try {
 			server.stop();
-			RouteManager.getInstance().clean();
+			clean();
 		} catch (Exception e) {
 			throw new RuntimeException("Could not stop the server!", e);
 		}
 		
 		started = false;
+	}
+
+	public void clean() {
+		RouteManager.getInstance().clean();		
 	}
 
 }

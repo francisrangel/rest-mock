@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.eclipse.jetty.client.ContentExchange;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpExchange;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -24,12 +25,19 @@ public class IntegrationTestBase {
 	public static void setUp() throws Exception {
 		client.start();
 		client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
+		
+		RestMock.startServer();
 	}
 
 	@AfterClass
 	public static void cleanUp() throws Exception {
 		client.stop();
 		RestMock.stopServer();
+	}
+	
+	@After
+	public void cleanUpRoutes() {
+		RestMock.clean();
 	}
 
 	protected void requestMethodWithResultString(String url, String expectedBody, HttpMethod method) throws Exception {

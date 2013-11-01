@@ -32,4 +32,8 @@ public class RestMock {
 		server.stop();
 	}
 
+	public static void clean() {
+		server.clean();
+	}
+
 }

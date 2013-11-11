@@ -6,6 +6,8 @@ import restmock.request.RouteRegister;
 
 public class RestMock {
 	
+	public static final int DEFAULT_PORT = 9080;
+	
 	private static final RestMockServer server = new RestMockServer();
 
 	public static RestMockResponse whenGet(String uri) {
@@ -21,7 +23,7 @@ public class RestMock {
 	}
 
 	public static void startServer() {
-		startServer(9080);
+		startServer(DEFAULT_PORT);
 	}
 
 	public static void startServer(int port) {

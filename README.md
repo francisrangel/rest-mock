@@ -5,39 +5,44 @@ A tiny test-framework to provide stub-responses for REST calls.
 <br />
 
 
-### Talk is cheap, show me the code!
-
-  `Developer bob = new Developer("Bob", 25);`<br />
+### Talk is cheap, show me the code! 
+``` java
+Developer bob = new Developer("Bob", 25);
   
-  `RestMock.whenGet("/developer/").thenReturnJSON(bob);`<br />
-  `RestMock.startServer();`
+RestMock.whenGet("/developer/").thenReturnJSON(bob);
+RestMock.startServer();
+```
 
 
 *Ready!* 
 Now you can access http://localhost:8080/developer/ and get the following JSON:
-
-  `{ "name": "Bob", "age": 25 }`
-
+``` json 
+{ "name": "Bob", "age": 25 }
+```
 
 ### Alternatives:
 
-Do you preferer XML? What about:
-
-  `RestMock.whenGet("/developer/").thenReturnXML(bob);`
+Do you preferer XML? What about:  
+``` java
+RestMock.whenGet("/developer/").thenReturnXML(bob);
+```
   
-*Ready!*<p>
-	`<?xml version="1.0" ?>`<br />
-	`<developer>`<br />
-	`<name>Bob</name>`<br />
-	`<age>25</age>`<br />
-	`</developer>`<br /></p>
-	
+*Ready!*
+``` xml
+	<?xml version="1.0" ?>
+	<developer>
+	<name>Bob</name>
+	<age>25</age>
+	</developer>
+```	
 
-And more, you can define your return as a String using:<p>
-	a) `RestMock.whenGet("/developer/").thenReturnJSON("yourJSON");`<br />
-	b) `RestMock.whenGet("/developer/").thenReturnXML("yourXML");`<br />
-	c) `RestMock.whenGet("/developer/").thenReturnHtml("yourHTML");`<br />
-	d) `RestMock.whenGet("/developer/").thenReturnText("yourTxt");`</p>
+And more, you can define your return as a literal using:
+``` java
+RestMock.whenGet("/developer/").thenReturnJSON("yourJSON");
+RestMock.whenGet("/developer/").thenReturnXML("yourXML");
+RestMock.whenGet("/developer/").thenReturnHtml("yourHTML");
+RestMock.whenGet("/developer/").thenReturnText("yourTxt");
+``` 
 
 rest-mock will set the correct content type in http response.
 
@@ -48,17 +53,19 @@ And paste all the file inside a String doesn't look good as well.
 
 Ok my friend. What about save the files inside your resources test folder and keep your code clean?
 
-Just use the fromResource methods:<p>
-	a) `RestMock.whenGet("/reallyComplexEnterprise/").thenReturnXMLFromResource("enterprise-answer.xml");`<br />
-	b) `RestMock.whenGet("/hugeHTML/").thenReturnHtml("my-super-index.html");`</p>
-
+Just use the fromResource methods:
+``` java
+RestMock.whenGet("/reallyComplexEnterprise/").thenReturnXMLFromResource("enterprise-answer.xml");
+RestMock.whenGet("/hugeHTML/").thenReturnHtml("my-super-index.html");
+```
 
 ### Testing error handling
 
 Want to test a Forbidden error request?
-
-	RestMock.whenGet("/developer/")
-		.thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");
+``` java
+RestMock.whenGet("/developer/")
+	.thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");
+```
 	
 When you send a GET request do this address you get:
 
@@ -73,7 +80,12 @@ You can use any HTTP status to mock different behaviour.
 Sometimes you expect a result based on your request parameters.
 For those purpose you can use the wildtag ${parameter}.
 
-	RestMock.whenGet("/hello").thenReturnText("Hello ${name}!");
-    RestMock.startServer();
+``` java
+RestMock.whenGet("/hello").thenReturnText("Hello ${name}!");
+RestMock.startServer();
+``` 
 
-When you access /test?name=Bob, you got: Hello Bob!
+When you access /test?name=Bob, you got: 
+``` text
+Hello Bob!
+```

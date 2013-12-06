@@ -89,3 +89,10 @@ When you access /test?name=Bob, you got:
 ``` text
 Hello Bob!
 ```
+
+### Stub Headers
+Do you need some data in your header? Don't worry. 
+``` java
+RestMock.whenGet("/hello").thenReturnText("Hello ${name}!").withHeader("Cache-Control", "no-cache");
+RestMock.whenGet("/hi").thenReturnText("Hi").withHeader("a", "1").withHeader("b", "2").withHeader("c", "3");
+``` 

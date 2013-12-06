@@ -1,4 +1,4 @@
-rest-mock [![Build Status](https://travis-ci.org/francisrangel/rest-mock.png)](https://travis-ci.org/francisrangel/rest-mock])
+rest-mock [![Build Status](https://travis-ci.org/francisrangel/rest-mock.png)](https://travis-ci.org/francisrangel/rest-mock)
 =========
 
 A tiny test-framework to provide stub-responses for REST calls.

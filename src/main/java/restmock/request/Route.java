@@ -1,7 +1,7 @@
 package restmock.request;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
+import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
 
 public class Route {
 	
@@ -14,10 +14,9 @@ public class Route {
 	}
 	
 	public Route(String method, String uri) {
-		this.method = HttpMethod.byString(method);
-		this.uri = uri;
+		this(HttpMethod.byString(method), uri);
 	}
-
+	
 	public HttpMethod getMethod() {
 		return method;
 	}
@@ -28,12 +27,12 @@ public class Route {
 
 	@Override
 	public int hashCode() {
-		return HashCodeBuilder.reflectionHashCode(this);
+		return reflectionHashCode(this);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return EqualsBuilder.reflectionEquals(this, obj);
+		return reflectionEquals(this, obj);
 	}
 	
 }

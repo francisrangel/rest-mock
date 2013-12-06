@@ -6,6 +6,7 @@ import restmock.RestMockResponse;
 import restmock.response.Html;
 import restmock.response.JSON;
 import restmock.response.Response;
+import restmock.response.ResponseOptions;
 import restmock.response.TextPlain;
 import restmock.response.XML;
 import restmock.utils.Resource;
@@ -19,69 +20,70 @@ public class RouteRegister implements RestMockResponse {
 	}
 	
 	@Override
-	public void thenReturnXML(Object object) {
-		registerRoute(new XML(object));
+	public ResponseOptions thenReturnXML(Object object) {
+		return registerRoute(new XML(object));
 	}
 
 	@Override
-	public void thenReturnXML(String value) {
-		registerRoute(new XML(value));
+	public ResponseOptions thenReturnXML(String value) {
+		return registerRoute(new XML(value));
 	}
 
 	@Override
-	public void thenReturnHTML(String value) {
-		registerRoute(new Html(value));
+	public ResponseOptions thenReturnHTML(String value) {
+		return registerRoute(new Html(value));
 	}
 
 	@Override
-	public void thenReturnText(String value) {
-		registerRoute(new TextPlain(value));
+	public ResponseOptions thenReturnText(String value) {
+		return registerRoute(new TextPlain(value));
 	}
 	
 	@Override
-	public void thenReturnJSON(String value) {
-		registerRoute(new JSON(value));
+	public ResponseOptions thenReturnJSON(String value) {
+		return registerRoute(new JSON(value));
 	}
 	
 	@Override
-	public void thenReturnJSON(Object object) {
+	public ResponseOptions thenReturnJSON(Object object) {
 		try {
-			registerRoute(new JSON(object));
+			return registerRoute(new JSON(object));
 		} catch (Exception exception) {
 			throw new RuntimeException(exception);
 		}
 	}
 	
 	@Override
-	public void thenReturnErrorCodeWithMessage(int errorCode, String message) {
+	public ResponseOptions thenReturnErrorCodeWithMessage(int errorCode, String message) {
 		Response response = new TextPlain(message);
 		response.setResponseStatus(errorCode);
 		
-		registerRoute(response);
+		return registerRoute(response);
 	}
 	
-	private void registerRoute(Response body) {
+	private ResponseOptions registerRoute(Response body) {
 		RouteManager.getInstance().registerRoute(route, body);
+		return new ResponseOptions(route);
 	}
 
 	@Override
-	public void thenReturnJSONFromResource(String path) throws FileNotFoundException {
-		thenReturnJSON(Resource.dataFromResource(path));
+	public ResponseOptions thenReturnJSONFromResource(String path) throws FileNotFoundException {
+		return thenReturnJSON(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public void thenReturnXMLFromResource(String path) throws FileNotFoundException {
-		thenReturnXML(Resource.dataFromResource(path));
+	public ResponseOptions thenReturnXMLFromResource(String path) throws FileNotFoundException {
+		return thenReturnXML(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public void theReturnHTMLFromResource(String path) throws FileNotFoundException {
-		thenReturnHTML(Resource.dataFromResource(path));
+	public ResponseOptions theReturnHTMLFromResource(String path) throws FileNotFoundException {
+		return thenReturnHTML(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public void thenReturnTextFromResource(String path) throws FileNotFoundException {
-		thenReturnText(Resource.dataFromResource(path));
+	public ResponseOptions thenReturnTextFromResource(String path) throws FileNotFoundException {
+		return thenReturnText(Resource.dataFromResource(path));
 	}
 	
 }

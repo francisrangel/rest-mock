@@ -1,6 +1,7 @@
 package restmock.request;
 
 import java.io.IOException;
+import java.util.Map.Entry;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -29,15 +30,19 @@ public class FrontController extends HttpServlet {
 		response.setContentType(content.getContentType().getType());
 		response.getWriter().println(content.getContent());
 		
-		allowCrossDomainAccess(response);
+		addHeaderAndallowCrossDomainAccess(content, response);
 	}
 	
-	private void allowCrossDomainAccess(HttpServletResponse response) {
+	private void addHeaderAndallowCrossDomainAccess(Response content, HttpServletResponse response) {
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
 		response.setHeader("Access-Control-Max-Age", "360");
 		response.setHeader("Access-Control-Allow-Headers", "x-requested-with");
 		response.setHeader("Access-Control-Allow-Credentials", "true");
+		
+		for (Entry<String, String> header : content.getHeader().entrySet()) {
+			response.setHeader(header.getKey(), header.getValue());
+		}
 	}
 
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

@@ -88,4 +88,12 @@ public class HttpResponseForGETMethodTest {
 		assertEquals(expectedXML, response.getContent());		
 	}
 	
+	@Test
+	public void testHeaderResponse() {
+		subject.thenReturnXML(new Developer("Bob", 25)).withHeader("Cache-Control", "no-cache");
+		Response response = RouteManager.getInstance().get(route);
+		
+		assertEquals("no-cache", response.getHeader().get("Cache-Control"));
+	}
+	
 }

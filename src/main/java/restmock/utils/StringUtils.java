@@ -17,6 +17,10 @@ public class StringUtils {
 		return sb.toString();
 	}
 	
+	public static String singleLine(String string) {
+		return string.replaceAll("[\\r\\n ]", "");  
+	}
+	
 	private static String uncapitalizeWord(String word) {
 		char firstCharAsLower = Character.toLowerCase(word.charAt(0));
 		String withoutFirstChar = word.substring(1, word.length());

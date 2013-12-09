@@ -1,6 +1,7 @@
 package restmock;
 
 import static org.junit.Assert.assertEquals;
+import static restmock.utils.StringUtils.singleLine;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -63,7 +64,7 @@ public class HttpResponseForGETMethodTest {
 		Response response = RouteManager.getInstance().get(route);
 
 		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
-		assertEquals(expectedJSON, response.getContent());
+		assertEquals(singleLine(expectedJSON), singleLine(response.getContent()));
 	}
 	
 	@Test

@@ -1,7 +1,6 @@
 package restmock.integration;
 
 import static org.junit.Assert.assertEquals;
-import static restmock.utils.Resource.LINE_SEPARATOR;
 
 import java.io.IOException;
 
@@ -14,6 +13,7 @@ import org.junit.BeforeClass;
 
 import restmock.RestMock;
 import restmock.request.HttpMethod;
+import restmock.utils.StringUtils;
 
 public class IntegrationTestBase {
 	
@@ -42,7 +42,7 @@ public class IntegrationTestBase {
 
 	protected void requestMethodWithResultString(String url, String expectedBody, HttpMethod method) throws Exception {
 		ContentExchange exchange = sendRequestAndWaitForDone(url, method);
-		assertEquals(expectedBody + LINE_SEPARATOR, exchange.getResponseContent());
+		assertEquals(StringUtils.singleLine(expectedBody), StringUtils.singleLine(exchange.getResponseContent()));
 	}
 
 	protected ContentExchange sendRequestAndWaitForDone(String url, HttpMethod method) throws IOException, InterruptedException {

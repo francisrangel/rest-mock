@@ -1,10 +1,11 @@
 package restmock.response;
 
-import java.io.IOException;
+import java.io.Writer;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
+import com.thoughtworks.xstream.io.json.JsonWriter;
 
 public class JSON extends Response {
 
@@ -12,8 +13,18 @@ public class JSON extends Response {
 		super(body);
 	}
 	
-	public JSON(Object object) throws JsonGenerationException, JsonMappingException, IOException {
-		super(new ObjectMapper().writeValueAsString(object));
+	public JSON(Object object) {
+		super(toJSON(object));
+	}
+	
+	private static String toJSON(Object obj) {
+		XStream xstream = new XStream(new JsonHierarchicalStreamDriver() {
+		    public HierarchicalStreamWriter createWriter(Writer writer) {
+		        return new JsonWriter(writer, JsonWriter.DROP_ROOT_MODE);
+		    }
+		});
+		
+		return xstream.toXML(obj).toString();
 	}
 
 	@Override

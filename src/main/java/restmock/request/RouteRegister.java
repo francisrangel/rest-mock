@@ -46,11 +46,7 @@ public class RouteRegister implements RestMockResponse {
 	
 	@Override
 	public ResponseOptions thenReturnJSON(Object object) {
-		try {
-			return registerRoute(new JSON(object));
-		} catch (Exception exception) {
-			throw new RuntimeException(exception);
-		}
+		return registerRoute(new JSON(object));
 	}
 	
 	@Override

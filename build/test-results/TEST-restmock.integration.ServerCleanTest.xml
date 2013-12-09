@@ -1,9 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<testsuite name="restmock.integration.ServerCleanTest" tests="1" failures="0" errors="0" timestamp="2013-12-09T17:21:26" hostname="gsuch" time="0.003">
-  <properties/>
-  <testcase name="routesShouldBeEliminatedOnClean" classname="restmock.integration.ServerCleanTest" time="0.003"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[2013-12-09 15:21:26.558:INFO::jetty-7.1.0.RC0
-2013-12-09 15:21:26.560:INFO::Started SelectChannelConnector@0.0.0.0:9080
-]]></system-err>
-</testsuite>

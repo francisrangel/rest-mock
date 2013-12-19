@@ -4,3 +4,10 @@ target/
 .classpath
 .gradle
 build/
+*.ipr
+*.iws
+**/*.iml
+.idea/
+gradle/
+gradlew
+gradlew.bat

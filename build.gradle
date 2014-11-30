@@ -5,7 +5,7 @@ repositories {
 }
 
 archivesBaseName = 'rest-mock'
-sourceCompatibility = 1.6
+sourceCompatibility = 1.7
 version = '0.1'
 group = 'org.restmock'
 

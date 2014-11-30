@@ -1,6 +1,6 @@
 package restmock.request;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import restmock.RestMockResponse;
 import restmock.response.Html;
@@ -63,22 +63,22 @@ public class RouteRegister implements RestMockResponse {
 	}
 
 	@Override
-	public ResponseOptions thenReturnJSONFromResource(String path) throws FileNotFoundException {
+	public ResponseOptions thenReturnJSONFromResource(String path) throws IOException {
 		return thenReturnJSON(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public ResponseOptions thenReturnXMLFromResource(String path) throws FileNotFoundException {
+	public ResponseOptions thenReturnXMLFromResource(String path) throws IOException {
 		return thenReturnXML(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public ResponseOptions theReturnHTMLFromResource(String path) throws FileNotFoundException {
+	public ResponseOptions theReturnHTMLFromResource(String path) throws IOException {
 		return thenReturnHTML(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public ResponseOptions thenReturnTextFromResource(String path) throws FileNotFoundException {
+	public ResponseOptions thenReturnTextFromResource(String path) throws IOException {
 		return thenReturnText(Resource.dataFromResource(path));
 	}
 	

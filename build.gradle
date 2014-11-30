@@ -16,6 +16,6 @@ dependencies {
    compile 'org.eclipse.jetty.aggregate:jetty-all-server:7.1.0.RC0'
 }
 
-tasks.withType(Compile) {
+tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }

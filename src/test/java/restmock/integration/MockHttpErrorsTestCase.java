@@ -1,7 +1,6 @@
 package restmock.integration;
 
 import static org.junit.Assert.assertEquals;
-import static restmock.utils.Resource.LINE_SEPARATOR;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -29,7 +28,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.GET);
 		
 		assertEquals(HttpServletResponse.SC_BAD_REQUEST, exchange.getResponseStatus());
-		assertEquals("Message for error 500 GET" + LINE_SEPARATOR, exchange.getResponseContent());
+		assertEquals("Message for error 500 GET" + System.lineSeparator(), exchange.getResponseContent());
 	}
 	
 	@Test
@@ -39,7 +38,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.POST);
 		
 		assertEquals(HttpServletResponse.SC_BAD_REQUEST, exchange.getResponseStatus());
-		assertEquals("Message for error 500 POST" + LINE_SEPARATOR, exchange.getResponseContent());
+		assertEquals("Message for error 500 POST" + System.lineSeparator(), exchange.getResponseContent());
 	}
 	
 	@Test
@@ -49,7 +48,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.GET);
 		
 		assertEquals(HttpServletResponse.SC_FORBIDDEN, exchange.getResponseStatus());
-		assertEquals("Forbidden GET" + LINE_SEPARATOR, exchange.getResponseContent());
+		assertEquals("Forbidden GET" + System.lineSeparator(), exchange.getResponseContent());
 	}
 	
 	@Test
@@ -59,7 +58,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		ContentExchange exchange = sendRequestAndWaitForDone(baseUrl + "/test", HttpMethod.POST);
 		
 		assertEquals(HttpServletResponse.SC_FORBIDDEN, exchange.getResponseStatus());
-		assertEquals("Forbidden POST" + LINE_SEPARATOR, exchange.getResponseContent());
+		assertEquals("Forbidden POST" + System.lineSeparator(), exchange.getResponseContent());
 	}
 
 }

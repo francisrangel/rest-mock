@@ -9,8 +9,6 @@ import java.net.URL;
 
 public class Resource {
 	
-	public static final String LINE_SEPARATOR = System.getProperty("line.separator");
-	
 	public static String dataFromResource(String resource) throws IOException {
 		return new String(readAllBytes(get(fullPath(resource))));
 	}

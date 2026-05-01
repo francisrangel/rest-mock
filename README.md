@@ -184,6 +184,46 @@ RestMock.stopServer();
 
 ---
 
+## JUnit extension
+
+If you don't want to manage the server lifecycle yourself, rest-mock provides a JUnit extension that takes care of it for you.
+
+`RestMockExtension` starts the server once before your tests run, cleans all routes after each test so they don't leak into each other, and stops the server when the class is done. You just declare it and write your tests:
+
+```java
+class MyApiTest {
+
+    @RegisterExtension
+    static RestMockExtension server = new RestMockExtension();
+
+    @Test
+    void fetchesUser() throws Exception {
+        RestMock.whenGet("/users/1").thenReturnJSON("{\"name\": \"Bob\"}");
+
+        // your HTTP client call here
+    }
+
+    @Test
+    void createsUser() throws Exception {
+        RestMock.whenPost("/users").thenReturnText("created ${name}");
+
+        // routes from fetchesUser are already gone,
+        // no manual clean() needed
+    }
+}
+```
+
+If you need a different port:
+
+```java
+@RegisterExtension
+static RestMockExtension server = new RestMockExtension(3000);
+```
+
+No base class. No `@BeforeAll`. No forgotten `clean()` calls. The extension handles everything so your tests only contain what matters: the mock setup and the assertion.
+
+---
+
 ## Design principles
 
 - Minimal API surface  

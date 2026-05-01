@@ -9,12 +9,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
+import restmock.request.RouteManager.Match;
 import restmock.response.Response;
 import restmock.response.visitor.ReplacerParametersVisitor;
 
@@ -32,21 +34,22 @@ public class FrontController implements HttpHandler {
 	public void processRequest(HttpExchange exchange, RouteManager routeManager) throws IOException {
 		String method = exchange.getRequestMethod();
 		URI uri = exchange.getRequestURI();
-		Route route = new Route(method, uri.getPath());
-		Response content = routeManager.get(route);
+		Optional<Match> match = routeManager.lookup(HttpMethod.byString(method), uri.getPath());
 
-		if (content == null) {
+		if (match.isEmpty()) {
 			sendStatusOnly(exchange, HttpURLConnection.HTTP_NOT_FOUND);
 			return;
 		}
 
+		Response content = match.get().response;
 		Map<String, String> parameters = parseParameters(exchange, uri);
+		parameters.putAll(match.get().pathCaptures);
 		new ReplacerParametersVisitor(parameters).visit(content);
 
 		addHeadersAndAllowCrossDomainAccess(content, exchange);
 		exchange.getResponseHeaders().set("Content-Type", content.getContentType().getType());
 
-		if (route.getMethod() == HttpMethod.OPTIONS) {
+		if (match.get().route.getMethod() == HttpMethod.OPTIONS) {
 			exchange.getResponseHeaders().set("Allow", allowHeaderFor(uri.getPath(), routeManager));
 		}
 
@@ -80,9 +83,15 @@ public class FrontController implements HttpHandler {
 		appendQueryParameters(parameters, uri.getRawQuery());
 
 		String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
-		if (contentType != null && contentType.toLowerCase().contains("application/x-www-form-urlencoded")) {
+		if (contentType == null) return parameters;
+
+		String lower = contentType.toLowerCase();
+		if (lower.contains("application/x-www-form-urlencoded")) {
 			String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 			appendQueryParameters(parameters, body);
+		} else if (lower.contains("application/json")) {
+			String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+			parameters.putAll(JsonFlattener.flatten(body));
 		}
 
 		return parameters;

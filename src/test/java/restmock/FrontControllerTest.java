@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -15,6 +17,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import restmock.request.FrontController;
+import restmock.request.HttpMethod;
 import restmock.request.Route;
 import restmock.request.RouteManager;
 import restmock.response.TextPlain;
@@ -36,16 +39,17 @@ public class FrontControllerTest {
 	@Test
 	public void frontControllerShouldAskRouteManagerForAResponseToProcessARequest() throws IOException {
 		prepare("GET", "/test");
+		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 
 		new FrontController().processRequest(exchange, routeManager);
 
-		verify(routeManager).get(any(Route.class));
+		verify(routeManager).lookup(HttpMethod.GET, "/test");
 	}
 
 	@Test
 	public void frontControllerShouldReturn404WhenRouteManagerDoesNotKnowARoute() throws IOException {
 		prepare("GET", "/test");
-		when(routeManager.get(any(Route.class))).thenReturn(null);
+		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 
 		new FrontController().processRequest(exchange, routeManager);
 
@@ -55,7 +59,9 @@ public class FrontControllerTest {
 	@Test
 	public void frontControllerShouldReturn200WhenRouteManagerKnowsARoute() throws IOException {
 		prepare("GET", "/test");
-		when(routeManager.get(any(Route.class))).thenReturn(new TextPlain("ok"));
+		Route route = new Route(HttpMethod.GET, "/test");
+		RouteManager.Match match = new RouteManager.Match(route, new TextPlain("ok"), new HashMap<>());
+		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.of(match));
 
 		new FrontController().processRequest(exchange, routeManager);
 

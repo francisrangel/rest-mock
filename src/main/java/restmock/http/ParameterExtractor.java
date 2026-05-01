@@ -1,13 +1,11 @@
 package restmock.http;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import com.sun.net.httpserver.HttpExchange;
 
 import restmock.response.ContentType;
 import restmock.utils.JsonFlattener;
@@ -16,23 +14,26 @@ final class ParameterExtractor {
 
 	private ParameterExtractor() { }
 
-	static Map<String, String> extract(HttpExchange exchange, URI uri) throws IOException {
+	static Map<String, String> extract(URI uri, String body, Map<String, List<String>> headers) {
 		Map<String, String> parameters = new HashMap<>();
 		appendQueryParameters(parameters, uri.getRawQuery());
 
-		String contentType = exchange.getRequestHeaders().getFirst(HttpHeader.CONTENT_TYPE);
+		String contentType = firstHeader(headers, HttpHeader.CONTENT_TYPE);
 		if (contentType == null) return parameters;
 
 		String lower = contentType.toLowerCase();
 		if (lower.contains(ContentType.APPLICATION_FORM_URLENCODED.getType())) {
-			String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 			appendQueryParameters(parameters, body);
 		} else if (lower.contains(ContentType.APPLICATION_JSON.getType())) {
-			String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 			parameters.putAll(JsonFlattener.flatten(body));
 		}
 
 		return parameters;
+	}
+
+	private static String firstHeader(Map<String, List<String>> headers, String name) {
+		List<String> values = headers.get(name);
+		return (values != null && !values.isEmpty()) ? values.get(0) : null;
 	}
 
 	private static void appendQueryParameters(Map<String, String> parameters, String raw) {

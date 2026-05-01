@@ -221,6 +221,48 @@ Delay chains with `withStatus()` and `withHeader()` like everything else. Routes
 
 ---
 
+## Inspecting received requests
+
+rest-mock records every request the server receives. After your test code runs, you can inspect what was actually called through `RestMock.requests()`:
+
+```java
+RestMock.whenPost("/api/users").thenReturnJSON("{\"id\":1}").withStatus(201);
+
+// ... your code makes HTTP calls ...
+
+// How many requests hit /api/users?
+RestMock.requests().countForPath("/api/users");
+
+// What was the last POST body?
+String body = RestMock.requests()
+        .lastForPath("/api/users")
+        .orElseThrow()
+        .body();
+
+// Filter by method and path
+List<ReceivedRequest> posts = RestMock.requests()
+        .forRoute(HttpMethod.POST, "/api/users");
+
+// Did anything hit this endpoint?
+RestMock.requests().forPath("/health").isEmpty();
+```
+
+Each `ReceivedRequest` captures the method, path, query string, headers, body, and timestamp. The `RequestLog` provides common filters out of the box:
+
+- `all()` — every request in arrival order
+- `forPath(path)` — literal path match
+- `forMethod(method)` — filter by HTTP verb
+- `forRoute(method, path)` — both at once
+- `countForPath(path)`, `countForRoute(method, path)` — counts
+- `last()`, `lastForPath(path)` — most recent
+- `isEmpty()` — quick check
+
+For anything more specific, `all()` gives you the raw list to filter however you want.
+
+The request log is cleared automatically when you call `RestMock.clean()` or when the `RestMockExtension` cleans between tests.
+
+---
+
 ## Install
 
 ```xml
@@ -308,10 +350,9 @@ If a feature adds complexity, it doesn’t get added.
 
 Use another tool if you need:
 
-- request verification  
-- call counting  
-- complex matching rules  
-- full API simulation  
+- complex matching rules (regex on headers, body matchers)  
+- full API simulation (stateful conversations, proxying)  
+- record and replay from live traffic  
 
 This library is intentionally not that.
 

@@ -5,7 +5,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -17,6 +19,8 @@ import java.util.stream.Collectors;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
+import restmock.ReceivedRequest;
+import restmock.RequestLog;
 import restmock.routing.RouteManager;
 import restmock.routing.RouteManager.Match;
 import restmock.response.Response;
@@ -30,31 +34,46 @@ public class FrontController implements HttpHandler {
 		.collect(Collectors.joining(", "));
 
 	private final RouteManager routeManager;
+	private final RequestLog requestLog;
 
-	public FrontController(RouteManager routeManager) {
+	public FrontController(RouteManager routeManager, RequestLog requestLog) {
 		this.routeManager = routeManager;
+		this.requestLog = requestLog;
 	}
 
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		try {
-			processRequest(exchange, routeManager);
+			processRequest(exchange);
 		} finally {
 			exchange.close();
 		}
 	}
 
-	public void processRequest(HttpExchange exchange, RouteManager routeManager) throws IOException {
+	public void processRequest(HttpExchange exchange) throws IOException {
 		String method = exchange.getRequestMethod();
 		URI uri = exchange.getRequestURI();
-		Optional<Match> match = routeManager.lookup(HttpMethod.byString(method), uri.getPath());
+		HttpMethod httpMethod = HttpMethod.byString(method);
+		String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+
+		requestLog.add(new ReceivedRequest(
+			httpMethod,
+			uri.getPath(),
+			uri.getRawQuery(),
+			new HashMap<>(exchange.getRequestHeaders()),
+			requestBody,
+			Instant.now()
+		));
+
+		Optional<Match> match = routeManager.lookup(httpMethod, uri.getPath());
 
 		if (match.isEmpty()) {
 			sendStatusOnly(exchange, HttpURLConnection.HTTP_NOT_FOUND);
 			return;
 		}
 
-		Response content = match.get().response();
+		Match resolved = match.get();
+		Response content = resolved.response();
 
 		if (content.getDelayMillis() > 0) {
 			try {
@@ -64,20 +83,20 @@ public class FrontController implements HttpHandler {
 			}
 		}
 
-		Map<String, String> parameters = ParameterExtractor.extract(exchange, uri);
-		parameters.putAll(match.get().pathCaptures());
+		Map<String, String> parameters = ParameterExtractor.extract(uri, requestBody, exchange.getRequestHeaders());
+		parameters.putAll(resolved.pathCaptures());
 		String responseBody = replaceParameters(content.getContent(), parameters);
 
 		addHeadersAndAllowCrossDomainAccess(content, exchange);
 		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, content.getContentType().getType());
 
-		if (match.get().route().getMethod() == HttpMethod.OPTIONS) {
+		if (resolved.route().getMethod() == HttpMethod.OPTIONS) {
 			exchange.getResponseHeaders().set(HttpHeader.ALLOW, allowHeaderFor(uri.getPath(), routeManager));
 		}
 
 		byte[] body = (responseBody + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
 
-		if (match.get().route().getMethod() == HttpMethod.HEAD) {
+		if (resolved.route().getMethod() == HttpMethod.HEAD) {
 			exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
 			exchange.sendResponseHeaders(content.getResponseStatus(), -1);
 			return;

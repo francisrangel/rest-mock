@@ -12,10 +12,12 @@ import restmock.routing.RouteManager;
 public class RestMockServer {
 
 	private final RouteManager routeManager;
+	private final RequestLog requestLog;
 	private HttpServer server;
 
-	protected RestMockServer(RouteManager routeManager) {
+	protected RestMockServer(RouteManager routeManager, RequestLog requestLog) {
 		this.routeManager = routeManager;
+		this.requestLog = requestLog;
 	}
 
 	public void start(int port) {
@@ -27,7 +29,7 @@ public class RestMockServer {
 			throw new UncheckedIOException("Could not start the server!", e);
 		}
 
-		server.createContext("/", new FrontController(routeManager));
+		server.createContext("/", new FrontController(routeManager, requestLog));
 		server.setExecutor(null);
 		server.start();
 	}
@@ -38,6 +40,7 @@ public class RestMockServer {
 		server.stop(0);
 		server = null;
 		routeManager.clean();
+		requestLog.clear();
 	}
 
 }

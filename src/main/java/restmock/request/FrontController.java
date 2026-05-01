@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -44,7 +46,18 @@ public class FrontController implements HttpHandler {
 		addHeadersAndAllowCrossDomainAccess(content, exchange);
 		exchange.getResponseHeaders().set("Content-Type", content.getContentType().getType());
 
+		if (route.getMethod() == HttpMethod.OPTIONS) {
+			exchange.getResponseHeaders().set("Allow", allowHeaderFor(uri.getPath(), routeManager));
+		}
+
 		byte[] body = (content.getContent() + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
+
+		if ("HEAD".equalsIgnoreCase(method)) {
+			exchange.getResponseHeaders().set("Content-Length", Integer.toString(body.length));
+			exchange.sendResponseHeaders(content.getResponseStatus(), -1);
+			return;
+		}
+
 		exchange.sendResponseHeaders(content.getResponseStatus(), body.length);
 
 		try (OutputStream os = exchange.getResponseBody()) {
@@ -54,6 +67,12 @@ public class FrontController implements HttpHandler {
 
 	private void sendStatusOnly(HttpExchange exchange, int status) throws IOException {
 		exchange.sendResponseHeaders(status, -1);
+	}
+
+	private String allowHeaderFor(String path, RouteManager routeManager) {
+		Set<HttpMethod> methods = routeManager.methodsFor(path);
+		methods.add(HttpMethod.OPTIONS);
+		return methods.stream().map(Enum::name).collect(Collectors.joining(", "));
 	}
 
 	private Map<String, String> parseParameters(HttpExchange exchange, URI uri) throws IOException {
@@ -84,7 +103,7 @@ public class FrontController implements HttpHandler {
 
 	private void addHeadersAndAllowCrossDomainAccess(Response content, HttpExchange exchange) {
 		exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-		exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+		exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS");
 		exchange.getResponseHeaders().set("Access-Control-Max-Age", "360");
 		exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "x-requested-with");
 		exchange.getResponseHeaders().set("Access-Control-Allow-Credentials", "true");

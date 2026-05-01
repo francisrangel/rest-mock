@@ -19,6 +19,15 @@ public class HttpMethodTest {
 		
 		assertEquals(HttpMethod.DELETE, HttpMethod.byString("delete"));
 		assertEquals(HttpMethod.DELETE, HttpMethod.byString("DELETE"));
+
+		assertEquals(HttpMethod.PATCH, HttpMethod.byString("patch"));
+		assertEquals(HttpMethod.PATCH, HttpMethod.byString("PATCH"));
+
+		assertEquals(HttpMethod.HEAD, HttpMethod.byString("head"));
+		assertEquals(HttpMethod.HEAD, HttpMethod.byString("HEAD"));
+
+		assertEquals(HttpMethod.OPTIONS, HttpMethod.byString("options"));
+		assertEquals(HttpMethod.OPTIONS, HttpMethod.byString("OPTIONS"));
 	}
 	
 	@Test(expected = IllegalArgumentException.class)

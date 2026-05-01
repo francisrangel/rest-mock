@@ -2,7 +2,7 @@ package restmock.request;
 
 public enum HttpMethod {
 	
-	GET, POST, PUT, DELETE;
+	GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS;
 	
 	public static HttpMethod byString(String method) {
 		for (HttpMethod value : HttpMethod.values())

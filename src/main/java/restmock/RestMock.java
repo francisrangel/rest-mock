@@ -17,7 +17,27 @@ public class RestMock {
 	public static RestMockResponse whenPost(String uri) {
 		return registerRoute(HttpMethod.POST, uri);
 	}
-	
+
+	public static RestMockResponse whenPut(String uri) {
+		return registerRoute(HttpMethod.PUT, uri);
+	}
+
+	public static RestMockResponse whenDelete(String uri) {
+		return registerRoute(HttpMethod.DELETE, uri);
+	}
+
+	public static RestMockResponse whenPatch(String uri) {
+		return registerRoute(HttpMethod.PATCH, uri);
+	}
+
+	public static RestMockResponse whenHead(String uri) {
+		return registerRoute(HttpMethod.HEAD, uri);
+	}
+
+	public static RestMockResponse whenOptions(String uri) {
+		return registerRoute(HttpMethod.OPTIONS, uri);
+	}
+
 	private static RestMockResponse registerRoute(HttpMethod method, String uri) {
 		return new RouteRegister(new Route(method, uri));
 	}

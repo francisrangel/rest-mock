@@ -50,10 +50,13 @@ public class IntegrationTestBase {
 		HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create(url));
 
 		switch (method) {
-			case GET:    builder.GET(); break;
-			case POST:   builder.POST(HttpRequest.BodyPublishers.noBody()); break;
-			case PUT:    builder.PUT(HttpRequest.BodyPublishers.noBody()); break;
-			case DELETE: builder.DELETE(); break;
+			case GET:     builder.GET(); break;
+			case POST:    builder.POST(HttpRequest.BodyPublishers.noBody()); break;
+			case PUT:     builder.PUT(HttpRequest.BodyPublishers.noBody()); break;
+			case DELETE:  builder.DELETE(); break;
+			case PATCH:   builder.method("PATCH", HttpRequest.BodyPublishers.noBody()); break;
+			case HEAD:    builder.method("HEAD", HttpRequest.BodyPublishers.noBody()); break;
+			case OPTIONS: builder.method("OPTIONS", HttpRequest.BodyPublishers.noBody()); break;
 		}
 
 		return client.send(builder.build(), HttpResponse.BodyHandlers.ofString());

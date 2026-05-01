@@ -1,17 +1,18 @@
 package restmock;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.net.URI;
 
 import org.junit.Test;
-import org.mockito.Mockito;
+
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpExchange;
 
 import restmock.request.FrontController;
 import restmock.request.Route;
@@ -19,45 +20,47 @@ import restmock.request.RouteManager;
 import restmock.response.TextPlain;
 
 public class FrontControllerTest {
-	
-	private HttpServletRequest request = mock(HttpServletRequest.class);
-	private HttpServletResponse response = mock(HttpServletResponse.class);
-	private RouteManager routeManager = mock(RouteManager.class);
-	
-	@Test
-	public void frontControllerShouldAsksRouteManagerAResponseToProcessARequest() throws ServletException, IOException {
-		when(request.getMethod()).thenReturn("GET");
-		
-		FrontController controller = new FrontController();
-		controller.processRequest(request, response, routeManager);
-		
-		verify(routeManager, times(1)).get(any(Route.class));
+
+	private final HttpExchange exchange = mock(HttpExchange.class);
+	private final RouteManager routeManager = mock(RouteManager.class);
+	private final Headers headers = new Headers();
+
+	private void prepare(String method, String uri) {
+		when(exchange.getRequestMethod()).thenReturn(method);
+		when(exchange.getRequestURI()).thenReturn(URI.create(uri));
+		when(exchange.getRequestHeaders()).thenReturn(headers);
+		when(exchange.getResponseHeaders()).thenReturn(new Headers());
+		when(exchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
 	}
-	
+
 	@Test
-	public void frontControllerShouldReturn404WhenRouteManagerDontKnownARoute() throws ServletException, IOException {
-		when(request.getMethod()).thenReturn("GET");
+	public void frontControllerShouldAskRouteManagerForAResponseToProcessARequest() throws IOException {
+		prepare("GET", "/test");
+
+		new FrontController().processRequest(exchange, routeManager);
+
+		verify(routeManager).get(any(Route.class));
+	}
+
+	@Test
+	public void frontControllerShouldReturn404WhenRouteManagerDoesNotKnowARoute() throws IOException {
+		prepare("GET", "/test");
 		when(routeManager.get(any(Route.class))).thenReturn(null);
-		
-		FrontController controller = new FrontController();
-		controller.processRequest(request, response, routeManager);
-		
-		verify(response).setStatus(404);
+
+		new FrontController().processRequest(exchange, routeManager);
+
+		verify(exchange).sendResponseHeaders(404, -1);
 	}
-	
+
 	@Test
-	public void frontControllerShouldReturn200WhenRouteManagerKnownARoute() throws ServletException, IOException {
-		PrintWriter printWriter = mock(PrintWriter.class);
-		doNothing().when(printWriter).println(Mockito.anyString());
-		
-		when(request.getMethod()).thenReturn("GET");
+	public void frontControllerShouldReturn200WhenRouteManagerKnowsARoute() throws IOException {
+		prepare("GET", "/test");
 		when(routeManager.get(any(Route.class))).thenReturn(new TextPlain("ok"));
-		when(response.getWriter()).thenReturn(printWriter);
-		
-		FrontController controller = new FrontController();
-		controller.processRequest(request, response, routeManager);
-		
-		verify(response).setStatus(200);
+
+		new FrontController().processRequest(exchange, routeManager);
+
+		long expectedLength = ("ok" + System.lineSeparator()).getBytes().length;
+		verify(exchange).sendResponseHeaders(200, expectedLength);
 	}
 
 }

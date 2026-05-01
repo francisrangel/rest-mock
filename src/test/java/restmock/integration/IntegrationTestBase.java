@@ -2,11 +2,12 @@ package restmock.integration;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 
-import org.eclipse.jetty.client.ContentExchange;
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.HttpExchange;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -16,47 +17,46 @@ import restmock.request.HttpMethod;
 import restmock.utils.StringUtils;
 
 public class IntegrationTestBase {
-	
+
 	protected final String baseUrl = "http://localhost:9080";
 
-	protected static HttpClient client = new HttpClient();
-	
+	protected static HttpClient client;
+
 	@BeforeClass
-	public static void setUp() throws Exception {
-		client.start();
-		client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
-		
+	public static void setUp() {
+		client = HttpClient.newBuilder()
+			.connectTimeout(Duration.ofSeconds(5))
+			.build();
+
 		RestMock.startServer();
 	}
 
 	@AfterClass
-	public static void cleanUp() throws Exception {
-		client.stop();
+	public static void cleanUp() {
 		RestMock.stopServer();
 	}
-	
+
 	@After
 	public void cleanUpRoutes() {
 		RestMock.clean();
 	}
 
 	protected void requestMethodWithResultString(String url, String expectedBody, HttpMethod method) throws Exception {
-		ContentExchange exchange = sendRequestAndWaitForDone(url, method);
-		assertEquals(StringUtils.singleLine(expectedBody), StringUtils.singleLine(exchange.getResponseContent()));
+		HttpResponse<String> response = sendRequest(url, method);
+		assertEquals(StringUtils.singleLine(expectedBody), StringUtils.singleLine(response.body()));
 	}
 
-	protected ContentExchange sendRequestAndWaitForDone(String url, HttpMethod method) throws IOException, InterruptedException {
-		ContentExchange exchange = new ContentExchange(false);
-		exchange.setURL(url);
-		exchange.setMethod(method.name());
+	protected HttpResponse<String> sendRequest(String url, HttpMethod method) throws Exception {
+		HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create(url));
 
-		client.send(exchange);
+		switch (method) {
+			case GET:    builder.GET(); break;
+			case POST:   builder.POST(HttpRequest.BodyPublishers.noBody()); break;
+			case PUT:    builder.PUT(HttpRequest.BodyPublishers.noBody()); break;
+			case DELETE: builder.DELETE(); break;
+		}
 
-		int exchangeState = exchange.waitForDone();
-
-		assertEquals(HttpExchange.STATUS_COMPLETED, exchangeState);
-		
-		return exchange;
+		return client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
 	}
 
 }

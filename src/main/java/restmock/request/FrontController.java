@@ -1,56 +1,97 @@
 package restmock.request;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 
 import restmock.response.Response;
 import restmock.response.visitor.ReplacerParametersVisitor;
 
-public class FrontController extends HttpServlet {
+public class FrontController implements HttpHandler {
 
-	private static final long serialVersionUID = -8762086840436163410L;
-	
-	public void processRequest(HttpServletRequest request, HttpServletResponse response, RouteManager routeManager) throws ServletException, IOException {
-		Route route = new Route(request.getMethod(), request.getRequestURI());
+	@Override
+	public void handle(HttpExchange exchange) throws IOException {
+		try {
+			processRequest(exchange, RouteManager.getInstance());
+		} finally {
+			exchange.close();
+		}
+	}
+
+	public void processRequest(HttpExchange exchange, RouteManager routeManager) throws IOException {
+		String method = exchange.getRequestMethod();
+		URI uri = exchange.getRequestURI();
+		Route route = new Route(method, uri.getPath());
 		Response content = routeManager.get(route);
-		
+
 		if (content == null) {
-			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			sendStatusOnly(exchange, HttpURLConnection.HTTP_NOT_FOUND);
 			return;
 		}
-		
-		new ReplacerParametersVisitor(request).visit(content);
-		
-		response.setStatus(content.getResponseStatus());
-		response.setContentType(content.getContentType().getType());
-		response.getWriter().println(content.getContent());
-		
-		addHeaderAndallowCrossDomainAccess(content, response);
-	}
-	
-	private void addHeaderAndallowCrossDomainAccess(Response content, HttpServletResponse response) {
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-		response.setHeader("Access-Control-Max-Age", "360");
-		response.setHeader("Access-Control-Allow-Headers", "x-requested-with");
-		response.setHeader("Access-Control-Allow-Credentials", "true");
-		
-		for (Entry<String, String> header : content.getHeader().entrySet()) {
-			response.setHeader(header.getKey(), header.getValue());
+
+		Map<String, String> parameters = parseParameters(exchange, uri);
+		new ReplacerParametersVisitor(parameters).visit(content);
+
+		addHeadersAndAllowCrossDomainAccess(content, exchange);
+		exchange.getResponseHeaders().set("Content-Type", content.getContentType().getType());
+
+		byte[] body = (content.getContent() + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
+		exchange.sendResponseHeaders(content.getResponseStatus(), body.length);
+
+		try (OutputStream os = exchange.getResponseBody()) {
+			os.write(body);
 		}
 	}
 
-	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		processRequest(request, response, RouteManager.getInstance());
+	private void sendStatusOnly(HttpExchange exchange, int status) throws IOException {
+		exchange.sendResponseHeaders(status, -1);
 	}
 
-	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		processRequest(request, response, RouteManager.getInstance());
+	private Map<String, String> parseParameters(HttpExchange exchange, URI uri) throws IOException {
+		Map<String, String> parameters = new HashMap<>();
+		appendQueryParameters(parameters, uri.getRawQuery());
+
+		String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
+		if (contentType != null && contentType.toLowerCase().contains("application/x-www-form-urlencoded")) {
+			String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+			appendQueryParameters(parameters, body);
+		}
+
+		return parameters;
+	}
+
+	private void appendQueryParameters(Map<String, String> parameters, String raw) {
+		if (raw == null || raw.isEmpty()) return;
+
+		for (String pair : raw.split("&")) {
+			int eq = pair.indexOf('=');
+			if (eq < 0) continue;
+
+			String key = URLDecoder.decode(pair.substring(0, eq), StandardCharsets.UTF_8);
+			String value = URLDecoder.decode(pair.substring(eq + 1), StandardCharsets.UTF_8);
+			parameters.put(key, value);
+		}
+	}
+
+	private void addHeadersAndAllowCrossDomainAccess(Response content, HttpExchange exchange) {
+		exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+		exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+		exchange.getResponseHeaders().set("Access-Control-Max-Age", "360");
+		exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "x-requested-with");
+		exchange.getResponseHeaders().set("Access-Control-Allow-Credentials", "true");
+
+		for (Entry<String, String> header : content.getHeader().entrySet()) {
+			exchange.getResponseHeaders().set(header.getKey(), header.getValue());
+		}
 	}
 
 }

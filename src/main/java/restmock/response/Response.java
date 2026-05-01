@@ -1,9 +1,8 @@
 package restmock.response;
 
+import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
 
 import restmock.response.visitor.Visitable;
 import restmock.response.visitor.Visitor;
@@ -30,7 +29,7 @@ public abstract class Response implements Visitable<Response> {
 	}
 
 	public Integer getResponseStatus() {
-		return responseStatus != null ? responseStatus : HttpServletResponse.SC_OK;
+		return responseStatus != null ? responseStatus : HttpURLConnection.HTTP_OK;
 	}
 
 	public void setResponseStatus(Integer responseStatus) {

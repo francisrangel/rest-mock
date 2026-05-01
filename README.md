@@ -64,7 +64,7 @@ RestMock.whenGet("/hugeHTML/").thenReturnHtml("my-super-index.html");
 Want to test a Forbidden error request?
 ``` java
 RestMock.whenGet("/developer/")
-	.thenReturnErrorCodeWithMessage(HttpServletResponse.SC_FORBIDDEN, "Forbidden GET");
+	.thenReturnErrorCodeWithMessage(HttpURLConnection.HTTP_FORBIDDEN, "Forbidden GET");
 ```
 	
 When you send a GET request do this address you get:

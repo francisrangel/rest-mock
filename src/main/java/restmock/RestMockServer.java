@@ -1,57 +1,44 @@
 package restmock;
 
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+
+import com.sun.net.httpserver.HttpServer;
 
 import restmock.request.FrontController;
 import restmock.request.RouteManager;
 
 public class RestMockServer {
 
-	private Server server;
-	private boolean started;
+	private HttpServer server;
 
 	protected RestMockServer() {
 	}
 
 	public void start(int port) {
-		if (started) return;
-		initContext(port);
+		if (server != null) return;
 
 		try {
-			server.start();
-		} catch (Exception e) {
+			server = HttpServer.create(new InetSocketAddress(port), 0);
+		} catch (IOException e) {
 			throw new RuntimeException("Could not start the server!", e);
 		}
-		
-		started = true;
-	}
 
-	private void initContext(int port) {
-		server = new Server(port);
-		ServletContextHandler context = new ServletContextHandler();
-
-		context.setContextPath("/");
-		context.setResourceBase(".");
-		context.setClassLoader(Thread.currentThread().getContextClassLoader());
-		context.addServlet(FrontController.class, "/*");
-
-		server.setHandler(context);
+		server.createContext("/", new FrontController());
+		server.setExecutor(null);
+		server.start();
 	}
 
 	public void stop() {
-		try {
-			server.stop();
-			clean();
-		} catch (Exception e) {
-			throw new RuntimeException("Could not stop the server!", e);
-		}
-		
-		started = false;
+		if (server == null) return;
+
+		server.stop(0);
+		server = null;
+		clean();
 	}
 
 	public void clean() {
-		RouteManager.getInstance().clean();		
+		RouteManager.getInstance().clean();
 	}
 
 }

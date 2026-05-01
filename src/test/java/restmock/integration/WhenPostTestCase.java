@@ -2,17 +2,18 @@ package restmock.integration;
 
 import static org.junit.Assert.assertEquals;
 
-import org.eclipse.jetty.client.ContentExchange;
-import org.eclipse.jetty.client.HttpExchange;
-import org.eclipse.jetty.io.ByteArrayBuffer;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 import org.junit.Test;
 
 import restmock.RestMock;
 import restmock.request.HttpMethod;
 
 public class WhenPostTestCase extends IntegrationTestBase {
-	
-	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+
+	private static final String LINE_SEPARATOR = System.lineSeparator();
 
 	@Test
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
@@ -39,20 +40,17 @@ public class WhenPostTestCase extends IntegrationTestBase {
 		requestMethodWithResultString(baseUrl + "/test", expectedBody, HttpMethod.POST);
 	}
 
-	private void requestPostWithParameters(String url, String requestParamtersString, String resultString) throws Exception {
-		ContentExchange exchange = new ContentExchange();
-		exchange.setURL(url);
-		exchange.setMethod(HttpMethod.POST.name());
+	private void requestPostWithParameters(String url, String requestParametersString, String resultString) throws Exception {
+		HttpRequest request = HttpRequest.newBuilder()
+			.uri(URI.create(url))
+			.header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+			.POST(HttpRequest.BodyPublishers.ofString(requestParametersString))
+			.build();
 
-		exchange.setRequestContent(new ByteArrayBuffer(requestParamtersString));
-		exchange.setRequestContentType("application/x-www-form-urlencoded; charset=UTF-8");
+		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-		client.send(exchange);
-
-		int exchangeState = exchange.waitForDone();
-
-		assertEquals(HttpExchange.STATUS_COMPLETED, exchangeState);
-		assertEquals(resultString + LINE_SEPARATOR, exchange.getResponseContent());
+		assertEquals(200, response.statusCode());
+		assertEquals(resultString + LINE_SEPARATOR, response.body());
 	}
 
 }

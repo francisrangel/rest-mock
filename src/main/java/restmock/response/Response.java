@@ -5,12 +5,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import restmock.response.visitor.Visitable;
-import restmock.response.visitor.Visitor;
+public abstract class Response {
 
-public abstract class Response implements Visitable<Response> {
-
-	private String content;
+	private final String content;
 	private final Map<String, String> header;
 	private int responseStatus = HttpURLConnection.HTTP_OK;
 
@@ -23,10 +20,6 @@ public abstract class Response implements Visitable<Response> {
 
 	public String getContent() {
 		return content;
-	}
-
-	public void setContent(String content) {
-		this.content = content;
 	}
 
 	public int getResponseStatus() {
@@ -48,10 +41,6 @@ public abstract class Response implements Visitable<Response> {
 	@Override
 	public String toString() {
 		return content;
-	}
-
-	public void accept(Visitor<Response> visitor) {
-		visitor.visit(this);
 	}
 
 }

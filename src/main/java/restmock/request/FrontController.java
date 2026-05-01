@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -18,9 +20,10 @@ import com.sun.net.httpserver.HttpHandler;
 
 import restmock.request.RouteManager.Match;
 import restmock.response.Response;
-import restmock.response.visitor.ReplacerParametersVisitor;
 
 public class FrontController implements HttpHandler {
+
+	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
 
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
@@ -44,7 +47,7 @@ public class FrontController implements HttpHandler {
 		Response content = match.get().response();
 		Map<String, String> parameters = parseParameters(exchange, uri);
 		parameters.putAll(match.get().pathCaptures());
-		new ReplacerParametersVisitor(parameters).visit(content);
+		String responseBody = replaceParameters(content.getContent(), parameters);
 
 		addHeadersAndAllowCrossDomainAccess(content, exchange);
 		exchange.getResponseHeaders().set("Content-Type", content.getContentType().getType());
@@ -53,7 +56,7 @@ public class FrontController implements HttpHandler {
 			exchange.getResponseHeaders().set("Allow", allowHeaderFor(uri.getPath(), routeManager));
 		}
 
-		byte[] body = (content.getContent() + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
+		byte[] body = (responseBody + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
 
 		if ("HEAD".equalsIgnoreCase(method)) {
 			exchange.getResponseHeaders().set("Content-Length", Integer.toString(body.length));
@@ -76,6 +79,18 @@ public class FrontController implements HttpHandler {
 		Set<HttpMethod> methods = routeManager.methodsFor(path);
 		methods.add(HttpMethod.OPTIONS);
 		return methods.stream().map(Enum::name).collect(Collectors.joining(", "));
+	}
+
+	private String replaceParameters(String template, Map<String, String> parameters) {
+		Matcher matcher = PARAMETER_PATTERN.matcher(template);
+		StringBuilder sb = new StringBuilder();
+		while (matcher.find()) {
+			String key = matcher.group(1);
+			String replacement = parameters.getOrDefault(key, matcher.group(0));
+			matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+		}
+		matcher.appendTail(sb);
+		return sb.toString();
 	}
 
 	private Map<String, String> parseParameters(HttpExchange exchange, URI uri) throws IOException {

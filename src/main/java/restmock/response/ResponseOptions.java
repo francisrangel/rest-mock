@@ -1,18 +1,14 @@
 package restmock.response;
 
-import restmock.request.Route;
-import restmock.request.RouteManager;
-
 public class ResponseOptions {
-	
-	private final Route route;
 
-	public ResponseOptions(Route route) {
-		this.route = route;
+	private final Response response;
+
+	public ResponseOptions(Response response) {
+		this.response = response;
 	}
-	
+
 	public ResponseOptions withHeader(String property, String value) {
-		Response response = RouteManager.getInstance().get(route);
 		response.addHeader(property, value);
 		return this;
 	}

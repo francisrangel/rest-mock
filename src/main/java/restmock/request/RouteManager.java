@@ -58,20 +58,10 @@ public class RouteManager {
 		routes = new LinkedHashMap<>();
 	}
 
-	public static final class Match {
-		private final Route route;
-		private final Response response;
-		private final Map<String, String> pathCaptures;
-
-		public Match(Route route, Response response, Map<String, String> pathCaptures) {
-			this.route = route;
-			this.response = response;
-			this.pathCaptures = Collections.unmodifiableMap(pathCaptures);
+	public record Match(Route route, Response response, Map<String, String> pathCaptures) {
+		public Match {
+			pathCaptures = Collections.unmodifiableMap(pathCaptures);
 		}
-
-		public Route route() { return route; }
-		public Response response() { return response; }
-		public Map<String, String> pathCaptures() { return pathCaptures; }
 	}
 
 }

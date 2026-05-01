@@ -18,7 +18,7 @@ public class RouteRegister implements RestMockResponse {
 	public RouteRegister(Route route) {
 		this.route = route;
 	}
-	
+
 	@Override
 	public ResponseOptions thenReturnXML(Object object) {
 		return registerRoute(new XML(object));
@@ -38,28 +38,28 @@ public class RouteRegister implements RestMockResponse {
 	public ResponseOptions thenReturnText(String value) {
 		return registerRoute(new TextPlain(value));
 	}
-	
+
 	@Override
 	public ResponseOptions thenReturnJSON(String value) {
 		return registerRoute(new JSON(value));
 	}
-	
+
 	@Override
 	public ResponseOptions thenReturnJSON(Object object) {
 		return registerRoute(new JSON(object));
 	}
-	
+
 	@Override
 	public ResponseOptions thenReturnErrorCodeWithMessage(int errorCode, String message) {
 		Response response = new TextPlain(message);
 		response.setResponseStatus(errorCode);
-		
+
 		return registerRoute(response);
 	}
-	
+
 	private ResponseOptions registerRoute(Response body) {
 		RouteManager.getInstance().registerRoute(route, body);
-		return new ResponseOptions(route);
+		return new ResponseOptions(body);
 	}
 
 	@Override
@@ -81,5 +81,5 @@ public class RouteRegister implements RestMockResponse {
 	public ResponseOptions thenReturnTextFromResource(String path) throws IOException {
 		return thenReturnText(Resource.dataFromResource(path));
 	}
-	
+
 }

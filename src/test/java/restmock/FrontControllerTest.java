@@ -16,10 +16,10 @@ import org.junit.Test;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
-import restmock.request.FrontController;
-import restmock.request.HttpMethod;
-import restmock.request.Route;
-import restmock.request.RouteManager;
+import restmock.http.FrontController;
+import restmock.http.HttpMethod;
+import restmock.routing.Route;
+import restmock.routing.RouteManager;
 import restmock.response.TextPlain;
 
 public class FrontControllerTest {
@@ -38,7 +38,7 @@ public class FrontControllerTest {
 
 	@Test
 	public void frontControllerShouldAskRouteManagerForAResponseToProcessARequest() throws IOException {
-		prepare("GET", "/test");
+		prepare(HttpMethod.GET.name(), "/test");
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 
 		new FrontController().processRequest(exchange, routeManager);
@@ -48,7 +48,7 @@ public class FrontControllerTest {
 
 	@Test
 	public void frontControllerShouldReturn404WhenRouteManagerDoesNotKnowARoute() throws IOException {
-		prepare("GET", "/test");
+		prepare(HttpMethod.GET.name(), "/test");
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 
 		new FrontController().processRequest(exchange, routeManager);
@@ -58,7 +58,7 @@ public class FrontControllerTest {
 
 	@Test
 	public void frontControllerShouldReturn200WhenRouteManagerKnowsARoute() throws IOException {
-		prepare("GET", "/test");
+		prepare(HttpMethod.GET.name(), "/test");
 		Route route = new Route(HttpMethod.GET, "/test");
 		RouteManager.Match match = new RouteManager.Match(route, new TextPlain("ok"), new HashMap<>());
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.of(match));

@@ -3,12 +3,15 @@ package restmock.integration;
 import static org.junit.Assert.assertEquals;
 
 import java.net.http.HttpResponse;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
 import restmock.RestMock;
-import restmock.request.HttpMethod;
+import restmock.http.HttpHeader;
+import restmock.http.HttpMethod;
 
 public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 
@@ -49,9 +52,9 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 
 		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.OPTIONS);
 
-		String allow = response.headers().firstValue("Allow").orElse("");
+		String allow = response.headers().firstValue(HttpHeader.ALLOW).orElse("");
 		Set<String> methods = Set.of(allow.split(",\\s*"));
-		assertEquals(Set.of("GET", "POST", "OPTIONS"), methods);
+		assertEquals(Set.of(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.OPTIONS.name()), methods);
 	}
 
 	@Test
@@ -64,7 +67,7 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 		assertEquals("", response.body());
 
 		String expectedLength = Integer.toString(("Head succeed" + System.lineSeparator()).getBytes().length);
-		assertEquals(expectedLength, response.headers().firstValue("Content-Length").orElse(""));
+		assertEquals(expectedLength, response.headers().firstValue(HttpHeader.CONTENT_LENGTH).orElse(""));
 	}
 
 	@Test
@@ -73,9 +76,13 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 
 		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.GET);
 
+		String allMethods = Arrays.stream(HttpMethod.values())
+			.map(Enum::name)
+			.collect(Collectors.joining(", "));
+
 		assertEquals(
-			"GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS",
-			response.headers().firstValue("Access-Control-Allow-Methods").orElse(""));
+			allMethods,
+			response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS).orElse(""));
 	}
 
 }

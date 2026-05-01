@@ -9,6 +9,8 @@ import restmock.response.Response;
 import restmock.response.ResponseOptions;
 import restmock.response.TextPlain;
 import restmock.response.XML;
+import restmock.routing.Route;
+import restmock.routing.RouteManager;
 import restmock.utils.Resource;
 
 public class RouteRegister implements RestMockResponse {

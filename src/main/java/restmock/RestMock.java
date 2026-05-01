@@ -1,7 +1,7 @@
 package restmock;
 
-import restmock.request.HttpMethod;
-import restmock.request.Route;
+import restmock.http.HttpMethod;
+import restmock.routing.Route;
 import restmock.request.RouteRegister;
 
 public final class RestMock {

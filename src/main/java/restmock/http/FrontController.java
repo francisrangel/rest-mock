@@ -1,12 +1,11 @@
-package restmock.request;
+package restmock.http;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -18,12 +17,17 @@ import java.util.stream.Collectors;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import restmock.request.RouteManager.Match;
+import restmock.routing.RouteManager;
+import restmock.routing.RouteManager.Match;
 import restmock.response.Response;
 
 public class FrontController implements HttpHandler {
 
 	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+
+	private static final String ALL_METHODS = Arrays.stream(HttpMethod.values())
+		.map(Enum::name)
+		.collect(Collectors.joining(", "));
 
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
@@ -45,21 +49,21 @@ public class FrontController implements HttpHandler {
 		}
 
 		Response content = match.get().response();
-		Map<String, String> parameters = parseParameters(exchange, uri);
+		Map<String, String> parameters = ParameterExtractor.extract(exchange, uri);
 		parameters.putAll(match.get().pathCaptures());
 		String responseBody = replaceParameters(content.getContent(), parameters);
 
 		addHeadersAndAllowCrossDomainAccess(content, exchange);
-		exchange.getResponseHeaders().set("Content-Type", content.getContentType().getType());
+		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, content.getContentType().getType());
 
 		if (match.get().route().getMethod() == HttpMethod.OPTIONS) {
-			exchange.getResponseHeaders().set("Allow", allowHeaderFor(uri.getPath(), routeManager));
+			exchange.getResponseHeaders().set(HttpHeader.ALLOW, allowHeaderFor(uri.getPath(), routeManager));
 		}
 
 		byte[] body = (responseBody + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
 
-		if ("HEAD".equalsIgnoreCase(method)) {
-			exchange.getResponseHeaders().set("Content-Length", Integer.toString(body.length));
+		if (match.get().route().getMethod() == HttpMethod.HEAD) {
+			exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
 			exchange.sendResponseHeaders(content.getResponseStatus(), -1);
 			return;
 		}
@@ -93,44 +97,12 @@ public class FrontController implements HttpHandler {
 		return sb.toString();
 	}
 
-	private Map<String, String> parseParameters(HttpExchange exchange, URI uri) throws IOException {
-		Map<String, String> parameters = new HashMap<>();
-		appendQueryParameters(parameters, uri.getRawQuery());
-
-		String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
-		if (contentType == null) return parameters;
-
-		String lower = contentType.toLowerCase();
-		if (lower.contains("application/x-www-form-urlencoded")) {
-			String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-			appendQueryParameters(parameters, body);
-		} else if (lower.contains("application/json")) {
-			String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-			parameters.putAll(JsonFlattener.flatten(body));
-		}
-
-		return parameters;
-	}
-
-	private void appendQueryParameters(Map<String, String> parameters, String raw) {
-		if (raw == null || raw.isEmpty()) return;
-
-		for (String pair : raw.split("&")) {
-			int eq = pair.indexOf('=');
-			if (eq < 0) continue;
-
-			String key = URLDecoder.decode(pair.substring(0, eq), StandardCharsets.UTF_8);
-			String value = URLDecoder.decode(pair.substring(eq + 1), StandardCharsets.UTF_8);
-			parameters.put(key, value);
-		}
-	}
-
 	private void addHeadersAndAllowCrossDomainAccess(Response content, HttpExchange exchange) {
-		exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-		exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS");
-		exchange.getResponseHeaders().set("Access-Control-Max-Age", "360");
-		exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "x-requested-with");
-		exchange.getResponseHeaders().set("Access-Control-Allow-Credentials", "true");
+		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS, ALL_METHODS);
+		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_MAX_AGE, "360");
+		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS, "x-requested-with");
+		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
 
 		for (Entry<String, String> header : content.getHeader().entrySet()) {
 			exchange.getResponseHeaders().set(header.getKey(), header.getValue());

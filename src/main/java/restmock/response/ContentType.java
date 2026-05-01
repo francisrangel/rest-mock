@@ -5,7 +5,8 @@ public enum ContentType {
 	TEXT_HTML("text/html"),
 	TEXT_PLAIN("text/plain"),
 	TEXT_XML("text/xml"),
-	APPLICATION_JSON("application/json");
+	APPLICATION_JSON("application/json"),
+	APPLICATION_FORM_URLENCODED("application/x-www-form-urlencoded");
 
 	private final String type;
 

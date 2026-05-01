@@ -3,7 +3,7 @@ package restmock.integration;
 import org.junit.Test;
 
 import restmock.RestMock;
-import restmock.request.HttpMethod;
+import restmock.http.HttpMethod;
 
 public class PathTemplateTestCase extends IntegrationTestBase {
 

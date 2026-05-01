@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import restmock.RestMock;
 import restmock.mock.Developer;
-import restmock.request.HttpMethod;
+import restmock.http.HttpMethod;
 
 public class WhenGetTestCase extends IntegrationTestBase {
 

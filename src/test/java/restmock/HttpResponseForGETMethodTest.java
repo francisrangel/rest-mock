@@ -7,9 +7,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import restmock.mock.Developer;
-import restmock.request.HttpMethod;
-import restmock.request.Route;
-import restmock.request.RouteManager;
+import restmock.http.HttpMethod;
+import restmock.routing.Route;
+import restmock.routing.RouteManager;
 import restmock.request.RouteRegister;
 import restmock.response.ContentType;
 import restmock.response.Response;

@@ -7,20 +7,20 @@ import com.thoughtworks.xstream.io.xml.StaxDriver;
 
 public final class XML extends Response {
 
+	private static final XStream XML_XSTREAM = new XStream(new StaxDriver());
+
 	public XML(String body) {
 		super(body);
 	}
-	
+
 	public XML(Object object) {
-		super(parseObjectToXML(object));		
+		super(serializeToXML(object));
 	}
 
-	private static String parseObjectToXML(Object object) {
-		XStream parser = new XStream(new StaxDriver());
+	private static String serializeToXML(Object object) {
 		String alias = StringUtils.uncapitalize(object.getClass().getSimpleName());
-		parser.alias(alias, object.getClass());
-		
-		return parser.toXML(object);
+		XML_XSTREAM.alias(alias, object.getClass());
+		return XML_XSTREAM.toXML(object);
 	}
 
 	@Override

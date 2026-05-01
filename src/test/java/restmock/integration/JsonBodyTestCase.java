@@ -9,6 +9,8 @@ import java.net.http.HttpResponse;
 import org.junit.Test;
 
 import restmock.RestMock;
+import restmock.http.HttpHeader;
+import restmock.response.ContentType;
 
 public class JsonBodyTestCase extends IntegrationTestBase {
 
@@ -48,7 +50,7 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 
 		HttpRequest request = HttpRequest.newBuilder()
 			.uri(URI.create(baseUrl + "/test"))
-			.header("Content-Type", "text/plain")
+			.header(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.getType())
 			.POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"Bob\"}"))
 			.build();
 		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -66,7 +68,7 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 	private void postJson(String path, String jsonBody, String expectedAnswer) throws Exception {
 		HttpRequest request = HttpRequest.newBuilder()
 			.uri(URI.create(baseUrl + path))
-			.header("Content-Type", "application/json")
+			.header(HttpHeader.CONTENT_TYPE, ContentType.APPLICATION_JSON.getType())
 			.POST(HttpRequest.BodyPublishers.ofString(jsonBody))
 			.build();
 		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());

@@ -1,4 +1,4 @@
-package restmock.request;
+package restmock.routing;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -8,11 +8,12 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
+import restmock.http.HttpMethod;
 import restmock.response.Response;
 
 public class RouteManager {
 
-	private Map<Route, Response> routes = new LinkedHashMap<>();
+	private volatile Map<Route, Response> routes = new LinkedHashMap<>();
 
 	private RouteManager() { }
 

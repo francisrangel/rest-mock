@@ -13,7 +13,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import restmock.RestMock;
-import restmock.request.HttpMethod;
+import restmock.http.HttpMethod;
 import restmock.utils.StringUtils;
 
 public class IntegrationTestBase {
@@ -54,9 +54,9 @@ public class IntegrationTestBase {
 			case POST:    builder.POST(HttpRequest.BodyPublishers.noBody()); break;
 			case PUT:     builder.PUT(HttpRequest.BodyPublishers.noBody()); break;
 			case DELETE:  builder.DELETE(); break;
-			case PATCH:   builder.method("PATCH", HttpRequest.BodyPublishers.noBody()); break;
-			case HEAD:    builder.method("HEAD", HttpRequest.BodyPublishers.noBody()); break;
-			case OPTIONS: builder.method("OPTIONS", HttpRequest.BodyPublishers.noBody()); break;
+			case PATCH:   builder.method(HttpMethod.PATCH.name(), HttpRequest.BodyPublishers.noBody()); break;
+			case HEAD:    builder.method(HttpMethod.HEAD.name(), HttpRequest.BodyPublishers.noBody()); break;
+			case OPTIONS: builder.method(HttpMethod.OPTIONS.name(), HttpRequest.BodyPublishers.noBody()); break;
 		}
 
 		return client.send(builder.build(), HttpResponse.BodyHandlers.ofString());

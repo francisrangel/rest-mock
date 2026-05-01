@@ -9,7 +9,7 @@ import java.net.http.HttpResponse;
 import org.junit.Test;
 
 import restmock.RestMock;
-import restmock.request.HttpMethod;
+import restmock.http.HttpMethod;
 
 public class MockHttpErrorsTestCase extends IntegrationTestBase {
 

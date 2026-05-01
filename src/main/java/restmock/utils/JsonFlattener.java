@@ -1,4 +1,4 @@
-package restmock.request;
+package restmock.utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

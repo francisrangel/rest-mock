@@ -9,7 +9,9 @@ import java.net.http.HttpResponse;
 import org.junit.Test;
 
 import restmock.RestMock;
-import restmock.request.HttpMethod;
+import restmock.http.HttpHeader;
+import restmock.http.HttpMethod;
+import restmock.response.ContentType;
 
 public class WhenPostTestCase extends IntegrationTestBase {
 
@@ -43,7 +45,7 @@ public class WhenPostTestCase extends IntegrationTestBase {
 	private void requestPostWithParameters(String url, String requestParametersString, String resultString) throws Exception {
 		HttpRequest request = HttpRequest.newBuilder()
 			.uri(URI.create(url))
-			.header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+			.header(HttpHeader.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.getType() + "; charset=UTF-8")
 			.POST(HttpRequest.BodyPublishers.ofString(requestParametersString))
 			.build();
 

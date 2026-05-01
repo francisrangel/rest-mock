@@ -6,8 +6,8 @@ import java.net.InetSocketAddress;
 
 import com.sun.net.httpserver.HttpServer;
 
-import restmock.request.FrontController;
-import restmock.request.RouteManager;
+import restmock.http.FrontController;
+import restmock.routing.RouteManager;
 
 public class RestMockServer {
 

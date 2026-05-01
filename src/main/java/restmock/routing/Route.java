@@ -1,4 +1,4 @@
-package restmock.request;
+package restmock.routing;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -8,6 +8,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import restmock.http.HttpMethod;
 
 public class Route {
 

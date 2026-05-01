@@ -8,6 +8,19 @@
 	<version>0.0.1</version>
 	<name>Rest Mock</name>
 
+	<developers>
+		<developer>
+			<id>gb</id>
+			<name>Gabriel Such</name>
+			<email>gabrielsuch@gmail.com</email>
+		</developer>
+		<developer>
+			<id>francisrangel</id>
+			<name>Francis Rangel</name>
+			<email>francis.rangel@gmail.com</email>
+		</developer>
+	</developers>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>17</maven.compiler.source>

@@ -5,6 +5,7 @@ import java.io.IOException;
 import restmock.RestMockResponse;
 import restmock.response.Html;
 import restmock.response.JSON;
+import restmock.response.NotConfigured;
 import restmock.response.Response;
 import restmock.response.ResponseOptions;
 import restmock.response.TextPlain;
@@ -19,6 +20,7 @@ public class RouteRegister implements RestMockResponse {
 
 	public RouteRegister(Route route) {
 		this.route = route;
+		RouteManager.getInstance().registerRoute(route, new NotConfigured(route.getUri()));
 	}
 
 	@Override

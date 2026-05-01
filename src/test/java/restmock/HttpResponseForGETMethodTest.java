@@ -13,6 +13,7 @@ import restmock.routing.Route;
 import restmock.routing.RouteManager;
 import restmock.request.RouteRegister;
 import restmock.response.ContentType;
+import restmock.response.NotConfigured;
 import restmock.response.Response;
 
 public class HttpResponseForGETMethodTest {
@@ -142,6 +143,29 @@ public class HttpResponseForGETMethodTest {
 
 		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
 		assertEquals("rest-mock rock! :-)", response.getContent());
+	}
+
+	@Test
+	public void danglingRouteRegistersSentinel() {
+		Route dangling = new Route(HttpMethod.GET, "/dangling");
+		new RouteRegister(dangling);
+
+		Response response = RouteManager.getInstance().get(dangling);
+
+		assertEquals(NotConfigured.class, response.getClass());
+		assertEquals(501, response.getResponseStatus());
+	}
+
+	@Test
+	public void thenReturnReplacesSentinel() {
+		Route replaced = new Route(HttpMethod.GET, "/replaced");
+		new RouteRegister(replaced).thenReturnText("real response");
+
+		Response response = RouteManager.getInstance().get(replaced);
+
+		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
+		assertEquals("real response", response.getContent());
+		assertEquals(200, response.getResponseStatus());
 	}
 
 }

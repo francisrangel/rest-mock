@@ -1,22 +1,27 @@
 package restmock.utils;
 
 import static java.nio.file.Files.readAllBytes;
-import static java.nio.file.Paths.get;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 
 public class Resource {
-	
+
 	public static String dataFromResource(String resource) throws IOException {
-		return new String(readAllBytes(get(fullPath(resource))));
+		try {
+			return new String(readAllBytes(Paths.get(fullPath(resource).toURI())));
+		} catch (URISyntaxException e) {
+			throw new IOException(e);
+		}
 	}
-	
-	private static String fullPath(String resource) throws FileNotFoundException {
+
+	private static URL fullPath(String resource) throws FileNotFoundException {
 		URL url = Thread.currentThread().getContextClassLoader().getResource(resource);
 		if (url == null) throw new FileNotFoundException(resource + " was not found at resources folder!");
-		return url.getPath();
+		return url;
 	}
 
 }

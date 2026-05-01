@@ -2,13 +2,8 @@ target/
 .settings/
 .project
 .classpath
-.gradle
-build/
 *.ipr
 *.iws
 **/*.iml
 .idea/
-gradle/
-gradlew
-gradlew.bat
 /bin/

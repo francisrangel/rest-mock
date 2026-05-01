@@ -4,11 +4,13 @@ import restmock.request.HttpMethod;
 import restmock.request.Route;
 import restmock.request.RouteRegister;
 
-public class RestMock {
-	
+public final class RestMock {
+
 	public static final int DEFAULT_PORT = 9080;
-	
+
 	private static final RestMockServer server = new RestMockServer();
+
+	private RestMock() {}
 
 	public static RestMockResponse whenGet(String uri) {
 		return registerRoute(HttpMethod.GET, uri);

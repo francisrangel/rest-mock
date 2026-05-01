@@ -1,6 +1,7 @@
 package restmock;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 
 import com.sun.net.httpserver.HttpServer;
@@ -21,7 +22,7 @@ public class RestMockServer {
 		try {
 			server = HttpServer.create(new InetSocketAddress(port), 0);
 		} catch (IOException e) {
-			throw new RuntimeException("Could not start the server!", e);
+			throw new UncheckedIOException("Could not start the server!", e);
 		}
 
 		server.createContext("/", new FrontController());

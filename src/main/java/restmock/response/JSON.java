@@ -7,24 +7,20 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
 import com.thoughtworks.xstream.io.json.JsonWriter;
 
-public class JSON extends Response {
+public final class JSON extends Response {
+
+	private static final XStream JSON_XSTREAM = new XStream(new JsonHierarchicalStreamDriver() {
+		public HierarchicalStreamWriter createWriter(Writer writer) {
+			return new JsonWriter(writer, JsonWriter.DROP_ROOT_MODE);
+		}
+	});
 
 	public JSON(String body) {
 		super(body);
 	}
-	
+
 	public JSON(Object object) {
-		super(toJSON(object));
-	}
-	
-	private static String toJSON(Object obj) {
-		XStream xstream = new XStream(new JsonHierarchicalStreamDriver() {
-		    public HierarchicalStreamWriter createWriter(Writer writer) {
-		        return new JsonWriter(writer, JsonWriter.DROP_ROOT_MODE);
-		    }
-		});
-		
-		return xstream.toXML(obj).toString();
+		super(JSON_XSTREAM.toXML(object));
 	}
 
 	@Override

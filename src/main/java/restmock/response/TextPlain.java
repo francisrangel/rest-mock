@@ -1,6 +1,6 @@
 package restmock.response;
 
-public class TextPlain extends Response {
+public final class TextPlain extends Response {
 
 	public TextPlain(String body) {
 		super(body);

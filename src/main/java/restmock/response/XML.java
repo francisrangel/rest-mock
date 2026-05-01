@@ -5,7 +5,7 @@ import restmock.utils.StringUtils;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
 
-public class XML extends Response {
+public final class XML extends Response {
 
 	public XML(String body) {
 		super(body);

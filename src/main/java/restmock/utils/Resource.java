@@ -8,7 +8,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 
-public class Resource {
+public final class Resource {
+
+	private Resource() {}
 
 	public static String dataFromResource(String resource) throws IOException {
 		try {

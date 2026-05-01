@@ -1,10 +1,12 @@
 package restmock.utils;
 
-public class StringUtils {
-	
+public final class StringUtils {
+
+	private StringUtils() {}
+
 	public static String uncapitalize(String word) {
 		if (word == null) return null;
-		if (word == "") return word;
+		if (word.isEmpty()) return word;
 		
 		String[] words = word.split(" ");
 		StringBuilder sb = new StringBuilder();

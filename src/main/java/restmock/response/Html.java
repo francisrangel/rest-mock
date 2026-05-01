@@ -1,6 +1,6 @@
 package restmock.response;
 
-public class Html extends Response {
+public final class Html extends Response {
 
 	public Html(String body) {
 		super(body);

@@ -20,22 +20,16 @@ public class ReplacerParametersVisitor implements Visitor<Response> {
 	public void visit(Response response) {
 		String input = response.getContent();
 		Matcher matcher = PARAMETER_PATTERN.matcher(input);
+		StringBuilder sb = new StringBuilder();
 
-		while (matcher.find())
-			input = replaceWildTags(input, matcher);
+		while (matcher.find()) {
+			String key = matcher.group(1);
+			String replacement = parameters.getOrDefault(key, matcher.group(0));
+			matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+		}
+		matcher.appendTail(sb);
 
-		response.setContent(input);
-	}
-
-	private String replaceWildTags(String input, Matcher matcher) {
-		String expressionName = matcher.group(1);
-		String expression = String.format("\\$\\{%s\\}", expressionName);
-		String parameterValue = parameters.get(expressionName);
-
-		if (parameterValue != null)
-			input = input.replaceAll(expression, parameterValue);
-
-		return input;
+		response.setContent(sb.toString());
 	}
 
 }

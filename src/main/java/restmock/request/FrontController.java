@@ -41,15 +41,15 @@ public class FrontController implements HttpHandler {
 			return;
 		}
 
-		Response content = match.get().response;
+		Response content = match.get().response();
 		Map<String, String> parameters = parseParameters(exchange, uri);
-		parameters.putAll(match.get().pathCaptures);
+		parameters.putAll(match.get().pathCaptures());
 		new ReplacerParametersVisitor(parameters).visit(content);
 
 		addHeadersAndAllowCrossDomainAccess(content, exchange);
 		exchange.getResponseHeaders().set("Content-Type", content.getContentType().getType());
 
-		if (match.get().route.getMethod() == HttpMethod.OPTIONS) {
+		if (match.get().route().getMethod() == HttpMethod.OPTIONS) {
 			exchange.getResponseHeaders().set("Allow", allowHeaderFor(uri.getPath(), routeManager));
 		}
 

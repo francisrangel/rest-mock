@@ -1,5 +1,6 @@
 package restmock.request;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,14 +12,16 @@ import restmock.response.Response;
 
 public class RouteManager {
 
-	private static RouteManager instance;
 	private Map<Route, Response> routes = new LinkedHashMap<>();
 
 	private RouteManager() { }
 
+	private static final class Holder {
+		static final RouteManager INSTANCE = new RouteManager();
+	}
+
 	public static RouteManager getInstance() {
-		if (instance == null) instance = new RouteManager();
-		return instance;
+		return Holder.INSTANCE;
 	}
 
 	public void registerRoute(Route route, Response response) {
@@ -56,15 +59,19 @@ public class RouteManager {
 	}
 
 	public static final class Match {
-		public final Route route;
-		public final Response response;
-		public final Map<String, String> pathCaptures;
+		private final Route route;
+		private final Response response;
+		private final Map<String, String> pathCaptures;
 
 		public Match(Route route, Response response, Map<String, String> pathCaptures) {
 			this.route = route;
 			this.response = response;
-			this.pathCaptures = pathCaptures;
+			this.pathCaptures = Collections.unmodifiableMap(pathCaptures);
 		}
+
+		public Route route() { return route; }
+		public Response response() { return response; }
+		public Map<String, String> pathCaptures() { return pathCaptures; }
 	}
 
 }

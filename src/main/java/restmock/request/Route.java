@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,8 +19,8 @@ public class Route {
 	private final List<String> captureNames;
 
 	public Route(HttpMethod method, String uri) {
-		this.method = method;
-		this.uri = uri;
+		this.method = Objects.requireNonNull(method, "method");
+		this.uri = Objects.requireNonNull(uri, "uri");
 		this.captureNames = new ArrayList<>();
 		this.pattern = compile(uri, captureNames);
 	}
@@ -55,7 +56,7 @@ public class Route {
 
 	@Override
 	public int hashCode() {
-		return 31 * method.hashCode() * uri.hashCode();
+		return Objects.hash(method, uri);
 	}
 
 	@Override

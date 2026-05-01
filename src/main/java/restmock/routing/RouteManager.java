@@ -15,15 +15,7 @@ public class RouteManager {
 
 	private volatile Map<Route, Response> routes = new LinkedHashMap<>();
 
-	private RouteManager() { }
-
-	private static final class Holder {
-		static final RouteManager INSTANCE = new RouteManager();
-	}
-
-	public static RouteManager getInstance() {
-		return Holder.INSTANCE;
-	}
+	public RouteManager() { }
 
 	public void registerRoute(Route route, Response response) {
 		routes.put(route, response);

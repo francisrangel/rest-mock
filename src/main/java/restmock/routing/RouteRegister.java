@@ -1,4 +1,4 @@
-package restmock.request;
+package restmock.routing;
 
 import java.io.IOException;
 
@@ -10,17 +10,17 @@ import restmock.response.Response;
 import restmock.response.ResponseOptions;
 import restmock.response.TextPlain;
 import restmock.response.XML;
-import restmock.routing.Route;
-import restmock.routing.RouteManager;
 import restmock.utils.Resource;
 
 public class RouteRegister implements RestMockResponse {
 
 	private final Route route;
+	private final RouteManager routeManager;
 
-	public RouteRegister(Route route) {
+	public RouteRegister(Route route, RouteManager routeManager) {
 		this.route = route;
-		RouteManager.getInstance().registerRoute(route, new NotConfigured(route.getUri()));
+		this.routeManager = routeManager;
+		routeManager.registerRoute(route, new NotConfigured(route.getUri()));
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class RouteRegister implements RestMockResponse {
 	}
 
 	private ResponseOptions registerRoute(Response body) {
-		RouteManager.getInstance().registerRoute(route, body);
+		routeManager.registerRoute(route, body);
 		return new ResponseOptions(body);
 	}
 

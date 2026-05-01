@@ -29,10 +29,16 @@ public class FrontController implements HttpHandler {
 		.map(Enum::name)
 		.collect(Collectors.joining(", "));
 
+	private final RouteManager routeManager;
+
+	public FrontController(RouteManager routeManager) {
+		this.routeManager = routeManager;
+	}
+
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		try {
-			processRequest(exchange, RouteManager.getInstance());
+			processRequest(exchange, routeManager);
 		} finally {
 			exchange.close();
 		}

@@ -2,13 +2,15 @@ package restmock;
 
 import restmock.http.HttpMethod;
 import restmock.routing.Route;
-import restmock.request.RouteRegister;
+import restmock.routing.RouteManager;
+import restmock.routing.RouteRegister;
 
 public final class RestMock {
 
 	public static final int DEFAULT_PORT = 9080;
 
-	private static final RestMockServer server = new RestMockServer();
+	private static final RouteManager routeManager = new RouteManager();
+	private static final RestMockServer server = new RestMockServer(routeManager);
 
 	private RestMock() {}
 
@@ -41,7 +43,7 @@ public final class RestMock {
 	}
 
 	private static RestMockResponse registerRoute(HttpMethod method, String uri) {
-		return new RouteRegister(new Route(method, uri));
+		return new RouteRegister(new Route(method, uri), routeManager);
 	}
 
 	public static void startServer() {
@@ -57,7 +59,11 @@ public final class RestMock {
 	}
 
 	public static void clean() {
-		server.clean();
+		routeManager.clean();
+	}
+
+	static RouteManager routeManager() {
+		return routeManager;
 	}
 
 }

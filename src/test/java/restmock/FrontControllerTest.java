@@ -42,7 +42,7 @@ public class FrontControllerTest {
 		prepare(HttpMethod.GET.name(), "/test");
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 
-		new FrontController().processRequest(exchange, routeManager);
+		new FrontController(routeManager).processRequest(exchange, routeManager);
 
 		verify(routeManager).lookup(HttpMethod.GET, "/test");
 	}
@@ -52,7 +52,7 @@ public class FrontControllerTest {
 		prepare(HttpMethod.GET.name(), "/test");
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 
-		new FrontController().processRequest(exchange, routeManager);
+		new FrontController(routeManager).processRequest(exchange, routeManager);
 
 		verify(exchange).sendResponseHeaders(404, -1);
 	}
@@ -64,7 +64,7 @@ public class FrontControllerTest {
 		RouteManager.Match match = new RouteManager.Match(route, new TextPlain("ok"), new HashMap<>());
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.of(match));
 
-		new FrontController().processRequest(exchange, routeManager);
+		new FrontController(routeManager).processRequest(exchange, routeManager);
 
 		long expectedLength = ("ok" + System.lineSeparator()).getBytes().length;
 		verify(exchange).sendResponseHeaders(200, expectedLength);

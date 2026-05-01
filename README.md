@@ -222,6 +222,15 @@ static RestMockExtension server = new RestMockExtension(3000);
 
 No base class. No `@BeforeAll`. No forgotten `clean()` calls. The extension handles everything so your tests only contain what matters: the mock setup and the assertion.
 
+If some tests share the same routes and you don't want them cleaned between each test, use `keepRoutes()`:
+
+```java
+@RegisterExtension
+static RestMockExtension server = new RestMockExtension().keepRoutes();
+```
+
+Routes will persist for the entire test class. You can still call `RestMock.clean()` manually whenever you need to.
+
 ---
 
 ## Design principles

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
 
 	private final int port;
+	private boolean autoClean = true;
 
 	public RestMockExtension() {
 		this(RestMock.DEFAULT_PORT);
@@ -15,6 +16,11 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 
 	public RestMockExtension(int port) {
 		this.port = port;
+	}
+
+	public RestMockExtension keepRoutes() {
+		this.autoClean = false;
+		return this;
 	}
 
 	@Override
@@ -29,7 +35,9 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 
 	@Override
 	public void afterEach(ExtensionContext context) {
-		RestMock.clean();
+		if (autoClean) {
+			RestMock.clean();
+		}
 	}
 
 }

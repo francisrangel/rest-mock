@@ -18,4 +18,9 @@ public class ResponseOptions {
 		return this;
 	}
 
+	public ResponseOptions withDelay(long millis) {
+		response.setDelayMillis(millis);
+		return this;
+	}
+
 }

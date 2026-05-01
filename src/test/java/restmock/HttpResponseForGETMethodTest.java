@@ -184,4 +184,36 @@ public class HttpResponseForGETMethodTest {
 		assertEquals("validation", response.getHeader().get("X-Reason"));
 	}
 
+	@Test
+	public void withDelaySetsDelayOnResponse() {
+		subject.thenReturnText("ok").withDelay(500);
+
+		Response response = routeManager.get(route);
+
+		assertEquals(500, response.getDelayMillis());
+	}
+
+	@Test
+	public void defaultDelayIsZero() {
+		subject.thenReturnText("ok");
+
+		Response response = routeManager.get(route);
+
+		assertEquals(0, response.getDelayMillis());
+	}
+
+	@Test
+	public void withDelayChainsWithStatusAndHeader() {
+		subject.thenReturnJSON("{}")
+			.withStatus(201)
+			.withDelay(100)
+			.withHeader("X-Slow", "yes");
+
+		Response response = routeManager.get(route);
+
+		assertEquals(201, response.getResponseStatus());
+		assertEquals(100, response.getDelayMillis());
+		assertEquals("yes", response.getHeader().get("X-Slow"));
+	}
+
 }

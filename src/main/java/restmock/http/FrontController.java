@@ -55,6 +55,15 @@ public class FrontController implements HttpHandler {
 		}
 
 		Response content = match.get().response();
+
+		if (content.getDelayMillis() > 0) {
+			try {
+				Thread.sleep(content.getDelayMillis());
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+
 		Map<String, String> parameters = ParameterExtractor.extract(exchange, uri);
 		parameters.putAll(match.get().pathCaptures());
 		String responseBody = replaceParameters(content.getContent(), parameters);

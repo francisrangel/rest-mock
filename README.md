@@ -198,6 +198,29 @@ RestMock.whenGet("/api/data")
 
 ---
 
+## Simulating slow responses
+
+Need to test timeouts, retries, or loading states? Use `withDelay()` to make a route wait before responding:
+
+```java
+RestMock.whenGet("/slow-api")
+        .thenReturnJSON("{\"data\":\"here\"}")
+        .withDelay(2000);
+```
+
+The server will wait 2 seconds before sending the response. This is useful for verifying that your HTTP client handles timeouts correctly:
+
+```java
+RestMock.whenGet("/unreliable")
+        .thenReturnText("too late")
+        .withDelay(5000)
+        .withStatus(200);
+```
+
+Delay chains with `withStatus()` and `withHeader()` like everything else. Routes without `withDelay()` respond immediately.
+
+---
+
 ## Install
 
 ```xml

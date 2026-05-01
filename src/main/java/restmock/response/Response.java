@@ -10,6 +10,7 @@ public abstract class Response {
 	private final String content;
 	private final Map<String, String> header;
 	private int responseStatus = HttpURLConnection.HTTP_OK;
+	private long delayMillis;
 
 	Response(String body) {
 		this.content = body;
@@ -28,6 +29,14 @@ public abstract class Response {
 
 	public void setResponseStatus(int responseStatus) {
 		this.responseStatus = responseStatus;
+	}
+
+	public long getDelayMillis() {
+		return delayMillis;
+	}
+
+	public void setDelayMillis(long delayMillis) {
+		this.delayMillis = delayMillis;
 	}
 
 	public Map<String, String> getHeader() {

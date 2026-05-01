@@ -66,6 +66,9 @@ Everything you actually need, nothing you don’t:
 - JSON, XML, HTML, text  
 - Load responses from files  
 - Custom status codes and headers  
+- Response delays for timeout testing  
+- Request inspection and counting  
+- JUnit extension for automatic lifecycle  
 - Built-in CORS support  
 
 And that’s it.
@@ -117,7 +120,7 @@ It’s for:
 - integration tests  
 - mocking dependencies quickly  
 
-If you need request verification or traffic inspection → use something else.
+If you need full API simulation or traffic proxying → use something else.
 
 ---
 
@@ -158,6 +161,28 @@ Works with:
 - query params  
 - form body  
 - JSON body  
+
+---
+
+## Loading responses from files
+
+When a response is too large or complex to inline, you can load it from a file in your test resources folder (`src/test/resources`):
+
+```java
+RestMock.whenGet("/invoice")
+        .thenReturnJSONFromResource("invoice.json");
+
+RestMock.whenGet("/report")
+        .thenReturnXMLFromResource("report.xml");
+
+RestMock.whenGet("/page")
+        .thenReturnHTMLFromResource("page.html");
+
+RestMock.whenGet("/readme")
+        .thenReturnTextFromResource("readme.txt");
+```
+
+Place the file in `src/test/resources` and pass the filename. rest-mock loads it from the classpath and serves it with the matching content type. This keeps your test code short while the actual response payload lives in a dedicated file you can inspect and edit separately.
 
 ---
 

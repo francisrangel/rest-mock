@@ -1,5 +1,9 @@
 package restmock.integration;
 
+import static org.junit.Assert.assertEquals;
+
+import java.net.http.HttpResponse;
+
 import org.junit.Test;
 
 import restmock.RestMock;
@@ -70,6 +74,18 @@ public class WhenGetTestCase extends IntegrationTestBase {
 		RestMock.whenGet("/test").thenReturnText("Hello ${name}, you are the number #${number}!");
 
 		requestGetWithResultString(baseUrl + "/test?name=Bob&number=1", "Hello Bob, you are the number #1!");
+	}
+
+	@Test
+	public void customHeaderArrivesOverHttp() throws Exception {
+		RestMock.whenGet("/test").thenReturnText("ok")
+			.withHeader("X-Custom", "hello")
+			.withHeader("X-Trace-Id", "abc123");
+
+		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.GET);
+
+		assertEquals("hello", response.headers().firstValue("X-Custom").orElse(""));
+		assertEquals("abc123", response.headers().firstValue("X-Trace-Id").orElse(""));
 	}
 
 	private void requestGetWithResultString(String url, String expectedBody) throws Exception {

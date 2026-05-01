@@ -1,6 +1,7 @@
 package restmock.routing;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import org.junit.Test;
 
@@ -14,6 +15,52 @@ public class RouteTest {
 
 		assertEquals(HttpMethod.GET, route.getMethod());
 		assertEquals("www.google.com", route.getUri());
+	}
+
+	@Test
+	public void equalWhenSameMethodAndUri() {
+		Route a = new Route(HttpMethod.GET, "/users");
+		Route b = new Route(HttpMethod.GET, "/users");
+
+		assertEquals(a, b);
+		assertEquals(a.hashCode(), b.hashCode());
+	}
+
+	@Test
+	public void notEqualWhenDifferentMethod() {
+		Route get = new Route(HttpMethod.GET, "/users");
+		Route post = new Route(HttpMethod.POST, "/users");
+
+		assertNotEquals(get, post);
+	}
+
+	@Test
+	public void notEqualWhenDifferentUri() {
+		Route a = new Route(HttpMethod.GET, "/users");
+		Route b = new Route(HttpMethod.GET, "/posts");
+
+		assertNotEquals(a, b);
+	}
+
+	@Test
+	public void notEqualToNull() {
+		Route route = new Route(HttpMethod.GET, "/users");
+
+		assertNotEquals(route, null);
+	}
+
+	@Test
+	public void notEqualToDifferentType() {
+		Route route = new Route(HttpMethod.GET, "/users");
+
+		assertNotEquals(route, "/users");
+	}
+
+	@Test
+	public void equalToSelf() {
+		Route route = new Route(HttpMethod.GET, "/users");
+
+		assertEquals(route, route);
 	}
 
 }

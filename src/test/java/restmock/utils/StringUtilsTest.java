@@ -16,4 +16,21 @@ public class StringUtilsTest {
 		assertEquals("uNCAPITALIZEWORD", StringUtils.uncapitalize("UNCAPITALIZEWORD"));
 	}
 
+	@Test
+	public void singleLineRemovesNewlinesAndSpaces() {
+		assertEquals("abc", StringUtils.singleLine("a b c"));
+		assertEquals("abc", StringUtils.singleLine("a\nb\rc"));
+		assertEquals("abc", StringUtils.singleLine("a\r\n b\n c"));
+	}
+
+	@Test
+	public void singleLineWithNoWhitespace() {
+		assertEquals("abc", StringUtils.singleLine("abc"));
+	}
+
+	@Test
+	public void singleLineEmptyString() {
+		assertEquals("", StringUtils.singleLine(""));
+	}
+
 }

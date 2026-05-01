@@ -3,6 +3,7 @@ package restmock;
 import static org.junit.Assert.assertEquals;
 import static restmock.utils.StringUtils.singleLine;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,6 +24,11 @@ public class HttpResponseForGETMethodTest {
 	public void setUp() {
 		route = new Route(HttpMethod.GET, "/test");
 		subject = new RouteRegister(route);
+	}
+
+	@After
+	public void cleanUp() {
+		RouteManager.getInstance().clean();
 	}
 
 	@Test
@@ -93,8 +99,49 @@ public class HttpResponseForGETMethodTest {
 	public void testHeaderResponse() {
 		subject.thenReturnXML(new Developer("Bob", 25)).withHeader("Cache-Control", "no-cache");
 		Response response = RouteManager.getInstance().get(route);
-		
+
 		assertEquals("no-cache", response.getHeader().get("Cache-Control"));
 	}
-	
+
+	@Test
+	public void testJSONFromResource() throws Exception {
+		subject.thenReturnJSONFromResource("developer.json");
+
+		Response response = RouteManager.getInstance().get(route);
+
+		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
+		assertEquals("{\"name\":\"Bob\",\"age\":25}", response.getContent());
+	}
+
+	@Test
+	public void testXMLFromResource() throws Exception {
+		subject.thenReturnXMLFromResource("developer.xml");
+
+		Response response = RouteManager.getInstance().get(route);
+
+		assertEquals(ContentType.TEXT_XML, response.getContentType());
+		assertEquals(singleLine("<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>"),
+			singleLine(response.getContent()));
+	}
+
+	@Test
+	public void testHTMLFromResource() throws Exception {
+		subject.thenReturnHTMLFromResource("page.html");
+
+		Response response = RouteManager.getInstance().get(route);
+
+		assertEquals(ContentType.TEXT_HTML, response.getContentType());
+		assertEquals("<h1>Hello</h1>", response.getContent());
+	}
+
+	@Test
+	public void testTextFromResource() throws Exception {
+		subject.thenReturnTextFromResource("example.txt");
+
+		Response response = RouteManager.getInstance().get(route);
+
+		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
+		assertEquals("rest-mock rock! :-)", response.getContent());
+	}
+
 }

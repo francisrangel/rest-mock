@@ -1,5 +1,9 @@
 package restmock.integration;
 
+import static org.junit.Assert.assertEquals;
+
+import java.net.http.HttpResponse;
+
 import org.junit.Test;
 
 import restmock.RestMock;
@@ -42,13 +46,9 @@ public class PathTemplateTestCase extends IntegrationTestBase {
 	public void templateDoesNotSpanSlash() throws Exception {
 		RestMock.whenGet("/users/{id}").thenReturnText("matched");
 
-		java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-			.uri(java.net.URI.create(baseUrl + "/users/1/extra"))
-			.GET()
-			.build();
-		java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> response = sendRequest(baseUrl + "/users/1/extra", HttpMethod.GET);
 
-		org.junit.Assert.assertEquals(404, response.statusCode());
+		assertEquals(404, response.statusCode());
 	}
 
 	@Test

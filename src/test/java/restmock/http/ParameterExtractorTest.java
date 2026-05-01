@@ -134,4 +134,42 @@ public class ParameterExtractorTest {
 		assertEquals("Bob", params.get("name"));
 	}
 
+	@Test
+	public void trailingAmpersandInQuery() throws IOException {
+		prepare("/test?name=Bob&");
+
+		Map<String, String> params = ParameterExtractor.extract(exchange, URI.create("/test?name=Bob&"));
+
+		assertEquals("Bob", params.get("name"));
+		assertEquals(1, params.size());
+	}
+
+	@Test
+	public void valueContainingEqualsSign() throws IOException {
+		prepare("/test?expr=a%3Db");
+
+		Map<String, String> params = ParameterExtractor.extract(exchange, URI.create("/test?expr=a%3Db"));
+
+		assertEquals("a=b", params.get("expr"));
+	}
+
+	@Test
+	public void contentTypeCaseInsensitive() throws IOException {
+		prepare("/test");
+		withBody("APPLICATION/JSON", "{\"name\":\"Bob\"}");
+
+		Map<String, String> params = ParameterExtractor.extract(exchange, URI.create("/test"));
+
+		assertEquals("Bob", params.get("name"));
+	}
+
+	@Test
+	public void emptyQueryString() throws IOException {
+		prepare("/test?");
+
+		Map<String, String> params = ParameterExtractor.extract(exchange, URI.create("/test?"));
+
+		assertTrue(params.isEmpty());
+	}
+
 }

@@ -2,6 +2,7 @@ package restmock;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,6 +22,11 @@ public class HttpResponseForPOSTMethodTest {
 	public void setUp() {
 		route = new Route(HttpMethod.POST, "/teste");
 		subject = new RouteRegister(route);
+	}
+
+	@After
+	public void cleanUp() {
+		RouteManager.getInstance().clean();
 	}
 	
 	@Test

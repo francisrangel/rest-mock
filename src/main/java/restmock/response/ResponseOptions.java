@@ -13,4 +13,9 @@ public class ResponseOptions {
 		return this;
 	}
 
+	public ResponseOptions withStatus(int status) {
+		response.setResponseStatus(status);
+		return this;
+	}
+
 }

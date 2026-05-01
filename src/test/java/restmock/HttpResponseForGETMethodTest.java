@@ -164,4 +164,24 @@ public class HttpResponseForGETMethodTest {
 		assertEquals(200, response.getResponseStatus());
 	}
 
+	@Test
+	public void withStatusSetsCustomStatusCode() {
+		subject.thenReturnJSON("{\"id\":1}").withStatus(201);
+
+		Response response = routeManager.get(route);
+
+		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
+		assertEquals(201, response.getResponseStatus());
+	}
+
+	@Test
+	public void withStatusChainsWithHeader() {
+		subject.thenReturnJSON("{\"error\":\"bad\"}").withStatus(422).withHeader("X-Reason", "validation");
+
+		Response response = routeManager.get(route);
+
+		assertEquals(422, response.getResponseStatus());
+		assertEquals("validation", response.getHeader().get("X-Reason"));
+	}
+
 }

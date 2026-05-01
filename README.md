@@ -161,6 +161,43 @@ Works with:
 
 ---
 
+## Custom status codes and headers
+
+By default every response returns 200. You can change that with `withStatus()`:
+
+```java
+RestMock.whenPost("/users")
+        .thenReturnJSON("{\"id\":1}")
+        .withStatus(201);
+```
+
+This works with any content type, so you can return a JSON error body with the right status code:
+
+```java
+RestMock.whenPost("/users")
+        .thenReturnJSON("{\"error\":\"email already taken\"}")
+        .withStatus(422);
+```
+
+For simple error messages where you don't need a specific content type, there's a shorthand:
+
+```java
+RestMock.whenGet("/secret")
+        .thenReturnErrorCodeWithMessage(403, "Forbidden");
+```
+
+Headers work the same way. Chain as many as you need:
+
+```java
+RestMock.whenGet("/api/data")
+        .thenReturnJSON("{\"items\":[]}")
+        .withStatus(200)
+        .withHeader("Cache-Control", "no-cache")
+        .withHeader("X-Request-Id", "abc123");
+```
+
+---
+
 ## Install
 
 ```xml

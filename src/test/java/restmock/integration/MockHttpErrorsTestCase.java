@@ -62,4 +62,33 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		assertEquals("Forbidden POST" + lineSeparator(), response.body());
 	}
 
+	@Test
+	public void jsonBodyWithCreatedStatus() throws Exception {
+		RestMock.whenPost("/users").thenReturnJSON("{\"id\":1}").withStatus(201);
+
+		HttpResponse<String> response = sendRequest(baseUrl + "/users", HttpMethod.POST);
+
+		assertEquals(201, response.statusCode());
+		assertEquals("{\"id\":1}" + lineSeparator(), response.body());
+	}
+
+	@Test
+	public void jsonBodyWithUnprocessableEntityStatus() throws Exception {
+		RestMock.whenPost("/users").thenReturnJSON("{\"error\":\"invalid\"}").withStatus(422);
+
+		HttpResponse<String> response = sendRequest(baseUrl + "/users", HttpMethod.POST);
+
+		assertEquals(422, response.statusCode());
+		assertEquals("{\"error\":\"invalid\"}" + lineSeparator(), response.body());
+	}
+
+	@Test
+	public void xmlBodyWithCustomStatus() throws Exception {
+		RestMock.whenGet("/data").thenReturnXML("<error>not found</error>").withStatus(404);
+
+		HttpResponse<String> response = sendRequest(baseUrl + "/data", HttpMethod.GET);
+
+		assertEquals(404, response.statusCode());
+	}
+
 }

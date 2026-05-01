@@ -25,7 +25,7 @@ public final class StringUtils {
 	
 	private static String uncapitalizeWord(String word) {
 		char firstCharAsLower = Character.toLowerCase(word.charAt(0));
-		String withoutFirstChar = word.substring(1, word.length());
+		String withoutFirstChar = word.substring(1);
 		return firstCharAsLower + withoutFirstChar;
 	}
 

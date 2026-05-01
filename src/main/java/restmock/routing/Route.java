@@ -64,9 +64,7 @@ public class Route {
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) return true;
-		if (obj == null || getClass() != obj.getClass()) return false;
-
-		Route other = (Route) obj;
+		if (!(obj instanceof Route other)) return false;
 		return other.uri.equals(uri) && other.method.equals(method);
 	}
 

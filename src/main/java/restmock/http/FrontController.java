@@ -43,10 +43,8 @@ public class FrontController implements HttpHandler {
 
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
-		try {
+		try (exchange) {
 			processRequest(exchange);
-		} finally {
-			exchange.close();
 		}
 	}
 
@@ -120,15 +118,10 @@ public class FrontController implements HttpHandler {
 	}
 
 	private String replaceParameters(String template, Map<String, String> parameters) {
-		Matcher matcher = PARAMETER_PATTERN.matcher(template);
-		StringBuilder sb = new StringBuilder();
-		while (matcher.find()) {
-			String key = matcher.group(1);
-			String replacement = parameters.getOrDefault(key, matcher.group(0));
-			matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
-		}
-		matcher.appendTail(sb);
-		return sb.toString();
+		return PARAMETER_PATTERN.matcher(template).replaceAll(match -> {
+			String key = match.group(1);
+			return Matcher.quoteReplacement(parameters.getOrDefault(key, match.group(0)));
+		});
 	}
 
 	private void addHeadersAndAllowCrossDomainAccess(Response content, HttpExchange exchange) {

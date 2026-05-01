@@ -37,12 +37,12 @@ public final class JsonFlattener {
 			skipWhitespace();
 			char c = src.charAt(pos);
 			switch (c) {
-				case '{': parseObject(prefix, out); break;
-				case '[': parseArray(prefix, out); break;
-				case '"': put(prefix, parseString(), out); break;
-				case 't': case 'f': put(prefix, parseBoolean(), out); break;
-				case 'n': parseNull(); put(prefix, "null", out); break;
-				default: put(prefix, parseNumber(), out);
+				case '{' -> parseObject(prefix, out);
+				case '[' -> parseArray(prefix, out);
+				case '"' -> put(prefix, parseString(), out);
+				case 't', 'f' -> put(prefix, parseBoolean(), out);
+				case 'n' -> { parseNull(); put(prefix, "null", out); }
+				default -> put(prefix, parseNumber(), out);
 			}
 		}
 
@@ -88,19 +88,19 @@ public final class JsonFlattener {
 				if (c == '\\') {
 					char esc = src.charAt(pos++);
 					switch (esc) {
-						case '"': sb.append('"'); break;
-						case '\\': sb.append('\\'); break;
-						case '/': sb.append('/'); break;
-						case 'b': sb.append('\b'); break;
-						case 'f': sb.append('\f'); break;
-						case 'n': sb.append('\n'); break;
-						case 'r': sb.append('\r'); break;
-						case 't': sb.append('\t'); break;
-						case 'u':
+						case '"' -> sb.append('"');
+						case '\\' -> sb.append('\\');
+						case '/' -> sb.append('/');
+						case 'b' -> sb.append('\b');
+						case 'f' -> sb.append('\f');
+						case 'n' -> sb.append('\n');
+						case 'r' -> sb.append('\r');
+						case 't' -> sb.append('\t');
+						case 'u' -> {
 							sb.append((char) Integer.parseInt(src.substring(pos, pos + 4), 16));
 							pos += 4;
-							break;
-						default: throw new RuntimeException("bad escape");
+						}
+						default -> throw new RuntimeException("bad escape");
 					}
 				} else {
 					sb.append(c);

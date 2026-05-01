@@ -73,7 +73,7 @@ public class RouteRegister implements RestMockResponse {
 	}
 
 	@Override
-	public ResponseOptions theReturnHTMLFromResource(String path) throws IOException {
+	public ResponseOptions thenReturnHTMLFromResource(String path) throws IOException {
 		return thenReturnHTML(Resource.dataFromResource(path));
 	}
 

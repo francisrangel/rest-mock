@@ -15,7 +15,7 @@ public interface RestMockResponse {
 	ResponseOptions thenReturnXMLFromResource(String path) throws IOException;
 	
 	ResponseOptions thenReturnHTML(String html);
-	ResponseOptions theReturnHTMLFromResource(String path) throws IOException;
+	ResponseOptions thenReturnHTMLFromResource(String path) throws IOException;
 	
 	ResponseOptions thenReturnText(String txt);
 	ResponseOptions thenReturnTextFromResource(String path) throws IOException;

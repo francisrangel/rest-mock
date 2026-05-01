@@ -1,6 +1,6 @@
 package restmock.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -8,11 +8,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import restmock.RestMock;
+import restmock.RestMockExtension;
 import restmock.http.HttpMethod;
 import restmock.utils.StringUtils;
 
@@ -20,26 +18,12 @@ public class IntegrationTestBase {
 
 	protected final String baseUrl = "http://localhost:9080";
 
-	protected static HttpClient client;
+	@RegisterExtension
+	static RestMockExtension server = new RestMockExtension();
 
-	@BeforeClass
-	public static void setUp() {
-		client = HttpClient.newBuilder()
-			.connectTimeout(Duration.ofSeconds(5))
-			.build();
-
-		RestMock.startServer();
-	}
-
-	@AfterClass
-	public static void cleanUp() {
-		RestMock.stopServer();
-	}
-
-	@After
-	public void cleanUpRoutes() {
-		RestMock.clean();
-	}
+	protected static final HttpClient client = HttpClient.newBuilder()
+		.connectTimeout(Duration.ofSeconds(5))
+		.build();
 
 	protected void requestMethodWithResultString(String url, String expectedBody, HttpMethod method) throws Exception {
 		HttpResponse<String> response = sendRequest(url, method);

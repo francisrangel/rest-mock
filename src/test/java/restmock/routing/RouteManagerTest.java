@@ -1,20 +1,19 @@
 package restmock.routing;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.HashMap;
 import java.util.Optional;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import restmock.http.HttpMethod;
 import restmock.response.TextPlain;
 
 public class RouteManagerTest {
 
-	@After
+	@AfterEach
 	public void cleanUp() {
 		RouteManager.getInstance().clean();
 	}

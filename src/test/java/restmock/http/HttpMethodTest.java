@@ -1,8 +1,9 @@
 package restmock.http;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class HttpMethodTest {
 
@@ -30,9 +31,9 @@ public class HttpMethodTest {
 		assertEquals(HttpMethod.OPTIONS, HttpMethod.byString("OPTIONS"));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void invalidMethod() {
-		HttpMethod.byString("foo");
+		assertThrows(IllegalArgumentException.class, () -> HttpMethod.byString("foo"));
 	}
 
 }

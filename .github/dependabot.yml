@@ -1,0 +1,40 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    groups:
+      jackson:
+        patterns:
+          - "com.fasterxml.jackson.*"
+        update-types:
+          - "minor"
+          - "patch"
+      junit:
+        patterns:
+          - "org.junit.*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-plugins:
+        patterns:
+          - "org.apache.maven.plugins:*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

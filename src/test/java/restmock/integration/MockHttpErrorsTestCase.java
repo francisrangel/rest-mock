@@ -1,6 +1,5 @@
 package restmock.integration;
 
-import static java.lang.System.lineSeparator;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.HttpURLConnection;
@@ -29,7 +28,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.GET);
 
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.statusCode());
-		assertEquals("Message for error 500 GET" + lineSeparator(), response.body());
+		assertEquals("Message for error 500 GET", response.body());
 	}
 
 	@Test
@@ -39,7 +38,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.POST);
 
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.statusCode());
-		assertEquals("Message for error 500 POST" + lineSeparator(), response.body());
+		assertEquals("Message for error 500 POST", response.body());
 	}
 
 	@Test
@@ -49,7 +48,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.GET);
 
 		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, response.statusCode());
-		assertEquals("Forbidden GET" + lineSeparator(), response.body());
+		assertEquals("Forbidden GET", response.body());
 	}
 
 	@Test
@@ -59,7 +58,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.POST);
 
 		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, response.statusCode());
-		assertEquals("Forbidden POST" + lineSeparator(), response.body());
+		assertEquals("Forbidden POST", response.body());
 	}
 
 	@Test
@@ -69,7 +68,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = sendRequest(baseUrl + "/users", HttpMethod.POST);
 
 		assertEquals(201, response.statusCode());
-		assertEquals("{\"id\":1}" + lineSeparator(), response.body());
+		assertEquals("{\"id\":1}", response.body());
 	}
 
 	@Test
@@ -79,7 +78,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = sendRequest(baseUrl + "/users", HttpMethod.POST);
 
 		assertEquals(422, response.statusCode());
-		assertEquals("{\"error\":\"invalid\"}" + lineSeparator(), response.body());
+		assertEquals("{\"error\":\"invalid\"}", response.body());
 	}
 
 	@Test

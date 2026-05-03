@@ -14,8 +14,6 @@ import restmock.response.ContentType;
 
 public class JsonBodyTestCase extends IntegrationTestBase {
 
-	private static final String LINE_SEPARATOR = System.lineSeparator();
-
 	@Test
 	public void flatJsonKey() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("hello ${name}");
@@ -55,7 +53,7 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 			.build();
 		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-		assertEquals("hello ${name}" + LINE_SEPARATOR, response.body());
+		assertEquals("hello ${name}", response.body());
 	}
 
 	@Test
@@ -74,7 +72,7 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		assertEquals(200, response.statusCode());
-		assertEquals(expectedAnswer + LINE_SEPARATOR, response.body());
+		assertEquals(expectedAnswer, response.body());
 	}
 
 }

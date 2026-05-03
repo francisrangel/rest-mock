@@ -274,17 +274,47 @@ RestMock.requests().forPath("/health").isEmpty();
 
 Each `ReceivedRequest` captures the method, path, query string, headers, body, and timestamp. The `RequestLog` provides common filters out of the box:
 
-- `all()` — every request in arrival order
-- `forPath(path)` — literal path match
-- `forMethod(method)` — filter by HTTP verb
-- `forRoute(method, path)` — both at once
-- `countForPath(path)`, `countForRoute(method, path)` — counts
-- `last()`, `lastForPath(path)` — most recent
-- `isEmpty()` — quick check
+- `all()`: every request in arrival order
+- `forPath(path)`: literal path match
+- `forMethod(method)`: filter by HTTP verb
+- `forRoute(method, path)`: both at once
+- `countForPath(path)`, `countForRoute(method, path)`: counts
+- `last()`, `lastForPath(path)`: most recent
+- `isEmpty()`: quick check
 
 For anything more specific, `all()` gives you the raw list to filter however you want.
 
 The request log is cleared automatically when you call `RestMock.clean()` or when the `RestMockExtension` cleans between tests.
+
+---
+
+## Customizing JSON and XML serialization
+
+rest-mock uses Jackson under the hood. Records, POJOs, and getters just work:
+
+```java
+record Customer(String name, int age) {}
+
+RestMock.whenGet("/me").thenReturnJSON(new Customer("Bob", 25));
+```
+
+Jackson auto-detects modules on your test classpath. Add `jackson-datatype-jsr310` to your test dependencies and `LocalDateTime` serializes as `"2026-05-03T18:58:12"` instead of an int array, no extra config.
+
+When you need more control (snake_case, pretty printing, custom serializers), `RestMock.json()` and `RestMock.xml()` return the live `ObjectMapper` and `XmlMapper`. Configure them once before your tests run:
+
+```java
+@BeforeAll
+static void configureSerialization() {
+    RestMock.json()
+            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+            .registerModule(new MyCustomModule());
+
+    RestMock.xml()
+            .enable(SerializationFeature.INDENT_OUTPUT);
+}
+```
+
+If even that's not enough, pre-serialize the response yourself and use the string overload; `thenReturnJSON(String)` accepts whatever you give it.
 
 ---
 

@@ -92,7 +92,7 @@ public class FrontController implements HttpHandler {
 			exchange.getResponseHeaders().set(HttpHeader.ALLOW, allowHeaderFor(uri.getPath(), routeManager));
 		}
 
-		byte[] body = (responseBody + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
+		byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
 
 		if (resolved.route().getMethod() == HttpMethod.HEAD) {
 			exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));

@@ -69,8 +69,7 @@ public class FrontControllerTest {
 
 		new FrontController(routeManager, requestLog).processRequest(exchange);
 
-		long expectedLength = ("ok" + System.lineSeparator()).getBytes().length;
-		verify(exchange).sendResponseHeaders(200, expectedLength);
+		verify(exchange).sendResponseHeaders(200, "ok".getBytes().length);
 	}
 
 	@Test

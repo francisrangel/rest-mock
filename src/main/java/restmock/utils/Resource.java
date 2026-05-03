@@ -12,7 +12,7 @@ public final class Resource {
 	public static String dataFromResource(String resource) throws IOException {
 		try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource)) {
 			if (is == null) throw new FileNotFoundException(resource + " was not found at resources folder!");
-			return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+			return new String(is.readAllBytes(), StandardCharsets.UTF_8).strip();
 		}
 	}
 

@@ -57,7 +57,7 @@ public class WhenGetTestCase extends IntegrationTestBase {
 		Developer developerMock = new Developer("Bob", 25);
 		RestMock.whenGet("/test").thenReturnXML(developerMock);
 
-		String simpleXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
+		String simpleXML = "<Developer><name>Bob</name><age>25</age></Developer>";
 
 		requestGetWithResultString(simpleXML);
 	}

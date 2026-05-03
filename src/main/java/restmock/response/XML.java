@@ -1,31 +1,33 @@
 package restmock.response;
 
-import restmock.utils.StringUtils;
+import java.io.UncheckedIOException;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.StaxDriver;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 public final class XML extends Response {
 
-	private static final XStream XML_XSTREAM = new XStream(new StaxDriver());
+	public static final XmlMapper MAPPER = (XmlMapper) new XmlMapper().findAndRegisterModules();
 
 	public XML(String body) {
 		super(body);
 	}
 
 	public XML(Object object) {
-		super(serializeToXML(object));
-	}
-
-	private static String serializeToXML(Object object) {
-		String alias = StringUtils.uncapitalize(object.getClass().getSimpleName());
-		XML_XSTREAM.alias(alias, object.getClass());
-		return XML_XSTREAM.toXML(object);
+		super(write(object));
 	}
 
 	@Override
 	public ContentType getContentType() {
 		return ContentType.TEXT_XML;
+	}
+
+	private static String write(Object object) {
+		try {
+			return MAPPER.writeValueAsString(object);
+		} catch (JsonProcessingException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 
 }

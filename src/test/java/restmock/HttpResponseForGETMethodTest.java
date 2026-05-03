@@ -1,7 +1,6 @@
 package restmock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static restmock.utils.StringUtils.singleLine;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +66,7 @@ public class HttpResponseForGETMethodTest {
 		Response response = routeManager.get(route);
 
 		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
-		assertEquals(singleLine(expectedJSON), singleLine(response.getContent()));
+		assertEquals(expectedJSON, response.getContent());
 	}
 
 	@Test
@@ -85,7 +84,7 @@ public class HttpResponseForGETMethodTest {
 	public void testXMLObjectResponse() {
 		subject.thenReturnXML(new Developer("Bob", 25));
 
-		String expectedXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
+		String expectedXML = "<Developer><name>Bob</name><age>25</age></Developer>";
 		Response response = routeManager.get(route);
 
 		assertEquals(ContentType.TEXT_XML, response.getContentType());
@@ -117,8 +116,8 @@ public class HttpResponseForGETMethodTest {
 		Response response = routeManager.get(route);
 
 		assertEquals(ContentType.TEXT_XML, response.getContentType());
-		assertEquals(singleLine("<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>"),
-			singleLine(response.getContent()));
+		assertEquals("<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>",
+			response.getContent());
 	}
 
 	@Test

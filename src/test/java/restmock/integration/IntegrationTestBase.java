@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import restmock.RestMockExtension;
 import restmock.http.HttpMethod;
-import restmock.utils.StringUtils;
 
 public class IntegrationTestBase {
 
@@ -27,7 +26,7 @@ public class IntegrationTestBase {
 
 	protected void requestMethodWithResultString(String url, String expectedBody, HttpMethod method) throws Exception {
 		HttpResponse<String> response = sendRequest(url, method);
-		assertEquals(StringUtils.singleLine(expectedBody), StringUtils.singleLine(response.body()));
+		assertEquals(expectedBody, response.body());
 	}
 
 	protected HttpResponse<String> sendRequest(String url, HttpMethod method) throws Exception {

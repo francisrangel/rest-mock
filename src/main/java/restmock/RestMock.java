@@ -1,6 +1,11 @@
 package restmock;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+
 import restmock.http.HttpMethod;
+import restmock.response.JSON;
+import restmock.response.XML;
 import restmock.routing.Route;
 import restmock.routing.RouteManager;
 import restmock.routing.RouteRegister;
@@ -45,6 +50,14 @@ public final class RestMock {
 
 	public static RequestLog requests() {
 		return requestLog;
+	}
+
+	public static ObjectMapper json() {
+		return JSON.MAPPER;
+	}
+
+	public static XmlMapper xml() {
+		return XML.MAPPER;
 	}
 
 	private static RestMockResponse registerRoute(HttpMethod method, String uri) {

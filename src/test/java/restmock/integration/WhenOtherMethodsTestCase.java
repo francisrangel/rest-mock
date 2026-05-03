@@ -66,7 +66,7 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 		assertEquals(200, response.statusCode());
 		assertEquals("", response.body());
 
-		String expectedLength = Integer.toString(("Head succeed" + System.lineSeparator()).getBytes().length);
+		String expectedLength = Integer.toString("Head succeed".getBytes().length);
 		assertEquals(expectedLength, response.headers().firstValue(HttpHeader.CONTENT_LENGTH).orElse(""));
 	}
 

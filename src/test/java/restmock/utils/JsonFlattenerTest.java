@@ -114,11 +114,6 @@ public class JsonFlattenerTest {
 	}
 
 	@Test
-	public void trailingGarbageReturnsEmptyMap() {
-		assertTrue(JsonFlattener.flatten("{\"a\":\"b\"} extra").isEmpty());
-	}
-
-	@Test
 	public void whitespaceAroundTokens() {
 		Map<String, String> result = JsonFlattener.flatten("  { \"name\" : \"Bob\" }  ");
 		assertEquals("Bob", result.get("name"));

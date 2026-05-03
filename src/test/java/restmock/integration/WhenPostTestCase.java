@@ -15,8 +15,6 @@ import restmock.response.ContentType;
 
 public class WhenPostTestCase extends IntegrationTestBase {
 
-	private static final String LINE_SEPARATOR = System.lineSeparator();
-
 	@Test
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("Post succeed");
@@ -52,7 +50,7 @@ public class WhenPostTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		assertEquals(200, response.statusCode());
-		assertEquals(resultString + LINE_SEPARATOR, response.body());
+		assertEquals(resultString, response.body());
 	}
 
 }

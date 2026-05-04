@@ -1,6 +1,8 @@
 package restmock;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import restmock.http.HttpMethod;
 import restmock.routing.Route;
 import restmock.routing.RouteManager;
 import restmock.routing.RouteRegister;
+import restmock.response.Binary;
 import restmock.response.ContentType;
 import restmock.response.NotConfigured;
 import restmock.response.Response;
@@ -199,6 +202,54 @@ public class HttpResponseForGETMethodTest {
 		Response response = routeManager.get(route);
 
 		assertEquals(0, response.getDelayMillis());
+	}
+
+	@Test
+	public void thenReturnFileWithBytesUsesOctetStreamByDefault() {
+		byte[] bytes = {1, 2, 3};
+		subject.thenReturnFile(bytes);
+
+		Binary response = assertInstanceOf(Binary.class, routeManager.get(route));
+
+		assertArrayEquals(bytes, response.getBytes());
+		assertEquals("application/octet-stream", response.getContentType().getType());
+	}
+
+	@Test
+	public void thenReturnFileWithExplicitContentType() {
+		byte[] bytes = {1, 2, 3};
+		subject.thenReturnFile(bytes, "application/x-protobuf");
+
+		Response response = routeManager.get(route);
+
+		assertEquals("application/x-protobuf", response.getContentType().getType());
+	}
+
+	@Test
+	public void thenReturnFileFromResourceInfersContentType() throws Exception {
+		subject.thenReturnFileFromResource("page.html");
+
+		Response response = assertInstanceOf(Binary.class, routeManager.get(route));
+
+		assertEquals("text/html", response.getContentType().getType());
+	}
+
+	@Test
+	public void thenReturnFileFromResourceFallsBackToOctetStreamForUnknownExtension() throws Exception {
+		subject.thenReturnFileFromResource("fixture.xyz");
+
+		Response response = routeManager.get(route);
+
+		assertEquals("application/octet-stream", response.getContentType().getType());
+	}
+
+	@Test
+	public void thenReturnFileFromResourceWithExplicitContentType() throws Exception {
+		subject.thenReturnFileFromResource("page.html", "application/octet-stream");
+
+		Response response = routeManager.get(route);
+
+		assertEquals("application/octet-stream", response.getContentType().getType());
 	}
 
 	@Test

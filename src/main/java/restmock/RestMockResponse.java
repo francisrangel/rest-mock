@@ -19,7 +19,12 @@ public interface RestMockResponse {
 	
 	ResponseOptions thenReturnText(String txt);
 	ResponseOptions thenReturnTextFromResource(String path) throws IOException;
-	
+
+	ResponseOptions thenReturnFile(byte[] bytes);
+	ResponseOptions thenReturnFile(byte[] bytes, String contentType);
+	ResponseOptions thenReturnFileFromResource(String path) throws IOException;
+	ResponseOptions thenReturnFileFromResource(String path, String contentType) throws IOException;
+
 	ResponseOptions thenReturnErrorCodeWithMessage(int errorCode, String message);
-	
+
 }

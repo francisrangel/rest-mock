@@ -186,6 +186,37 @@ Place the file in `src/test/resources` and pass the filename. rest-mock loads it
 
 ---
 
+## Serving files (images, PDFs, binaries)
+
+For non-text responses, use `thenReturnFile`. It serves bytes as-is, with no template substitution and no UTF-8 round-trip:
+
+```java
+RestMock.whenGet("/logo")
+        .thenReturnFileFromResource("logo.png");
+```
+
+The MIME type is inferred from the filename extension (`.png` to `image/png`, `.pdf` to `application/pdf`, `.zip` to `application/zip`, etc.); unknown extensions fall back to `application/octet-stream`. Override it when you need a specific MIME:
+
+```java
+RestMock.whenGet("/data")
+        .thenReturnFileFromResource("payload.bin", "application/x-protobuf");
+```
+
+When the bytes come from somewhere other than a classpath file (generated, fetched, hand-crafted), pass them inline:
+
+```java
+byte[] pdf = generatePdf(invoice);
+
+RestMock.whenGet("/invoice")
+        .thenReturnFile(pdf, "application/pdf");
+```
+
+`thenReturnFile(byte[])` without a content type defaults to `application/octet-stream`, since raw bytes carry no filename to infer from.
+
+The file methods bypass `${...}` substitution because templates require a string view of the content. For text responses with placeholders, stick with `thenReturnJSONFromResource`, `thenReturnTextFromResource`, etc.
+
+---
+
 ## Custom status codes and headers
 
 By default every response returns 200. You can change that with `withStatus()`:

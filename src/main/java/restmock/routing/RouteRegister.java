@@ -1,8 +1,12 @@
 package restmock.routing;
 
 import java.io.IOException;
+import java.net.URLConnection;
+import java.util.Objects;
 
 import restmock.RestMockResponse;
+import restmock.response.Binary;
+import restmock.response.ContentType;
 import restmock.response.Html;
 import restmock.response.JSON;
 import restmock.response.NotConfigured;
@@ -84,6 +88,27 @@ public class RouteRegister implements RestMockResponse {
 	@Override
 	public ResponseOptions thenReturnTextFromResource(String path) throws IOException {
 		return thenReturnText(Resource.dataFromResource(path));
+	}
+
+	@Override
+	public ResponseOptions thenReturnFile(byte[] bytes) {
+		return thenReturnFile(bytes, ContentType.APPLICATION_OCTET_STREAM.getType());
+	}
+
+	@Override
+	public ResponseOptions thenReturnFile(byte[] bytes, String contentType) {
+		return registerRoute(new Binary(bytes, ContentType.of(contentType)));
+	}
+
+	@Override
+	public ResponseOptions thenReturnFileFromResource(String path) throws IOException {
+		String guessed = URLConnection.guessContentTypeFromName(path);
+		return thenReturnFileFromResource(path, Objects.requireNonNullElse(guessed, ContentType.APPLICATION_OCTET_STREAM.getType()));
+	}
+
+	@Override
+	public ResponseOptions thenReturnFileFromResource(String path, String contentType) throws IOException {
+		return thenReturnFile(Resource.bytesFromResource(path), contentType);
 	}
 
 }

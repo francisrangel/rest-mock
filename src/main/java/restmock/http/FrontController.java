@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -21,9 +22,10 @@ import com.sun.net.httpserver.HttpHandler;
 
 import restmock.ReceivedRequest;
 import restmock.RequestLog;
+import restmock.response.Binary;
+import restmock.response.Response;
 import restmock.routing.RouteManager;
 import restmock.routing.RouteManager.Match;
-import restmock.response.Response;
 
 public class FrontController implements HttpHandler {
 
@@ -81,10 +83,6 @@ public class FrontController implements HttpHandler {
 			}
 		}
 
-		Map<String, String> parameters = ParameterExtractor.extract(uri, requestBody, exchange.getRequestHeaders());
-		parameters.putAll(resolved.pathCaptures());
-		String responseBody = replaceParameters(content.getContent(), parameters);
-
 		addHeadersAndAllowCrossDomainAccess(content, exchange);
 		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, content.getContentType().getType());
 
@@ -92,7 +90,9 @@ public class FrontController implements HttpHandler {
 			exchange.getResponseHeaders().set(HttpHeader.ALLOW, allowHeaderFor(uri.getPath(), routeManager));
 		}
 
-		byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
+		byte[] body = content instanceof Binary binary
+			? binary.getBytes()
+			: renderTextBody(content, uri, requestBody, exchange.getRequestHeaders(), resolved.pathCaptures());
 
 		if (resolved.route().getMethod() == HttpMethod.HEAD) {
 			exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
@@ -105,6 +105,12 @@ public class FrontController implements HttpHandler {
 		try (OutputStream os = exchange.getResponseBody()) {
 			os.write(body);
 		}
+	}
+
+	private byte[] renderTextBody(Response content, URI uri, String requestBody, Map<String, List<String>> headers, Map<String, String> pathCaptures) {
+		Map<String, String> parameters = ParameterExtractor.extract(uri, requestBody, headers);
+		parameters.putAll(pathCaptures);
+		return replaceParameters(content.getContent(), parameters).getBytes(StandardCharsets.UTF_8);
 	}
 
 	private void sendStatusOnly(HttpExchange exchange, int status) throws IOException {

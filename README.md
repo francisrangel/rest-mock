@@ -1,5 +1,9 @@
 # rest-mock
 
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/java-17%2B-blue.svg)](#install)
+[![Maven Central](https://img.shields.io/maven-central/v/org.simulatest/restmock?label=maven%20central)](https://central.sonatype.com/artifact/org.simulatest/restmock)
+
 **The simplest way to mock HTTP in JVM**
 
 - No config  

@@ -17,6 +17,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -26,8 +29,11 @@ import restmock.response.Binary;
 import restmock.response.Response;
 import restmock.routing.RouteManager;
 import restmock.routing.RouteManager.Match;
+import restmock.utils.LogSafe;
 
 public class FrontController implements HttpHandler {
+
+	private static final Logger log = LoggerFactory.getLogger(FrontController.class);
 
 	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
 
@@ -56,6 +62,13 @@ public class FrontController implements HttpHandler {
 		HttpMethod httpMethod = HttpMethod.byString(method);
 		String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 
+		if (log.isTraceEnabled()) {
+			log.trace("Received {} {} headers={} body={}",
+				httpMethod, uri.getPath(),
+				LogSafe.maskHeaders(exchange.getRequestHeaders()),
+				LogSafe.truncate(requestBody));
+		}
+
 		requestLog.add(new ReceivedRequest(
 			httpMethod,
 			uri.getPath(),
@@ -68,6 +81,7 @@ public class FrontController implements HttpHandler {
 		Optional<Match> match = routeManager.lookup(httpMethod, uri.getPath());
 
 		if (match.isEmpty()) {
+			log.warn("No route matches {} {} - returning 404", httpMethod, uri.getPath());
 			sendStatusOnly(exchange, HttpURLConnection.HTTP_NOT_FOUND);
 			return;
 		}
@@ -79,6 +93,7 @@ public class FrontController implements HttpHandler {
 			try {
 				Thread.sleep(content.getDelayMillis());
 			} catch (InterruptedException e) {
+				log.warn("Delay interrupted for {} {}", httpMethod, uri.getPath());
 				Thread.currentThread().interrupt();
 			}
 		}
@@ -87,7 +102,9 @@ public class FrontController implements HttpHandler {
 		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, content.getContentType().getType());
 
 		if (resolved.route().getMethod() == HttpMethod.OPTIONS) {
-			exchange.getResponseHeaders().set(HttpHeader.ALLOW, allowHeaderFor(uri.getPath(), routeManager));
+			String allow = allowHeaderFor(uri.getPath(), routeManager);
+			exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
+			log.debug("Returning Allow: {} for OPTIONS {}", allow, uri.getPath());
 		}
 
 		byte[] body = content instanceof Binary binary
@@ -97,6 +114,7 @@ public class FrontController implements HttpHandler {
 		if (resolved.route().getMethod() == HttpMethod.HEAD) {
 			exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
 			exchange.sendResponseHeaders(content.getResponseStatus(), -1);
+			log.debug("HEAD {} -> {} (Content-Length {}, no body)", uri.getPath(), content.getResponseStatus(), body.length);
 			return;
 		}
 
@@ -104,6 +122,14 @@ public class FrontController implements HttpHandler {
 
 		try (OutputStream os = exchange.getResponseBody()) {
 			os.write(body);
+		}
+
+		log.debug("{} {} -> {} ({} bytes)", httpMethod, uri.getPath(), content.getResponseStatus(), body.length);
+		if (log.isTraceEnabled()) {
+			String rendered = content instanceof Binary
+				? LogSafe.binaryPlaceholder(body.length)
+				: LogSafe.previewBytes(body);
+			log.trace("Response body for {} {}: {}", httpMethod, uri.getPath(), rendered);
 		}
 	}
 

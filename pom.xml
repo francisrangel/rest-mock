@@ -7,6 +7,8 @@
 	<artifactId>restmock</artifactId>
 	<version>0.0.1</version>
 	<name>Rest Mock</name>
+	<description>The simplest way to mock HTTP in JVM</description>
+	<url>https://github.com/francisrangel/rest-mock</url>
 
 	<licenses>
 		<license>
@@ -15,6 +17,12 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
+	<scm>
+		<connection>scm:git:https://github.com/francisrangel/rest-mock.git</connection>
+		<developerConnection>scm:git:git@github.com:francisrangel/rest-mock.git</developerConnection>
+		<url>https://github.com/francisrangel/rest-mock</url>
+	</scm>
 
 	<developers>
 		<developer>
@@ -31,6 +39,10 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<!-- Reproducible builds: same source bytes in, same jar bytes out.
+		     Bump this to the release date on every release. -->
+		<project.build.outputTimestamp>2026-05-05T00:00:00Z</project.build.outputTimestamp>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 		<junit.version>6.0.3</junit.version>
@@ -110,7 +122,108 @@
 					<argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
 				</configuration>
 			</plugin>
+			<!-- Sources JAR: attached to every build so `mvn install` produces a
+			     complete artifact set and Maven Central gets *-sources.jar. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.4.0</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Javadoc JAR + lint: attached to every build so Maven Central gets
+			     *-javadoc.jar. doclint catches HTML/reference/syntax/accessibility
+			     issues but not missing comments - we document intent, not every getter. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.12.0</version>
+				<configuration>
+					<doclint>all,-missing</doclint>
+					<quiet>true</quiet>
+					<failOnWarnings>true</failOnWarnings>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- CycloneDX SBOM: emits a bom.xml + bom.json next to every jar so
+			     downstream supply-chain scanners can enumerate dependencies
+			     without re-resolving from Central. -->
+			<plugin>
+				<groupId>org.cyclonedx</groupId>
+				<artifactId>cyclonedx-maven-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>build-sbom</id>
+						<phase>package</phase>
+						<goals>
+							<goal>makeBom</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- Release-only concerns: GPG signing and Maven Central publishing.
+		     Source and javadoc JARs are produced by the default build. -->
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>3.2.8</version>
+						<configuration>
+							<!-- Loopback pinentry: read the passphrase from the
+							     MAVEN_GPG_PASSPHRASE env var (or -Dgpg.passphrase)
+							     instead of opening a GUI prompt. Works the same
+							     locally and in CI. -->
+							<gpgArguments>
+								<arg>--pinentry-mode</arg>
+								<arg>loopback</arg>
+							</gpgArguments>
+						</configuration>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.10.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>false</autoPublish>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

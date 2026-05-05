@@ -10,8 +10,6 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import restmock.http.HttpMethod;
-
 public class RequestLogTest {
 
 	private RequestLog log;

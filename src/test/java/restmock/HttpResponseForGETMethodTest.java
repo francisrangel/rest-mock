@@ -7,15 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import restmock.internal.response.Binary;
+import restmock.internal.response.ContentType;
+import restmock.internal.response.NotConfigured;
+import restmock.internal.response.Response;
+import restmock.internal.routing.Route;
+import restmock.internal.routing.RouteManager;
+import restmock.internal.routing.RouteRegister;
 import restmock.mock.Developer;
-import restmock.http.HttpMethod;
-import restmock.routing.Route;
-import restmock.routing.RouteManager;
-import restmock.routing.RouteRegister;
-import restmock.response.Binary;
-import restmock.response.ContentType;
-import restmock.response.NotConfigured;
-import restmock.response.Response;
 
 public class HttpResponseForGETMethodTest {
 

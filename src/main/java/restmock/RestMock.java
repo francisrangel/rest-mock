@@ -3,12 +3,12 @@ package restmock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
-import restmock.http.HttpMethod;
-import restmock.response.JSON;
-import restmock.response.XML;
-import restmock.routing.Route;
-import restmock.routing.RouteManager;
-import restmock.routing.RouteRegister;
+import restmock.internal.response.JSON;
+import restmock.internal.response.XML;
+import restmock.internal.routing.Route;
+import restmock.internal.routing.RouteManager;
+import restmock.internal.routing.RouteRegister;
+import restmock.internal.server.RestMockServer;
 
 /**
  * Entry point for stubbing HTTP responses in tests.

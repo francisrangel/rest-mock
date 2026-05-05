@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.List;
 
-import restmock.http.HttpMethod;
-
 /**
  * A single request the mock server received.
  *

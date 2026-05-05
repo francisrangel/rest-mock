@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import restmock.HttpMethod;
 import restmock.RestMock;
-import restmock.http.HttpHeader;
-import restmock.http.HttpMethod;
+import restmock.internal.http.HttpHeader;
 
 public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 

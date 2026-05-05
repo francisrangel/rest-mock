@@ -7,9 +7,8 @@ import static org.mockito.Mockito.mock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import restmock.http.HttpMethod;
-import restmock.routing.Route;
-import restmock.response.TextPlain;
+import restmock.internal.response.TextPlain;
+import restmock.internal.routing.Route;
 
 public class RestMockExtensionTest {
 

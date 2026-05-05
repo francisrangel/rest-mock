@@ -10,8 +10,8 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import restmock.HttpMethod;
 import restmock.RestMockExtension;
-import restmock.http.HttpMethod;
 
 public class IntegrationTestBase {
 

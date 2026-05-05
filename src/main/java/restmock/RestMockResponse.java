@@ -2,8 +2,6 @@ package restmock;
 
 import java.io.IOException;
 
-import restmock.response.ResponseOptions;
-
 /**
  * Configures the response for a stubbed route.
  *

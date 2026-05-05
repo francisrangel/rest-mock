@@ -8,10 +8,10 @@ import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.Test;
 
+import restmock.HttpMethod;
 import restmock.RestMock;
-import restmock.http.HttpHeader;
-import restmock.http.HttpMethod;
-import restmock.response.ContentType;
+import restmock.internal.http.HttpHeader;
+import restmock.internal.response.ContentType;
 
 public class WhenPostTestCase extends IntegrationTestBase {
 

@@ -9,8 +9,8 @@ import java.net.http.HttpResponse;
 import org.junit.jupiter.api.Test;
 
 import restmock.RestMock;
-import restmock.http.HttpHeader;
-import restmock.response.ContentType;
+import restmock.internal.http.HttpHeader;
+import restmock.internal.response.ContentType;
 
 public class JsonBodyTestCase extends IntegrationTestBase {
 

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import restmock.http.HttpMethod;
 
 /**
  * Records every request the mock server received, in arrival order.

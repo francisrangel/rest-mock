@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 import restmock.RestMock;
-import restmock.http.HttpHeader;
+import restmock.internal.http.HttpHeader;
 
 public class BinaryFileTestCase extends IntegrationTestBase {
 

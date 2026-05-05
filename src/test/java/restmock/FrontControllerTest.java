@@ -18,11 +18,10 @@ import org.junit.jupiter.api.Test;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
-import restmock.http.FrontController;
-import restmock.http.HttpMethod;
-import restmock.routing.Route;
-import restmock.routing.RouteManager;
-import restmock.response.TextPlain;
+import restmock.internal.http.FrontController;
+import restmock.internal.response.TextPlain;
+import restmock.internal.routing.Route;
+import restmock.internal.routing.RouteManager;
 
 public class FrontControllerTest {
 

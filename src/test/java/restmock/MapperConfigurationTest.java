@@ -11,8 +11,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import restmock.response.JSON;
-import restmock.response.XML;
+import restmock.internal.response.JSON;
+import restmock.internal.response.XML;
 
 public class MapperConfigurationTest {
 

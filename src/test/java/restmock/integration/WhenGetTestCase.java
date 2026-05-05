@@ -6,9 +6,9 @@ import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.Test;
 
+import restmock.HttpMethod;
 import restmock.RestMock;
 import restmock.mock.Developer;
-import restmock.http.HttpMethod;
 
 public class WhenGetTestCase extends IntegrationTestBase {
 

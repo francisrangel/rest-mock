@@ -6,8 +6,8 @@ import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.Test;
 
+import restmock.HttpMethod;
 import restmock.RestMock;
-import restmock.http.HttpMethod;
 
 public class PathTemplateTestCase extends IntegrationTestBase {
 

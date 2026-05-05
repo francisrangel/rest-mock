@@ -353,12 +353,20 @@ If even that's not enough, pre-serialize the response yourself and use the strin
 
 ```xml
 <dependency>
-  <groupId>org</groupId>
+  <groupId>org.simulatest</groupId>
   <artifactId>restmock</artifactId>
-  <version>0.0.1</version>
+  <version>0.1.0</version>
   <scope>test</scope>
 </dependency>
 ```
+
+Gradle:
+
+```groovy
+testImplementation 'org.simulatest:restmock:0.1.0'
+```
+
+Requires Java 17 or later.
 
 ---
 

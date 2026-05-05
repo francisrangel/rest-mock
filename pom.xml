@@ -5,7 +5,7 @@
 
 	<groupId>org.simulatest</groupId>
 	<artifactId>restmock</artifactId>
-	<version>0.0.1</version>
+	<version>0.1.0</version>
 	<name>Rest Mock</name>
 	<description>The simplest way to mock HTTP in JVM</description>
 	<url>https://github.com/francisrangel/rest-mock</url>

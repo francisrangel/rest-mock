@@ -45,7 +45,7 @@
 		<project.build.outputTimestamp>2026-05-05T00:00:00Z</project.build.outputTimestamp>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
-		<junit.version>6.0.3</junit.version>
+		<junit.version>6.1.0</junit.version>
 		<!-- slf4j-api is the only third-party jar pushed onto downstream
 		     classpaths (compile scope). Pin to the last 1.7.x so Maven's
 		     nearest-wins doesn't yank older Spring Boot 2.x users off

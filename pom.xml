@@ -51,7 +51,7 @@
 		     nearest-wins doesn't yank older Spring Boot 2.x users off
 		     their 1.7-compatible logback. SLF4J's Logger/LoggerFactory
 		     surface is wire-compatible across 1.7 and 2.x. -->
-		<slf4j.version>1.7.36</slf4j.version>
+		<slf4j.version>2.0.18</slf4j.version>
 	</properties>
 
 	<dependencies>

@@ -23,8 +23,10 @@ public class Route {
 	public Route(HttpMethod method, String uri) {
 		this.method = Objects.requireNonNull(method, "method");
 		this.uri = Objects.requireNonNull(uri, "uri");
-		this.captureNames = new ArrayList<>();
-		this.pattern = compile(uri, captureNames);
+
+		Compiled compiled = compile(uri);
+		this.pattern = compiled.pattern();
+		this.captureNames = compiled.captureNames();
 	}
 
 	public Route(String method, String uri) {
@@ -41,6 +43,11 @@ public class Route {
 
 	public int captureCount() {
 		return captureNames.size();
+	}
+
+	/** True when this route's path pattern matches {@code requestPath}, ignoring the method. */
+	public boolean matchesPath(String requestPath) {
+		return pattern.matcher(requestPath).matches();
 	}
 
 	public Optional<Map<String, String>> match(HttpMethod requestMethod, String requestPath) {
@@ -65,10 +72,11 @@ public class Route {
 	public boolean equals(Object obj) {
 		if (this == obj) return true;
 		if (!(obj instanceof Route other)) return false;
-		return other.uri.equals(uri) && other.method.equals(method);
+		return other.uri.equals(uri) && other.method == method;
 	}
 
-	private static Pattern compile(String uri, List<String> captureNames) {
+	private static Compiled compile(String uri) {
+		List<String> captureNames = new ArrayList<>();
 		Matcher m = PLACEHOLDER.matcher(uri);
 		StringBuilder regex = new StringBuilder("^");
 		int last = 0;
@@ -80,7 +88,9 @@ public class Route {
 		}
 		regex.append(Pattern.quote(uri.substring(last)));
 		regex.append("$");
-		return Pattern.compile(regex.toString());
+		return new Compiled(Pattern.compile(regex.toString()), List.copyOf(captureNames));
 	}
+
+	private record Compiled(Pattern pattern, List<String> captureNames) { }
 
 }

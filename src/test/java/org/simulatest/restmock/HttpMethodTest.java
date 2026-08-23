@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 public class HttpMethodTest {
 
 	@Test
-	public void byString() {
+	public void byStringResolvesEveryMethodIgnoringCase() {
 		assertEquals(HttpMethod.GET, HttpMethod.byString("get"));
 		assertEquals(HttpMethod.GET, HttpMethod.byString("GET"));
 
@@ -32,7 +32,7 @@ public class HttpMethodTest {
 	}
 
 	@Test
-	public void invalidMethod() {
+	public void byStringRejectsAnUnknownMethodName() {
 		assertThrows(IllegalArgumentException.class, () -> HttpMethod.byString("foo"));
 	}
 

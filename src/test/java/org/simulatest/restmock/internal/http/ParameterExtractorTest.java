@@ -1,6 +1,7 @@
 package org.simulatest.restmock.internal.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
@@ -60,7 +61,7 @@ public class ParameterExtractorTest {
 
 	@Test
 	public void formEncodedBody() {
-		withContentType(ContentType.APPLICATION_FORM_URLENCODED.getType() + "; charset=UTF-8");
+		withContentType(ContentType.APPLICATION_FORM_URLENCODED.type() + "; charset=UTF-8");
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "name=Bob&age=25", headers);
 
@@ -70,7 +71,7 @@ public class ParameterExtractorTest {
 
 	@Test
 	public void jsonBody() {
-		withContentType(ContentType.APPLICATION_JSON.getType());
+		withContentType(ContentType.APPLICATION_JSON.type());
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "{\"user\":{\"name\":\"Bob\"}}", headers);
 
@@ -79,16 +80,18 @@ public class ParameterExtractorTest {
 
 	@Test
 	public void unknownContentTypeIgnoresBody() {
-		withContentType(ContentType.TEXT_PLAIN.getType());
+		withContentType(ContentType.TEXT_PLAIN.type());
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "name=Bob", headers);
 
-		assertTrue(params.isEmpty());
+		assertNull(params.get("name"), "a text/plain body must not be parsed for parameters");
+		// the request's own headers are parameters too, so the map is not empty
+		assertEquals(ContentType.TEXT_PLAIN.type(), params.get(HttpHeader.CONTENT_TYPE));
 	}
 
 	@Test
 	public void queryAndFormBodyMerge() {
-		withContentType(ContentType.APPLICATION_FORM_URLENCODED.getType());
+		withContentType(ContentType.APPLICATION_FORM_URLENCODED.type());
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?from=query"), "from_body=yes", headers);
 
@@ -98,7 +101,7 @@ public class ParameterExtractorTest {
 
 	@Test
 	public void formBodyOverridesQueryWhenSameKey() {
-		withContentType(ContentType.APPLICATION_FORM_URLENCODED.getType());
+		withContentType(ContentType.APPLICATION_FORM_URLENCODED.type());
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=Alice"), "name=Bob", headers);
 
@@ -134,6 +137,99 @@ public class ParameterExtractorTest {
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?"), "", headers);
 
 		assertTrue(params.isEmpty());
+	}
+
+	// --- documented in RestMockResponse: "${name} may reference query parameters,
+	// --- headers, JSON/XML body fields, and path captures"
+
+	@Test
+	public void headerValuesAreExposedAsParameters() {
+		headers.put("X-Tenant", List.of("acme"));
+
+		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+
+		assertEquals("acme", params.get("X-Tenant"));
+	}
+
+	@Test
+	public void onlyTheFirstValueOfARepeatedHeaderIsExposed() {
+		headers.put("X-Tenant", List.of("acme", "other"));
+
+		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+
+		assertEquals("acme", params.get("X-Tenant"));
+	}
+
+	@Test
+	public void headerNamesAreMatchedIgnoringCase() {
+		// the JDK server rewrites X-Tenant to X-tenant, so a template that spells the
+		// header the way the client sent it still has to resolve
+		headers.put("X-tenant", List.of("acme"));
+
+		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+
+		assertEquals("acme", params.get("X-Tenant"));
+		assertEquals("acme", params.get("x-tenant"));
+	}
+
+	@Test
+	public void queryParametersWinOverHeadersWithTheSameName() {
+		headers.put("name", List.of("from-header"));
+
+		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=from-query"), "", headers);
+
+		assertEquals("from-query", params.get("name"));
+	}
+
+	@Test
+	public void bodyFieldsWinOverHeadersWithTheSameName() {
+		withContentType(ContentType.APPLICATION_JSON.type());
+		headers.put("name", List.of("from-header"));
+
+		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "{\"name\":\"from-body\"}", headers);
+
+		assertEquals("from-body", params.get("name"));
+	}
+
+	@Test
+	public void xmlBodyFieldsAreExposedAsParameters() {
+		withContentType(ContentType.TEXT_XML.type());
+
+		Map<String, String> params = ParameterExtractor.extract(
+			URI.create("/test"), "<developer><name>Bob</name><age>25</age></developer>", headers);
+
+		assertEquals("Bob", params.get("name"));
+		assertEquals("25", params.get("age"));
+	}
+
+	@Test
+	public void nestedXmlBodyFieldsUseDottedPaths() {
+		withContentType(ContentType.TEXT_XML.type());
+
+		Map<String, String> params = ParameterExtractor.extract(
+			URI.create("/test"), "<order><customer><name>Bob</name></customer></order>", headers);
+
+		assertEquals("Bob", params.get("customer.name"));
+	}
+
+	@Test
+	public void applicationXmlIsTreatedAsXmlToo() {
+		withContentType("application/xml");
+
+		Map<String, String> params = ParameterExtractor.extract(
+			URI.create("/test"), "<developer><name>Bob</name></developer>", headers);
+
+		assertEquals("Bob", params.get("name"));
+	}
+
+	@Test
+	public void malformedXmlIsIgnoredAndLeavesTheOtherSourcesIntact() {
+		withContentType(ContentType.TEXT_XML.type());
+
+		Map<String, String> params = ParameterExtractor.extract(
+			URI.create("/test?from=query"), "<not xml", headers);
+
+		assertEquals("query", params.get("from"));
 	}
 
 }

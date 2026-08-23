@@ -61,12 +61,12 @@ public class RequestLog {
 
 	/** How many recorded requests had this exact path. */
 	public int countForPath(String path) {
-		return (int) requests.stream().filter(r -> r.path().equals(path)).count();
+		return forPath(path).size();
 	}
 
 	/** How many recorded requests matched both method and exact path. */
 	public int countForRoute(HttpMethod method, String path) {
-		return (int) requests.stream().filter(r -> r.method() == method && r.path().equals(path)).count();
+		return forRoute(method, path).size();
 	}
 
 	/** True if no requests have been recorded. */
@@ -76,16 +76,12 @@ public class RequestLog {
 
 	/** The most recent request, or empty if none. */
 	public Optional<ReceivedRequest> last() {
-		return requests.isEmpty() ? Optional.empty() : Optional.of(requests.get(requests.size() - 1));
+		return last(requests);
 	}
 
 	/** The most recent request that hit this exact path, or empty if none. */
 	public Optional<ReceivedRequest> lastForPath(String path) {
-		ReceivedRequest result = null;
-		for (ReceivedRequest r : requests) {
-			if (r.path().equals(path)) result = r;
-		}
-		return Optional.ofNullable(result);
+		return last(forPath(path));
 	}
 
 	/** Internal: invoked by the server when a request arrives. */
@@ -96,6 +92,10 @@ public class RequestLog {
 	/** Internal: invoked by {@link RestMock#clean()} and {@link RestMock#stopServer()}. */
 	public void clear() {
 		requests.clear();
+	}
+
+	private static Optional<ReceivedRequest> last(List<ReceivedRequest> candidates) {
+		return candidates.isEmpty() ? Optional.empty() : Optional.of(candidates.get(candidates.size() - 1));
 	}
 
 }

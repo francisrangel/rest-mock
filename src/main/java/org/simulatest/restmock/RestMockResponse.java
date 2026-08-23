@@ -18,11 +18,17 @@ import java.io.IOException;
  * Text resources are decoded as UTF-8 and have leading and trailing whitespace
  * stripped; binary resources are passed through byte-for-byte.
  *
- * Response bodies may reference query parameters, headers, JSON/XML body fields,
- * and path captures using {@code ${name}} placeholders. For example, a route
- * registered as {@code /users/{id}} can return {@code {"id":"${id}"}}. If a name
- * appears in more than one source, path captures override query, header, and
- * body fields (in that order).
+ * Response bodies may reference request headers, query parameters, form/JSON/XML
+ * body fields, and path captures using {@code ${name}} placeholders. For example,
+ * a route registered as {@code /users/{id}} can return {@code {"id":"${id}"}}.
+ * Nested body fields use dotted paths ({@code ${user.name}}) and array elements
+ * use indexes ({@code ${items.0.sku}}); for XML the root element is not part of
+ * the path. Names are matched case-insensitively, so {@code ${X-Tenant}} resolves
+ * a header however the server happened to canonicalize its name.
+ *
+ * If a name appears in more than one source the most specific wins, in this order:
+ * path captures, then body fields, then query parameters, then headers. A
+ * placeholder with no matching name is left in the body verbatim.
  */
 public interface RestMockResponse {
 

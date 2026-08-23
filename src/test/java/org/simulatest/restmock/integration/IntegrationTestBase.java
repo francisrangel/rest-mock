@@ -11,11 +11,13 @@ import java.time.Duration;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.simulatest.restmock.HttpMethod;
+import org.simulatest.restmock.RestMock;
 import org.simulatest.restmock.RestMockExtension;
+import org.simulatest.restmock.internal.http.HttpHeader;
 
 public class IntegrationTestBase {
 
-	protected final String baseUrl = "http://localhost:9080";
+	protected final String baseUrl = "http://localhost:" + RestMock.DEFAULT_PORT;
 
 	@RegisterExtension
 	static RestMockExtension server = new RestMockExtension();
@@ -24,25 +26,38 @@ public class IntegrationTestBase {
 		.connectTimeout(Duration.ofSeconds(5))
 		.build();
 
-	protected void requestMethodWithResultString(String url, String expectedBody, HttpMethod method) throws Exception {
-		HttpResponse<String> response = sendRequest(url, method);
+	/** Sends the request and asserts the response body. Every helper below takes a path, not a full URL. */
+	protected void assertResponseBody(String path, String expectedBody, HttpMethod method) throws Exception {
+		HttpResponse<String> response = sendRequest(path, method);
+
+		assertEquals(200, response.statusCode(), "unexpected status for " + method + " " + path);
 		assertEquals(expectedBody, response.body());
 	}
 
-	protected HttpResponse<String> sendRequest(String url, HttpMethod method) throws Exception {
-		HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create(url));
+	protected HttpResponse<String> sendRequest(String path, HttpMethod method) throws Exception {
+		HttpRequest request = HttpRequest.newBuilder()
+			.uri(URI.create(baseUrl + path))
+			.method(method.name(), HttpRequest.BodyPublishers.noBody())
+			.build();
 
-		switch (method) {
-			case GET:     builder.GET(); break;
-			case POST:    builder.POST(HttpRequest.BodyPublishers.noBody()); break;
-			case PUT:     builder.PUT(HttpRequest.BodyPublishers.noBody()); break;
-			case DELETE:  builder.DELETE(); break;
-			case PATCH:   builder.method(HttpMethod.PATCH.name(), HttpRequest.BodyPublishers.noBody()); break;
-			case HEAD:    builder.method(HttpMethod.HEAD.name(), HttpRequest.BodyPublishers.noBody()); break;
-			case OPTIONS: builder.method(HttpMethod.OPTIONS.name(), HttpRequest.BodyPublishers.noBody()); break;
-		}
+		return client.send(request, HttpResponse.BodyHandlers.ofString());
+	}
 
-		return client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+	/** Sends {@code body} to {@code path} with the given method and Content-Type. */
+	protected HttpResponse<String> sendRequest(String path, HttpMethod method, String contentType, String body) throws Exception {
+		HttpRequest request = HttpRequest.newBuilder()
+			.uri(URI.create(baseUrl + path))
+			.header(HttpHeader.CONTENT_TYPE, contentType)
+			.method(method.name(), HttpRequest.BodyPublishers.ofString(body))
+			.build();
+
+		return client.send(request, HttpResponse.BodyHandlers.ofString());
+	}
+
+	/** Sends a GET to {@code path} and returns the raw response bytes. */
+	protected HttpResponse<byte[]> getBytes(String path) throws Exception {
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(baseUrl + path)).GET().build();
+		return client.send(request, HttpResponse.BodyHandlers.ofByteArray());
 	}
 
 }

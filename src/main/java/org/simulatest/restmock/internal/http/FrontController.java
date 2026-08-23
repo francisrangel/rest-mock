@@ -7,26 +7,24 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.ReceivedRequest;
 import org.simulatest.restmock.RequestLog;
-import org.simulatest.restmock.internal.response.Binary;
 import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.internal.routing.RouteManager.Match;
@@ -36,11 +34,7 @@ public class FrontController implements HttpHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(FrontController.class);
 
-	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
-
-	private static final String ALL_METHODS = Arrays.stream(HttpMethod.values())
-		.map(Enum::name)
-		.collect(Collectors.joining(", "));
+	private static final String ALL_METHODS = joinMethodNames(Arrays.asList(HttpMethod.values()));
 
 	private final RouteManager routeManager;
 	private final RequestLog requestLog;
@@ -60,7 +54,16 @@ public class FrontController implements HttpHandler {
 	public void processRequest(HttpExchange exchange) throws IOException {
 		String method = exchange.getRequestMethod();
 		URI uri = exchange.getRequestURI();
-		HttpMethod httpMethod = HttpMethod.byString(method);
+
+		HttpMethod httpMethod;
+		try {
+			httpMethod = HttpMethod.byString(method);
+		} catch (IllegalArgumentException unsupported) {
+			log.warn("Unsupported HTTP method {} for {} - returning 501", method, uri.getPath());
+			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_IMPLEMENTED, -1);
+			return;
+		}
+
 		String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 
 		if (log.isTraceEnabled()) {
@@ -74,7 +77,7 @@ public class FrontController implements HttpHandler {
 			httpMethod,
 			uri.getPath(),
 			uri.getRawQuery(),
-			new HashMap<>(exchange.getRequestHeaders()),
+			exchange.getRequestHeaders(),
 			requestBody,
 			Instant.now()
 		));
@@ -83,7 +86,7 @@ public class FrontController implements HttpHandler {
 
 		if (match.isEmpty()) {
 			log.warn("No route matches {} {} - returning 404", httpMethod, uri.getPath());
-			sendStatusOnly(exchange, HttpURLConnection.HTTP_NOT_FOUND);
+			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1);
 			return;
 		}
 
@@ -99,21 +102,21 @@ public class FrontController implements HttpHandler {
 			}
 		}
 
-		addHeadersAndAllowCrossDomainAccess(content, exchange);
-		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, content.getContentType().getType());
+		writeResponseHeaders(content, exchange);
 
-		if (resolved.route().getMethod() == HttpMethod.OPTIONS) {
-			String allow = allowHeaderFor(uri.getPath(), routeManager);
+		if (httpMethod == HttpMethod.OPTIONS) {
+			String allow = allowHeaderFor(uri.getPath());
 			exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
 			log.debug("Returning Allow: {} for OPTIONS {}", allow, uri.getPath());
 		}
 
-		byte[] body = content instanceof Binary binary
-			? binary.getBytes()
-			: renderTextBody(content, uri, requestBody, exchange.getRequestHeaders(), resolved.pathCaptures());
+		byte[] body = content.render(
+			parametersFor(uri, requestBody, exchange.getRequestHeaders(), resolved.pathCaptures()));
 
-		if (resolved.route().getMethod() == HttpMethod.HEAD) {
-			exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
+		if (httpMethod == HttpMethod.HEAD) {
+			if (allowsContentLength(content.getResponseStatus())) {
+				exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
+			}
 			exchange.sendResponseHeaders(content.getResponseStatus(), -1);
 			log.debug("HEAD {} -> {} (Content-Length {}, no body)", uri.getPath(), content.getResponseStatus(), body.length);
 			return;
@@ -127,46 +130,51 @@ public class FrontController implements HttpHandler {
 
 		log.debug("{} {} -> {} ({} bytes)", httpMethod, uri.getPath(), content.getResponseStatus(), body.length);
 		if (log.isTraceEnabled()) {
-			String rendered = content instanceof Binary
-				? LogSafe.binaryPlaceholder(body.length)
-				: LogSafe.previewBytes(body);
+			String rendered = content.isTextual()
+				? LogSafe.previewBytes(body)
+				: LogSafe.binaryPlaceholder(body.length);
 			log.trace("Response body for {} {}: {}", httpMethod, uri.getPath(), rendered);
 		}
 	}
 
-	private byte[] renderTextBody(Response content, URI uri, String requestBody, Map<String, List<String>> headers, Map<String, String> pathCaptures) {
+	private static Map<String, String> parametersFor(URI uri, String requestBody, Map<String, List<String>> headers, Map<String, String> pathCaptures) {
 		Map<String, String> parameters = ParameterExtractor.extract(uri, requestBody, headers);
 		parameters.putAll(pathCaptures);
-		return replaceParameters(content.getContent(), parameters).getBytes(StandardCharsets.UTF_8);
+		return parameters;
 	}
 
-	private void sendStatusOnly(HttpExchange exchange, int status) throws IOException {
-		exchange.sendResponseHeaders(status, -1);
-	}
-
-	private String allowHeaderFor(String path, RouteManager routeManager) {
+	private String allowHeaderFor(String path) {
 		Set<HttpMethod> methods = routeManager.methodsFor(path);
 		methods.add(HttpMethod.OPTIONS);
+		return joinMethodNames(methods);
+	}
+
+	private static String joinMethodNames(Collection<HttpMethod> methods) {
 		return methods.stream().map(Enum::name).collect(Collectors.joining(", "));
 	}
 
-	private String replaceParameters(String template, Map<String, String> parameters) {
-		return PARAMETER_PATTERN.matcher(template).replaceAll(match -> {
-			String key = match.group(1);
-			return Matcher.quoteReplacement(parameters.getOrDefault(key, match.group(0)));
-		});
-	}
+	/**
+	 * Writes the framework defaults first and the user's own headers last, so a
+	 * header set via {@code withHeader} always wins - including {@code Content-Type}.
+	 */
+	private void writeResponseHeaders(Response content, HttpExchange exchange) {
+		Headers responseHeaders = exchange.getResponseHeaders();
 
-	private void addHeadersAndAllowCrossDomainAccess(Response content, HttpExchange exchange) {
-		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS, ALL_METHODS);
-		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_MAX_AGE, "360");
-		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS, "x-requested-with");
-		exchange.getResponseHeaders().set(HttpHeader.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+		responseHeaders.set(HttpHeader.CONTENT_TYPE, content.getContentType().type());
+		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS, ALL_METHODS);
+		responseHeaders.set(HttpHeader.ACCESS_CONTROL_MAX_AGE, "360");
+		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS, "x-requested-with");
+		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
 
 		for (Entry<String, String> header : content.getHeader().entrySet()) {
-			exchange.getResponseHeaders().set(header.getKey(), header.getValue());
+			responseHeaders.set(header.getKey(), header.getValue());
 		}
+	}
+
+	/** 204 and 304 carry no body; the JDK server rejects the exchange if they declare a length. */
+	private static boolean allowsContentLength(int status) {
+		return status != HttpURLConnection.HTTP_NO_CONTENT && status != HttpURLConnection.HTTP_NOT_MODIFIED;
 	}
 
 }

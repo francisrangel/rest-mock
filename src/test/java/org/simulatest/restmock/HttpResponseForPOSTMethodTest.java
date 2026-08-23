@@ -20,12 +20,12 @@ public class HttpResponseForPOSTMethodTest {
 	@BeforeEach
 	public void setUp() {
 		routeManager = new RouteManager();
-		route = new Route(HttpMethod.POST, "/teste");
+		route = new Route(HttpMethod.POST, "/test");
 		subject = new RouteRegister(route, routeManager);
 	}
 
 	@Test
-	public void testSimpleTextResponse() {
+	public void thenReturnTextRegistersAPlainTextResponseForPost() {
 		subject.thenReturnText("Test succeed");
 
 		Response response = routeManager.get(route);

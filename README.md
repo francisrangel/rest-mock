@@ -163,8 +163,22 @@ GET /users/42?nickname=bob → "user 42 aka bob"
 Works with:
 - path params  
 - query params  
+- request headers  
 - form body  
 - JSON body  
+- XML body  
+
+Nested fields use dotted paths and array elements use indexes:
+
+```java
+RestMock.whenPost("/orders")
+        .thenReturnText("first sku: ${items.0.sku} for ${customer.name}");
+```
+
+Names are matched case-insensitively, so `${X-Tenant}` finds the header you sent.
+When a name exists in more than one place the most specific wins: path captures,
+then body fields, then query params, then headers. A placeholder that matches
+nothing is left in the body as-is.
 
 ---
 

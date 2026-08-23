@@ -3,6 +3,10 @@ package org.simulatest.restmock;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.io.UncheckedIOException;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +34,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testPlainTextResponse() throws Exception {
+	public void thenReturnTextRegistersAPlainTextResponse() throws Exception {
 		subject.thenReturnText("Hello World!");
 
 		Response response = routeManager.get(route);
@@ -40,7 +44,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testHtmlResponse() throws Exception {
+	public void thenReturnHTMLRegistersAnHtmlResponse() throws Exception {
 		subject.thenReturnHTML("<h1>Mock rules</h1>");
 
 		Response response = routeManager.get(route);
@@ -50,7 +54,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testJSONResponse() throws Exception {
+	public void thenReturnJSONWithAStringKeepsItVerbatim() throws Exception {
 		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
 		subject.thenReturnJSON(simpleJSON);
 
@@ -61,7 +65,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testJSONObjectResponse() throws Exception {
+	public void thenReturnJSONWithAnObjectSerializesIt() throws Exception {
 		subject.thenReturnJSON(new Developer("Bob", 25));
 
 		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";
@@ -72,7 +76,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testXMLStringResponse() {
+	public void thenReturnXMLWithAStringKeepsItVerbatim() {
 		String simpleXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
 		subject.thenReturnXML(simpleXML);
 
@@ -83,7 +87,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testXMLObjectResponse() {
+	public void thenReturnXMLWithAnObjectSerializesIt() {
 		subject.thenReturnXML(new Developer("Bob", 25));
 
 		String expectedXML = "<Developer><name>Bob</name><age>25</age></Developer>";
@@ -94,15 +98,31 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testHeaderResponse() {
-		subject.thenReturnXML(new Developer("Bob", 25)).withHeader("Cache-Control", "no-cache");
+	public void withHeaderAttachesTheHeaderToTheResponse() {
+		subject.thenReturnText("ok").withHeader("Cache-Control", "no-cache");
+
 		Response response = routeManager.get(route);
 
 		assertEquals("no-cache", response.getHeader().get("Cache-Control"));
 	}
 
 	@Test
-	public void testJSONFromResource() throws Exception {
+	public void lastValueWinsForARepeatedHeader() {
+		subject.thenReturnText("ok").withHeader("X-Retry", "1").withHeader("X-Retry", "2");
+
+		Response response = routeManager.get(route);
+
+		assertEquals("2", response.getHeader().get("X-Retry"));
+		assertEquals(1, response.getHeader().size());
+	}
+
+	@Test
+	public void thenReturnJSONWrapsASerializationFailure() {
+		assertThrows(UncheckedIOException.class, () -> subject.thenReturnJSON(new Object() { }));
+	}
+
+	@Test
+	public void thenReturnJSONFromResourceLoadsTheFile() throws Exception {
 		subject.thenReturnJSONFromResource("developer.json");
 
 		Response response = routeManager.get(route);
@@ -112,7 +132,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testXMLFromResource() throws Exception {
+	public void thenReturnXMLFromResourceLoadsTheFile() throws Exception {
 		subject.thenReturnXMLFromResource("developer.xml");
 
 		Response response = routeManager.get(route);
@@ -123,7 +143,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testHTMLFromResource() throws Exception {
+	public void thenReturnHTMLFromResourceLoadsTheFile() throws Exception {
 		subject.thenReturnHTMLFromResource("page.html");
 
 		Response response = routeManager.get(route);
@@ -133,7 +153,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void testTextFromResource() throws Exception {
+	public void thenReturnTextFromResourceLoadsTheFile() throws Exception {
 		subject.thenReturnTextFromResource("example.txt");
 
 		Response response = routeManager.get(route);
@@ -210,8 +230,8 @@ public class HttpResponseForGETMethodTest {
 
 		Binary response = assertInstanceOf(Binary.class, routeManager.get(route));
 
-		assertArrayEquals(bytes, response.getBytes());
-		assertEquals("application/octet-stream", response.getContentType().getType());
+		assertArrayEquals(bytes, response.render(Map.of()));
+		assertEquals(ContentType.APPLICATION_OCTET_STREAM, response.getContentType());
 	}
 
 	@Test
@@ -221,7 +241,7 @@ public class HttpResponseForGETMethodTest {
 
 		Response response = routeManager.get(route);
 
-		assertEquals("application/x-protobuf", response.getContentType().getType());
+		assertEquals("application/x-protobuf", response.getContentType().type());
 	}
 
 	@Test
@@ -230,7 +250,7 @@ public class HttpResponseForGETMethodTest {
 
 		Response response = assertInstanceOf(Binary.class, routeManager.get(route));
 
-		assertEquals("text/html", response.getContentType().getType());
+		assertEquals(ContentType.TEXT_HTML, response.getContentType());
 	}
 
 	@Test
@@ -239,7 +259,7 @@ public class HttpResponseForGETMethodTest {
 
 		Response response = routeManager.get(route);
 
-		assertEquals("application/octet-stream", response.getContentType().getType());
+		assertEquals(ContentType.APPLICATION_OCTET_STREAM, response.getContentType());
 	}
 
 	@Test
@@ -248,7 +268,7 @@ public class HttpResponseForGETMethodTest {
 
 		Response response = routeManager.get(route);
 
-		assertEquals("application/octet-stream", response.getContentType().getType());
+		assertEquals(ContentType.APPLICATION_OCTET_STREAM, response.getContentType());
 	}
 
 	@Test

@@ -2,14 +2,12 @@ package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.Test;
 
+import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.RestMock;
-import org.simulatest.restmock.internal.http.HttpHeader;
 import org.simulatest.restmock.internal.response.ContentType;
 
 public class JsonBodyTestCase extends IntegrationTestBase {
@@ -46,12 +44,8 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 	public void nonJsonContentTypeLeavesPlaceholderLiteral() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("hello ${name}");
 
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(baseUrl + "/test"))
-			.header(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.getType())
-			.POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"Bob\"}"))
-			.build();
-		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> response =
+			sendRequest("/test", HttpMethod.POST, ContentType.TEXT_PLAIN.type(), "{\"name\":\"Bob\"}");
 
 		assertEquals("hello ${name}", response.body());
 	}
@@ -64,12 +58,8 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 	}
 
 	private void postJson(String path, String jsonBody, String expectedAnswer) throws Exception {
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(baseUrl + path))
-			.header(HttpHeader.CONTENT_TYPE, ContentType.APPLICATION_JSON.getType())
-			.POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-			.build();
-		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> response =
+			sendRequest(path, HttpMethod.POST, ContentType.APPLICATION_JSON.type(), jsonBody);
 
 		assertEquals(200, response.statusCode());
 		assertEquals(expectedAnswer, response.body());

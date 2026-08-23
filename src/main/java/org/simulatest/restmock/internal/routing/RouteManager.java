@@ -62,7 +62,7 @@ public class RouteManager {
 	public Set<HttpMethod> methodsFor(String path) {
 		Set<HttpMethod> methods = EnumSet.noneOf(HttpMethod.class);
 		for (Route route : routes.keySet()) {
-			if (route.match(route.getMethod(), path).isPresent()) methods.add(route.getMethod());
+			if (route.matchesPath(path)) methods.add(route.getMethod());
 		}
 		return methods;
 	}

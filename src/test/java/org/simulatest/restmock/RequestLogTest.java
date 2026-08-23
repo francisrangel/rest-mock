@@ -67,7 +67,7 @@ public class RequestLogTest {
 	}
 
 	@Test
-	public void forMethod() {
+	public void forMethodFiltersByVerb() {
 		log.add(request(HttpMethod.GET, "/a"));
 		log.add(request(HttpMethod.POST, "/b"));
 		log.add(request(HttpMethod.GET, "/c"));
@@ -90,7 +90,7 @@ public class RequestLogTest {
 	}
 
 	@Test
-	public void countForPath() {
+	public void countForPathMatchesLiterally() {
 		log.add(request(HttpMethod.GET, "/a"));
 		log.add(request(HttpMethod.GET, "/b"));
 		log.add(request(HttpMethod.GET, "/a"));
@@ -101,7 +101,7 @@ public class RequestLogTest {
 	}
 
 	@Test
-	public void countForRoute() {
+	public void countForRouteMatchesMethodAndPath() {
 		log.add(request(HttpMethod.GET, "/a"));
 		log.add(request(HttpMethod.POST, "/a"));
 
@@ -119,7 +119,7 @@ public class RequestLogTest {
 	}
 
 	@Test
-	public void lastForPath() {
+	public void lastForPathReturnsTheMostRecentMatch() {
 		log.add(request(HttpMethod.GET, "/users", "page=1", ""));
 		log.add(request(HttpMethod.GET, "/posts", null, ""));
 		log.add(request(HttpMethod.GET, "/users", "page=2", ""));

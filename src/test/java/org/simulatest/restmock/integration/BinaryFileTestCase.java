@@ -3,8 +3,6 @@ package org.simulatest.restmock.integration;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
@@ -12,8 +10,15 @@ import org.junit.jupiter.api.Test;
 
 import org.simulatest.restmock.RestMock;
 import org.simulatest.restmock.internal.http.HttpHeader;
+import org.simulatest.restmock.internal.response.ContentType;
 
 public class BinaryFileTestCase extends IntegrationTestBase {
+
+	/** Exact contents of src/test/resources/page.html */
+	private static final byte[] PAGE_HTML_BYTES = "<h1>Hello</h1>".getBytes(StandardCharsets.UTF_8);
+
+	/** Exact contents of src/test/resources/fixture.xyz, trailing CRLF included */
+	private static final byte[] FIXTURE_XYZ_BYTES = "binary blob\r\n".getBytes(StandardCharsets.UTF_8);
 
 	@Test
 	public void binaryBytesAreReturnedUntouched() throws Exception {
@@ -24,7 +29,7 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 
 		assertEquals(200, response.statusCode());
 		assertArrayEquals(bytes, response.body());
-		assertEquals("application/octet-stream", contentType(response));
+		assertEquals(ContentType.APPLICATION_OCTET_STREAM.type(), contentType(response));
 	}
 
 	@Test
@@ -44,7 +49,8 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 
 		HttpResponse<byte[]> response = getBytes("/page");
 
-		assertEquals("text/html", contentType(response));
+		assertEquals(ContentType.TEXT_HTML.type(), contentType(response));
+		assertArrayEquals(PAGE_HTML_BYTES, response.body());
 	}
 
 	@Test
@@ -53,7 +59,8 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 
 		HttpResponse<byte[]> response = getBytes("/page");
 
-		assertEquals("application/octet-stream", contentType(response));
+		assertEquals(ContentType.APPLICATION_OCTET_STREAM.type(), contentType(response));
+		assertArrayEquals(PAGE_HTML_BYTES, response.body());
 	}
 
 	@Test
@@ -62,7 +69,9 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 
 		HttpResponse<byte[]> response = getBytes("/blob");
 
-		assertEquals("application/octet-stream", contentType(response));
+		assertEquals(ContentType.APPLICATION_OCTET_STREAM.type(), contentType(response));
+		// the trailing CRLF proves binary resources skip the strip() that text resources get
+		assertArrayEquals(FIXTURE_XYZ_BYTES, response.body());
 	}
 
 	@Test
@@ -70,11 +79,7 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 		byte[] bytes = "${name}".getBytes(StandardCharsets.UTF_8);
 		RestMock.whenGet("/echo").thenReturnFile(bytes);
 
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(baseUrl + "/echo?name=Bob"))
-			.GET()
-			.build();
-		HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+		HttpResponse<byte[]> response = getBytes("/echo?name=Bob");
 
 		assertArrayEquals(bytes, response.body());
 	}
@@ -87,11 +92,6 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 		HttpResponse<byte[]> response = getBytes("/sized");
 
 		assertEquals("10", response.headers().firstValue(HttpHeader.CONTENT_LENGTH).orElseThrow());
-	}
-
-	private HttpResponse<byte[]> getBytes(String path) throws Exception {
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(baseUrl + path)).GET().build();
-		return client.send(request, HttpResponse.BodyHandlers.ofByteArray());
 	}
 
 	private String contentType(HttpResponse<?> response) {

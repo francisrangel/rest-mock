@@ -1,5 +1,7 @@
 package org.simulatest.restmock.internal.response;
 
+import java.util.Map;
+
 public final class Binary extends Response {
 
 	private final byte[] bytes;
@@ -11,8 +13,14 @@ public final class Binary extends Response {
 		this.contentType = contentType;
 	}
 
-	public byte[] getBytes() {
+	@Override
+	public byte[] render(Map<String, String> parameters) {
 		return bytes;
+	}
+
+	@Override
+	public boolean isTextual() {
+		return false;
 	}
 
 	@Override

@@ -14,26 +14,27 @@ public class DelayTestCase extends IntegrationTestBase {
 
 	@Test
 	public void delayedResponseTakesAtLeastTheConfiguredTime() throws Exception {
-		RestMock.whenGet("/slow").thenReturnText("done").withDelay(300);
+		RestMock.whenGet("/slow").thenReturnText("done").withDelay(50);
 
 		long start = System.currentTimeMillis();
-		HttpResponse<String> response = sendRequest(baseUrl + "/slow", HttpMethod.GET);
+		HttpResponse<String> response = sendRequest("/slow", HttpMethod.GET);
 		long elapsed = System.currentTimeMillis() - start;
 
 		assertEquals(200, response.statusCode());
-		assertTrue(elapsed >= 300, "Expected at least 300ms but took " + elapsed + "ms");
+		assertTrue(elapsed >= 50, "Expected at least 50ms but took " + elapsed + "ms");
 	}
 
+	// The "no delay configured means zero delay" invariant is verified deterministically by
+	// HttpResponseForGETMethodTest.defaultDelayIsZero; asserting it here against the wall clock
+	// made the test fail on a loaded machine without any defect.
 	@Test
-	public void noDelayRespondsImmediately() throws Exception {
+	public void aRouteWithoutDelayRespondsNormally() throws Exception {
 		RestMock.whenGet("/fast").thenReturnText("done");
 
-		long start = System.currentTimeMillis();
-		HttpResponse<String> response = sendRequest(baseUrl + "/fast", HttpMethod.GET);
-		long elapsed = System.currentTimeMillis() - start;
+		HttpResponse<String> response = sendRequest("/fast", HttpMethod.GET);
 
 		assertEquals(200, response.statusCode());
-		assertTrue(elapsed < 200, "Expected fast response but took " + elapsed + "ms");
+		assertEquals("done", response.body());
 	}
 
 }

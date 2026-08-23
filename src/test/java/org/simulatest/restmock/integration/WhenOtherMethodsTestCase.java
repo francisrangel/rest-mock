@@ -1,11 +1,12 @@
 package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URI;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Arrays;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,28 +20,28 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 	public void put() throws Exception {
 		RestMock.whenPut("/test").thenReturnText("Put succeed");
 
-		requestMethodWithResultString(baseUrl + "/test", "Put succeed", HttpMethod.PUT);
+		assertResponseBody("/test", "Put succeed", HttpMethod.PUT);
 	}
 
 	@Test
 	public void delete() throws Exception {
 		RestMock.whenDelete("/test").thenReturnText("Delete succeed");
 
-		requestMethodWithResultString(baseUrl + "/test", "Delete succeed", HttpMethod.DELETE);
+		assertResponseBody("/test", "Delete succeed", HttpMethod.DELETE);
 	}
 
 	@Test
 	public void patch() throws Exception {
 		RestMock.whenPatch("/test").thenReturnText("Patch succeed");
 
-		requestMethodWithResultString(baseUrl + "/test", "Patch succeed", HttpMethod.PATCH);
+		assertResponseBody("/test", "Patch succeed", HttpMethod.PATCH);
 	}
 
 	@Test
 	public void options() throws Exception {
 		RestMock.whenOptions("/test").thenReturnText("Options succeed");
 
-		requestMethodWithResultString(baseUrl + "/test", "Options succeed", HttpMethod.OPTIONS);
+		assertResponseBody("/test", "Options succeed", HttpMethod.OPTIONS);
 	}
 
 	@Test
@@ -50,7 +51,7 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 		RestMock.whenOptions("/test").thenReturnText("ok");
 		RestMock.whenGet("/other").thenReturnText("ok");
 
-		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.OPTIONS);
+		HttpResponse<String> response = sendRequest("/test", HttpMethod.OPTIONS);
 
 		String allow = response.headers().firstValue(HttpHeader.ALLOW).orElse("");
 		Set<String> methods = Set.of(allow.split(",\\s*"));
@@ -61,28 +62,48 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 	public void head() throws Exception {
 		RestMock.whenHead("/test").thenReturnText("Head succeed");
 
-		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.HEAD);
+		HttpResponse<String> response = sendRequest("/test", HttpMethod.HEAD);
 
 		assertEquals(200, response.statusCode());
 		assertEquals("", response.body());
+		assertEquals("12", response.headers().firstValue(HttpHeader.CONTENT_LENGTH).orElse(""));
+	}
 
-		String expectedLength = Integer.toString("Head succeed".getBytes().length);
-		assertEquals(expectedLength, response.headers().firstValue(HttpHeader.CONTENT_LENGTH).orElse(""));
+	@Test
+	public void headWithANoContentStatusOmitsContentLength() throws Exception {
+		RestMock.whenHead("/test").thenReturnText("Head succeed").withStatus(204);
+
+		HttpResponse<String> response = sendRequest("/test", HttpMethod.HEAD);
+
+		assertEquals(204, response.statusCode());
+		assertTrue(response.headers().firstValue(HttpHeader.CONTENT_LENGTH).isEmpty(),
+			"a 204 must not declare a Content-Length, the JDK server rejects the exchange");
+	}
+
+	@Test
+	public void anUnsupportedVerbGetsNotImplemented() throws Exception {
+		RestMock.whenGet("/test").thenReturnText("ok");
+
+		HttpResponse<String> response = client.send(
+			HttpRequest.newBuilder()
+				.uri(URI.create(baseUrl + "/test"))
+				.method("TRACE", HttpRequest.BodyPublishers.noBody())
+				.build(),
+			HttpResponse.BodyHandlers.ofString());
+
+		assertEquals(501, response.statusCode());
 	}
 
 	@Test
 	public void corsAllowMethodsHeaderListsAllSupportedVerbs() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("ok");
 
-		HttpResponse<String> response = sendRequest(baseUrl + "/test", HttpMethod.GET);
+		HttpResponse<String> response = sendRequest("/test", HttpMethod.GET);
 
-		String allMethods = Arrays.stream(HttpMethod.values())
-			.map(Enum::name)
-			.collect(Collectors.joining(", "));
-
+		String allowMethods = response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS).orElse("");
 		assertEquals(
-			allMethods,
-			response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS).orElse(""));
+			Set.of("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"),
+			Set.of(allowMethods.split(",\\s*")));
 	}
 
 }

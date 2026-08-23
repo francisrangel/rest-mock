@@ -1,8 +1,6 @@
 package org.simulatest.restmock.internal.routing;
 
 import java.io.IOException;
-import java.net.URLConnection;
-import java.util.Objects;
 
 import org.simulatest.restmock.ResponseOptions;
 import org.simulatest.restmock.RestMockResponse;
@@ -92,23 +90,26 @@ public class RouteRegister implements RestMockResponse {
 
 	@Override
 	public ResponseOptions thenReturnFile(byte[] bytes) {
-		return thenReturnFile(bytes, ContentType.APPLICATION_OCTET_STREAM.getType());
+		return registerBinary(bytes, ContentType.APPLICATION_OCTET_STREAM);
 	}
 
 	@Override
 	public ResponseOptions thenReturnFile(byte[] bytes, String contentType) {
-		return registerRoute(new Binary(bytes, ContentType.of(contentType)));
+		return registerBinary(bytes, new ContentType(contentType));
 	}
 
 	@Override
 	public ResponseOptions thenReturnFileFromResource(String path) throws IOException {
-		String guessed = URLConnection.guessContentTypeFromName(path);
-		return thenReturnFileFromResource(path, Objects.requireNonNullElse(guessed, ContentType.APPLICATION_OCTET_STREAM.getType()));
+		return registerBinary(Resource.bytesFromResource(path), ContentType.guessFrom(path));
 	}
 
 	@Override
 	public ResponseOptions thenReturnFileFromResource(String path, String contentType) throws IOException {
 		return thenReturnFile(Resource.bytesFromResource(path), contentType);
+	}
+
+	private ResponseOptions registerBinary(byte[] bytes, ContentType contentType) {
+		return registerRoute(new Binary(bytes, contentType));
 	}
 
 }

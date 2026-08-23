@@ -1,6 +1,7 @@
 package org.simulatest.restmock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -29,8 +31,10 @@ public class FrontControllerTest {
 	private final RouteManager routeManager = mock(RouteManager.class);
 	private final RequestLog requestLog = new RequestLog();
 	private final Headers headers = new Headers();
+	private final FrontController controller = new FrontController(routeManager, requestLog);
 
 	private void prepare(String method, String uri) {
+		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 		when(exchange.getRequestMethod()).thenReturn(method);
 		when(exchange.getRequestURI()).thenReturn(URI.create(uri));
 		when(exchange.getRequestHeaders()).thenReturn(headers);
@@ -42,9 +46,8 @@ public class FrontControllerTest {
 	@Test
 	public void frontControllerShouldAskRouteManagerForAResponseToProcessARequest() throws IOException {
 		prepare(HttpMethod.GET.name(), "/test");
-		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 
-		new FrontController(routeManager, requestLog).processRequest(exchange);
+		controller.processRequest(exchange);
 
 		verify(routeManager).lookup(HttpMethod.GET, "/test");
 	}
@@ -52,9 +55,8 @@ public class FrontControllerTest {
 	@Test
 	public void frontControllerShouldReturn404WhenRouteManagerDoesNotKnowARoute() throws IOException {
 		prepare(HttpMethod.GET.name(), "/test");
-		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
 
-		new FrontController(routeManager, requestLog).processRequest(exchange);
+		controller.processRequest(exchange);
 
 		verify(exchange).sendResponseHeaders(404, -1);
 	}
@@ -66,22 +68,37 @@ public class FrontControllerTest {
 		RouteManager.Match match = new RouteManager.Match(route, new TextPlain("ok"), new HashMap<>());
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.of(match));
 
-		new FrontController(routeManager, requestLog).processRequest(exchange);
+		controller.processRequest(exchange);
 
 		verify(exchange).sendResponseHeaders(200, "ok".getBytes().length);
 	}
 
 	@Test
 	public void requestIsCaptured() throws IOException {
-		prepare(HttpMethod.GET.name(), "/test?q=1");
-		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
+		prepare(HttpMethod.POST.name(), "/test?q=1");
+		headers.add("Content-Type", "application/json");
+		when(exchange.getRequestBody()).thenReturn(
+			new ByteArrayInputStream("{\"name\":\"Bob\"}".getBytes(StandardCharsets.UTF_8)));
 
-		new FrontController(routeManager, requestLog).processRequest(exchange);
+		controller.processRequest(exchange);
 
 		assertEquals(1, requestLog.count());
-		assertEquals(HttpMethod.GET, requestLog.last().orElseThrow().method());
-		assertEquals("/test", requestLog.last().orElseThrow().path());
-		assertEquals("q=1", requestLog.last().orElseThrow().query());
+		ReceivedRequest captured = requestLog.last().orElseThrow();
+		assertEquals(HttpMethod.POST, captured.method());
+		assertEquals("/test", captured.path());
+		assertEquals("q=1", captured.query());
+		assertEquals("{\"name\":\"Bob\"}", captured.body());
+		assertEquals("application/json", captured.headers().get("Content-type").get(0));
+	}
+
+	@Test
+	public void anUnsupportedHttpMethodIsRejectedWithNotImplemented() throws IOException {
+		prepare("TRACE", "/test");
+
+		controller.processRequest(exchange);
+
+		verify(exchange).sendResponseHeaders(501, -1);
+		assertTrue(requestLog.isEmpty(), "an unsupported method must not be recorded");
 	}
 
 }

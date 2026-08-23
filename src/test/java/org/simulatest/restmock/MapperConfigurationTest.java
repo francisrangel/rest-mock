@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -30,28 +32,39 @@ public class MapperConfigurationTest {
 		assertSame(RestMock.xml(), RestMock.xml());
 	}
 
+	// These tests mutate the JVM-wide mappers that HttpResponseForGETMethodTest and
+	// WhenGetTestCase depend on for their exact expected serialization, so the restore
+	// has to be enforced by the fixture rather than by a finally block in each test.
+	private PropertyNamingStrategy originalNamingStrategy;
+	private boolean xmlWasIndented;
+
+	@BeforeEach
+	public void captureMapperConfiguration() {
+		originalNamingStrategy = RestMock.json().getPropertyNamingStrategy();
+		xmlWasIndented = RestMock.xml().isEnabled(SerializationFeature.INDENT_OUTPUT);
+	}
+
+	@AfterEach
+	public void restoreMapperConfiguration() {
+		RestMock.json().setPropertyNamingStrategy(originalNamingStrategy);
+		RestMock.xml().configure(SerializationFeature.INDENT_OUTPUT, xmlWasIndented);
+	}
+
 	@Test
 	public void jsonConfigurationFlowsThroughToSerialization() {
-		PropertyNamingStrategy original = RestMock.json().getPropertyNamingStrategy();
-		try {
-			RestMock.json().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-			assertEquals("{\"first_name\":\"Bob\",\"last_name\":\"Smith\"}",
-				new JSON(new Person("Bob", "Smith")).getContent());
-		} finally {
-			RestMock.json().setPropertyNamingStrategy(original);
-		}
+		RestMock.json().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+
+		assertEquals("{\"first_name\":\"Bob\",\"last_name\":\"Smith\"}",
+			new JSON(new Person("Bob", "Smith")).getContent());
 	}
 
 	@Test
 	public void xmlConfigurationFlowsThroughToSerialization() {
-		boolean wasIndented = RestMock.xml().isEnabled(SerializationFeature.INDENT_OUTPUT);
-		try {
-			RestMock.xml().enable(SerializationFeature.INDENT_OUTPUT);
-			String xml = new XML(new Person("Bob", "Smith")).getContent();
-			assertTrue(xml.contains("\n"), "expected indented XML to contain newlines, got: " + xml);
-		} finally {
-			if (!wasIndented) RestMock.xml().disable(SerializationFeature.INDENT_OUTPUT);
-		}
+		RestMock.xml().enable(SerializationFeature.INDENT_OUTPUT);
+
+		String xml = new XML(new Person("Bob", "Smith")).getContent();
+
+		assertTrue(xml.contains("\n"), "expected indented XML to contain newlines, got: " + xml);
 	}
 
 }

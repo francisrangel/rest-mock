@@ -1,9 +1,12 @@
 package org.simulatest.restmock.internal.routing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -73,6 +76,65 @@ public class RouteManagerTest {
 		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/users/42").orElseThrow();
 
 		assertEquals("42", match.pathCaptures().get("id"));
+	}
+
+	@Test
+	public void pathCapturesCannotBeModifiedByCallers() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/users/{id}"), new TextPlain("ok"));
+
+		Map<String, String> captures = manager.lookup(HttpMethod.GET, "/users/42").orElseThrow().pathCaptures();
+
+		assertThrows(UnsupportedOperationException.class, () -> captures.put("id", "99"));
+	}
+
+	@Test
+	public void methodsForCollectsEveryMethodRegisteredForThePath() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/users"), new TextPlain("ok"));
+		manager.registerRoute(new Route(HttpMethod.POST, "/users"), new TextPlain("ok"));
+		manager.registerRoute(new Route(HttpMethod.DELETE, "/posts"), new TextPlain("ok"));
+
+		assertEquals(Set.of(HttpMethod.GET, HttpMethod.POST), manager.methodsFor("/users"));
+	}
+
+	@Test
+	public void methodsForMatchesTemplatedRoutes() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.PUT, "/users/{id}"), new TextPlain("ok"));
+
+		assertEquals(Set.of(HttpMethod.PUT), manager.methodsFor("/users/42"));
+	}
+
+	@Test
+	public void methodsForIsEmptyWhenNothingMatchesThePath() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/users"), new TextPlain("ok"));
+
+		assertTrue(manager.methodsFor("/posts").isEmpty());
+	}
+
+	@Test
+	public void theLastRegisteredRouteWinsWhenCaptureCountsTie() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/t/{x}/c"), new TextPlain("first"));
+		manager.registerRoute(new Route(HttpMethod.GET, "/t/b/{y}"), new TextPlain("second"));
+
+		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/t/b/c").orElseThrow();
+
+		assertEquals("second", match.response().getContent());
+	}
+
+	@Test
+	public void reRegisteringTheSameRouteReplacesTheResponse() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/users"), new TextPlain("first"));
+		manager.registerRoute(new Route(HttpMethod.GET, "/users"), new TextPlain("second"));
+
+		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/users").orElseThrow();
+
+		assertEquals("second", match.response().getContent());
+		assertEquals(1, manager.size());
 	}
 
 	@Test

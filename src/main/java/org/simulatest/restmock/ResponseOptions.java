@@ -30,8 +30,8 @@ public class ResponseOptions {
 
 	/**
 	 * Sleeps for {@code millis} before sending the response. Useful for simulating
-	 * slow upstreams. Blocks the server thread; concurrent requests under delay
-	 * are serialized. Last call wins.
+	 * slow upstreams. The delay applies to this route only: requests to other
+	 * routes are served concurrently and are not held up. Last call wins.
 	 */
 	public ResponseOptions withDelay(long millis) {
 		response.setDelayMillis(millis);

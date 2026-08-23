@@ -4,8 +4,8 @@ import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,12 +18,16 @@ public abstract class Response {
 
 	private final String content;
 	private final Map<String, String> header;
-	private int responseStatus = HttpURLConnection.HTTP_OK;
-	private long delayMillis;
+
+	// Written by the test thread via ResponseOptions, read by the server's
+	// worker threads. Volatile (and a concurrent map) so a status, delay, or
+	// header set after the route was registered is visible to whoever serves it.
+	private volatile int responseStatus = HttpURLConnection.HTTP_OK;
+	private volatile long delayMillis;
 
 	Response(String body) {
 		this.content = body;
-		this.header = new HashMap<>();
+		this.header = new ConcurrentHashMap<>();
 	}
 
 	public abstract ContentType getContentType();

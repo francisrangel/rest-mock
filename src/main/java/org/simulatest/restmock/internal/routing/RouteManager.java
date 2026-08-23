@@ -19,12 +19,22 @@ public class RouteManager {
 
 	private static final Logger log = LoggerFactory.getLogger(RouteManager.class);
 
+	/**
+	 * Replaced wholesale on every registration rather than mutated in place: the
+	 * server threads iterate this map while a test thread registers routes, and a
+	 * LinkedHashMap cannot be read and written at once. Registration happens a
+	 * handful of times per test, so copying is free; keeping LinkedHashMap keeps
+	 * the insertion order that {@link #lookup} relies on to break ties.
+	 */
 	private volatile Map<Route, Response> routes = new LinkedHashMap<>();
 
 	public RouteManager() { }
 
-	public void registerRoute(Route route, Response response) {
-		Response previous = routes.put(route, response);
+	public synchronized void registerRoute(Route route, Response response) {
+		Map<Route, Response> updated = new LinkedHashMap<>(routes);
+		Response previous = updated.put(route, response);
+		routes = updated;
+
 		if (previous != null && !(previous instanceof NotConfigured) && !(response instanceof NotConfigured)) {
 			log.warn("Replacing existing route {} {} (previous response: {}, new response: {})",
 				route.getMethod(), route.getUri(),
@@ -67,7 +77,7 @@ public class RouteManager {
 		return methods;
 	}
 
-	public void clean() {
+	public synchronized void clean() {
 		routes = new LinkedHashMap<>();
 	}
 

@@ -3,6 +3,10 @@ package org.simulatest.restmock.internal.server;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +24,7 @@ public class RestMockServer {
 	private final RouteManager routeManager;
 	private final RequestLog requestLog;
 	private HttpServer server;
+	private ExecutorService workers;
 
 	public RestMockServer(RouteManager routeManager, RequestLog requestLog) {
 		this.routeManager = routeManager;
@@ -36,8 +41,10 @@ public class RestMockServer {
 			throw new UncheckedIOException("Could not start the server!", e);
 		}
 
+		workers = Executors.newCachedThreadPool(new WorkerFactory());
+
 		server.createContext("/", new FrontController(routeManager, requestLog));
-		server.setExecutor(null);
+		server.setExecutor(workers);
 		server.start();
 
 		log.info("RestMock server started on port {}", port);
@@ -53,11 +60,30 @@ public class RestMockServer {
 		int requestCount = requestLog.count();
 
 		server.stop(0);
+		workers.shutdownNow();
 		server = null;
+		workers = null;
 		routeManager.clean();
 		requestLog.clear();
 
 		log.info("RestMock server stopped (cleared {} routes, {} requests)", routeCount, requestCount);
+	}
+
+	/**
+	 * Daemon workers, so a test that forgets to stop the server never holds the
+	 * JVM open. Named so a thread dump during a hung test points here.
+	 */
+	private static final class WorkerFactory implements ThreadFactory {
+
+		private final AtomicInteger counter = new AtomicInteger();
+
+		@Override
+		public Thread newThread(Runnable runnable) {
+			Thread thread = new Thread(runnable, "restmock-" + counter.incrementAndGet());
+			thread.setDaemon(true);
+			return thread;
+		}
+
 	}
 
 }

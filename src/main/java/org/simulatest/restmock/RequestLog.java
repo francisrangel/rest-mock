@@ -1,9 +1,8 @@
 package org.simulatest.restmock;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
@@ -19,43 +18,49 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * like {@code /users/{id}} are not expanded for filtering. Filter with the literal
  * path the client called, or use {@link #all()} and stream.
  *
- * Safe to read from any thread; iteration sees a consistent snapshot even while
- * the server is recording new requests.
+ * Safe to read from any thread; every accessor takes a snapshot, so iteration is
+ * never disturbed by requests arriving as you read.
  *
  * Cleared by {@link RestMock#clean()} and by {@link RestMockExtension} between tests.
  */
 public class RequestLog {
 
-	private final List<ReceivedRequest> requests = new CopyOnWriteArrayList<>();
+	/**
+	 * Guarded by this. A copy-on-write list looks tempting for a
+	 * write-once-read-rarely log, but it is exactly backwards here: every
+	 * recorded request copied the whole backing array, so a test firing a few
+	 * thousand requests paid O(n^2) to build a list nobody read until the end.
+	 */
+	private final List<ReceivedRequest> requests = new ArrayList<>();
 
 	/** Every recorded request, in arrival order. */
-	public List<ReceivedRequest> all() {
-		return Collections.unmodifiableList(requests);
+	public synchronized List<ReceivedRequest> all() {
+		return List.copyOf(requests);
 	}
 
 	/** Recorded requests whose path equals {@code path} exactly. */
 	public List<ReceivedRequest> forPath(String path) {
-		return requests.stream()
+		return all().stream()
 			.filter(r -> r.path().equals(path))
 			.toList();
 	}
 
 	/** Recorded requests with the given HTTP method. */
 	public List<ReceivedRequest> forMethod(HttpMethod method) {
-		return requests.stream()
+		return all().stream()
 			.filter(r -> r.method() == method)
 			.toList();
 	}
 
 	/** Recorded requests matching both method and exact path. */
 	public List<ReceivedRequest> forRoute(HttpMethod method, String path) {
-		return requests.stream()
+		return all().stream()
 			.filter(r -> r.method() == method && r.path().equals(path))
 			.toList();
 	}
 
 	/** Total recorded requests. */
-	public int count() {
+	public synchronized int count() {
 		return requests.size();
 	}
 
@@ -70,13 +75,13 @@ public class RequestLog {
 	}
 
 	/** True if no requests have been recorded. */
-	public boolean isEmpty() {
+	public synchronized boolean isEmpty() {
 		return requests.isEmpty();
 	}
 
 	/** The most recent request, or empty if none. */
 	public Optional<ReceivedRequest> last() {
-		return last(requests);
+		return last(all());
 	}
 
 	/** The most recent request that hit this exact path, or empty if none. */
@@ -85,12 +90,12 @@ public class RequestLog {
 	}
 
 	/** Invoked by the server when a request arrives. Not public: a forged entry would make every assertion here worthless. */
-	void add(ReceivedRequest request) {
+	synchronized void add(ReceivedRequest request) {
 		requests.add(request);
 	}
 
 	/** Invoked by {@link RestMock#clean()} and {@link RestMock#stopServer()}. */
-	void clear() {
+	synchronized void clear() {
 		requests.clear();
 	}
 

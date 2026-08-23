@@ -4,12 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Modifier;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.BeforeEach;
-import java.lang.reflect.Modifier;
-
 import org.junit.jupiter.api.Test;
 
 public class RequestLogTest {
@@ -162,6 +166,40 @@ public class RequestLogTest {
 			"RequestLog.add must not be public");
 		assertFalse(Modifier.isPublic(RequestLog.class.getDeclaredMethod("clear").getModifiers()),
 			"RequestLog.clear must not be public");
+	}
+
+	@Test
+	public void allReturnsASnapshotThatLaterRequestsDoNotDisturb() {
+		RequestLog log = new RequestLog();
+		log.add(request(HttpMethod.GET, "/first"));
+
+		List<ReceivedRequest> snapshot = log.all();
+		log.add(request(HttpMethod.GET, "/second"));
+
+		assertEquals(1, snapshot.size(), "a snapshot taken before the second request must not grow");
+		assertEquals(2, log.all().size());
+	}
+
+	@Test
+	public void concurrentRecordingLosesNothing() throws Exception {
+		RequestLog log = new RequestLog();
+		int threads = 8;
+		int perThread = 500;
+
+		ExecutorService pool = Executors.newFixedThreadPool(threads);
+		try {
+			List<Future<?>> running = new ArrayList<>();
+			for (int t = 0; t < threads; t++) {
+				running.add(pool.submit(() -> {
+					for (int i = 0; i < perThread; i++) log.add(request(HttpMethod.GET, "/hit"));
+				}));
+			}
+			for (Future<?> future : running) future.get();
+		} finally {
+			pool.shutdownNow();
+		}
+
+		assertEquals(threads * perThread, log.count());
 	}
 
 }

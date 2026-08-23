@@ -1,7 +1,5 @@
-package org.simulatest.restmock.internal.routing;
+package org.simulatest.restmock;
 
-import org.simulatest.restmock.ResponseOptions;
-import org.simulatest.restmock.RestMockResponse;
 import org.simulatest.restmock.internal.response.Binary;
 import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.Html;
@@ -10,14 +8,21 @@ import org.simulatest.restmock.internal.response.NotConfigured;
 import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.response.TextPlain;
 import org.simulatest.restmock.internal.response.XML;
+import org.simulatest.restmock.internal.routing.Route;
+import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.internal.utils.Resource;
 
-public class RouteRegister implements RestMockResponse {
+/**
+ * The builder half of the public API. Package-private and living beside the
+ * types it hands back, so {@link ResponseOptions} need not expose a constructor
+ * taking an internal {@code Response} to the outside world.
+ */
+class RouteRegister implements RestMockResponse {
 
 	private final Route route;
 	private final RouteManager routeManager;
 
-	public RouteRegister(Route route, RouteManager routeManager) {
+	RouteRegister(Route route, RouteManager routeManager) {
 		this.route = route;
 		this.routeManager = routeManager;
 		routeManager.registerRoute(route, new NotConfigured(route.getUri()));

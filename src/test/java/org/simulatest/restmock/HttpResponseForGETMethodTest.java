@@ -18,7 +18,6 @@ import org.simulatest.restmock.internal.response.NotConfigured;
 import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
-import org.simulatest.restmock.internal.routing.RouteRegister;
 import org.simulatest.restmock.mock.Developer;
 
 public class HttpResponseForGETMethodTest {

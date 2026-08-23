@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
+import java.lang.reflect.Modifier;
+
 import org.junit.jupiter.api.Test;
 
 public class RequestLogTest {
@@ -148,6 +150,18 @@ public class RequestLogTest {
 
 		assertEquals("key=val", req.query());
 		assertEquals("{\"name\":\"Bob\"}", req.body());
+	}
+
+	/**
+	 * Recording is the server's job. When these were public, user code could
+	 * forge entries into the log every assertion here reads from.
+	 */
+	@Test
+	public void recordingAndClearingAreNotPublicApi() throws Exception {
+		assertFalse(Modifier.isPublic(RequestLog.class.getDeclaredMethod("add", ReceivedRequest.class).getModifiers()),
+			"RequestLog.add must not be public");
+		assertFalse(Modifier.isPublic(RequestLog.class.getDeclaredMethod("clear").getModifiers()),
+			"RequestLog.clear must not be public");
 	}
 
 }

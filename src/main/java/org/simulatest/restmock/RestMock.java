@@ -7,7 +7,6 @@ import org.simulatest.restmock.internal.response.JSON;
 import org.simulatest.restmock.internal.response.XML;
 import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
-import org.simulatest.restmock.internal.routing.RouteRegister;
 import org.simulatest.restmock.internal.server.RestMockServer;
 
 /**
@@ -44,7 +43,7 @@ public final class RestMock {
 
 	private static final RouteManager routeManager = new RouteManager();
 	private static final RequestLog requestLog = new RequestLog();
-	private static final RestMockServer server = new RestMockServer(routeManager, requestLog);
+	private static final RestMockServer server = new RestMockServer(routeManager, requestLog::add);
 
 	private RestMock() {}
 
@@ -139,6 +138,7 @@ public final class RestMock {
 	/** Stops the server and clears all routes and recorded requests. No-op if not running. */
 	public static void stopServer() {
 		server.stop();
+		clean();
 	}
 
 	/** Removes all stubbed routes and clears the request log. The server keeps running. */

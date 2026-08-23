@@ -9,7 +9,6 @@ import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
-import org.simulatest.restmock.internal.routing.RouteRegister;
 
 public class HttpResponseForPOSTMethodTest {
 

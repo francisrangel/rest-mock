@@ -34,7 +34,7 @@ public class FrontControllerTest {
 	private final RouteManager routeManager = mock(RouteManager.class);
 	private final RequestLog requestLog = new RequestLog();
 	private final Headers headers = new Headers();
-	private final FrontController controller = new FrontController(routeManager, requestLog);
+	private final FrontController controller = new FrontController(routeManager, requestLog::add);
 
 	private void prepare(String method, String uri) {
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());

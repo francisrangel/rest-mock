@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,7 +24,6 @@ import com.sun.net.httpserver.HttpHandler;
 
 import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.ReceivedRequest;
-import org.simulatest.restmock.RequestLog;
 import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.routing.RouteManager;
@@ -35,11 +35,11 @@ public class FrontController implements HttpHandler {
 	private static final Logger log = LoggerFactory.getLogger(FrontController.class);
 
 	private final RouteManager routeManager;
-	private final RequestLog requestLog;
+	private final Consumer<ReceivedRequest> recorder;
 
-	public FrontController(RouteManager routeManager, RequestLog requestLog) {
+	public FrontController(RouteManager routeManager, Consumer<ReceivedRequest> recorder) {
 		this.routeManager = routeManager;
-		this.requestLog = requestLog;
+		this.recorder = recorder;
 	}
 
 	@Override
@@ -105,7 +105,7 @@ public class FrontController implements HttpHandler {
 				LogSafe.truncate(requestBody));
 		}
 
-		requestLog.add(new ReceivedRequest(
+		recorder.accept(new ReceivedRequest(
 			httpMethod,
 			uri.getPath(),
 			uri.getRawQuery(),

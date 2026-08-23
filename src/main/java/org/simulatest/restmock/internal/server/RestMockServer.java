@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Consumer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sun.net.httpserver.HttpServer;
 
-import org.simulatest.restmock.RequestLog;
+import org.simulatest.restmock.ReceivedRequest;
 import org.simulatest.restmock.internal.http.FrontController;
 import org.simulatest.restmock.internal.routing.RouteManager;
 
@@ -22,13 +23,13 @@ public class RestMockServer {
 	private static final Logger log = LoggerFactory.getLogger(RestMockServer.class);
 
 	private final RouteManager routeManager;
-	private final RequestLog requestLog;
+	private final Consumer<ReceivedRequest> recorder;
 	private HttpServer server;
 	private ExecutorService workers;
 
-	public RestMockServer(RouteManager routeManager, RequestLog requestLog) {
+	public RestMockServer(RouteManager routeManager, Consumer<ReceivedRequest> recorder) {
 		this.routeManager = routeManager;
-		this.requestLog = requestLog;
+		this.recorder = recorder;
 	}
 
 	/** Reported by {@link #port()} when the server is not running. */
@@ -62,7 +63,7 @@ public class RestMockServer {
 
 		workers = Executors.newCachedThreadPool(new WorkerFactory());
 
-		server.createContext("/", new FrontController(routeManager, requestLog));
+		server.createContext("/", new FrontController(routeManager, recorder));
 		server.setExecutor(workers);
 		server.start();
 
@@ -80,17 +81,14 @@ public class RestMockServer {
 			return;
 		}
 
-		int routeCount = routeManager.size();
-		int requestCount = requestLog.count();
+		int port = port();
 
 		server.stop(0);
 		workers.shutdownNow();
 		server = null;
 		workers = null;
-		routeManager.clean();
-		requestLog.clear();
 
-		log.info("RestMock server stopped (cleared {} routes, {} requests)", routeCount, requestCount);
+		log.info("RestMock server stopped on port {}", port);
 	}
 
 	/**

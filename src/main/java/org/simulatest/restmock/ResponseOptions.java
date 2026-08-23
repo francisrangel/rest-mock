@@ -6,13 +6,14 @@ import org.simulatest.restmock.internal.response.Response;
  * Fluent options applied after the response body has been chosen.
  *
  * Returned by every {@code thenReturn*} method on {@code RestMockResponse}.
- * All methods return {@code this} so calls can be chained.
+ * All methods return {@code this} so calls can be chained. Instances come from
+ * the library; there is no public constructor.
  */
 public class ResponseOptions {
 
 	private final Response response;
 
-	public ResponseOptions(Response response) {
+	ResponseOptions(Response response) {
 		this.response = response;
 	}
 

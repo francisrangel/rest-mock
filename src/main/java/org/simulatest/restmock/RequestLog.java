@@ -84,13 +84,13 @@ public class RequestLog {
 		return last(forPath(path));
 	}
 
-	/** Internal: invoked by the server when a request arrives. */
-	public void add(ReceivedRequest request) {
+	/** Invoked by the server when a request arrives. Not public: a forged entry would make every assertion here worthless. */
+	void add(ReceivedRequest request) {
 		requests.add(request);
 	}
 
-	/** Internal: invoked by {@link RestMock#clean()} and {@link RestMock#stopServer()}. */
-	public void clear() {
+	/** Invoked by {@link RestMock#clean()} and {@link RestMock#stopServer()}. */
+	void clear() {
 		requests.clear();
 	}
 

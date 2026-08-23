@@ -10,5 +10,8 @@
  * {@link org.simulatest.restmock.RestMockResponse}, {@link org.simulatest.restmock.ResponseOptions},
  * {@link org.simulatest.restmock.RequestLog}, {@link org.simulatest.restmock.ReceivedRequest}, and
  * {@link org.simulatest.restmock.HttpMethod}.
+ *
+ * No type from this package appears in a public signature of those, which
+ * {@code PublicSurfaceTest} enforces.
  */
 package org.simulatest.restmock.internal;

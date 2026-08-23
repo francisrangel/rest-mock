@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.FileNotFoundException;
 import java.io.UncheckedIOException;
 import java.util.Map;
 
@@ -121,8 +122,20 @@ public class HttpResponseForGETMethodTest {
 		assertThrows(UncheckedIOException.class, () -> subject.thenReturnJSON(new Object() { }));
 	}
 
+	/**
+	 * No checked exception, so stubbing from a fixture does not force
+	 * "throws Exception" onto the test signature.
+	 */
 	@Test
-	public void thenReturnJSONFromResourceLoadsTheFile() throws Exception {
+	public void aMissingResourceFailsUnchecked() {
+		UncheckedIOException failure =
+			assertThrows(UncheckedIOException.class, () -> subject.thenReturnJSONFromResource("nope.json"));
+
+		assertInstanceOf(FileNotFoundException.class, failure.getCause());
+	}
+
+	@Test
+	public void thenReturnJSONFromResourceLoadsTheFile() {
 		subject.thenReturnJSONFromResource("developer.json");
 
 		Response response = routeManager.get(route);
@@ -132,7 +145,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void thenReturnXMLFromResourceLoadsTheFile() throws Exception {
+	public void thenReturnXMLFromResourceLoadsTheFile() {
 		subject.thenReturnXMLFromResource("developer.xml");
 
 		Response response = routeManager.get(route);
@@ -143,7 +156,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void thenReturnHTMLFromResourceLoadsTheFile() throws Exception {
+	public void thenReturnHTMLFromResourceLoadsTheFile() {
 		subject.thenReturnHTMLFromResource("page.html");
 
 		Response response = routeManager.get(route);
@@ -153,7 +166,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void thenReturnTextFromResourceLoadsTheFile() throws Exception {
+	public void thenReturnTextFromResourceLoadsTheFile() {
 		subject.thenReturnTextFromResource("example.txt");
 
 		Response response = routeManager.get(route);
@@ -245,7 +258,7 @@ public class HttpResponseForGETMethodTest {
 	}
 
 	@Test
-	public void thenReturnFileFromResourceInfersContentType() throws Exception {
+	public void thenReturnFileFromResourceInfersContentType() {
 		subject.thenReturnFileFromResource("page.html");
 
 		Response response = assertInstanceOf(Binary.class, routeManager.get(route));

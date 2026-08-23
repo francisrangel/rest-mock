@@ -1,7 +1,5 @@
 package org.simulatest.restmock.internal.routing;
 
-import java.io.IOException;
-
 import org.simulatest.restmock.ResponseOptions;
 import org.simulatest.restmock.RestMockResponse;
 import org.simulatest.restmock.internal.response.Binary;
@@ -69,22 +67,22 @@ public class RouteRegister implements RestMockResponse {
 	}
 
 	@Override
-	public ResponseOptions thenReturnJSONFromResource(String path) throws IOException {
+	public ResponseOptions thenReturnJSONFromResource(String path) {
 		return thenReturnJSON(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public ResponseOptions thenReturnXMLFromResource(String path) throws IOException {
+	public ResponseOptions thenReturnXMLFromResource(String path) {
 		return thenReturnXML(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public ResponseOptions thenReturnHTMLFromResource(String path) throws IOException {
+	public ResponseOptions thenReturnHTMLFromResource(String path) {
 		return thenReturnHTML(Resource.dataFromResource(path));
 	}
 
 	@Override
-	public ResponseOptions thenReturnTextFromResource(String path) throws IOException {
+	public ResponseOptions thenReturnTextFromResource(String path) {
 		return thenReturnText(Resource.dataFromResource(path));
 	}
 
@@ -99,12 +97,12 @@ public class RouteRegister implements RestMockResponse {
 	}
 
 	@Override
-	public ResponseOptions thenReturnFileFromResource(String path) throws IOException {
+	public ResponseOptions thenReturnFileFromResource(String path) {
 		return registerBinary(Resource.bytesFromResource(path), ContentType.guessFrom(path));
 	}
 
 	@Override
-	public ResponseOptions thenReturnFileFromResource(String path, String contentType) throws IOException {
+	public ResponseOptions thenReturnFileFromResource(String path, String contentType) {
 		return thenReturnFile(Resource.bytesFromResource(path), contentType);
 	}
 

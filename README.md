@@ -278,6 +278,8 @@ RestMock.whenGet("/readme")
 
 Place the file in `src/test/resources` and pass the filename. rest-mock loads it from the classpath and serves it with the matching content type. This keeps your test code short while the actual response payload lives in a dedicated file you can inspect and edit separately.
 
+A missing file fails on the spot with the name it looked for. Nothing here throws a checked exception, so stubbing never forces a `try`/`catch` or a `throws` onto your test.
+
 ---
 
 ## Serving files (images, PDFs, binaries)

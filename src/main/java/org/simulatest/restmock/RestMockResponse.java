@@ -1,7 +1,5 @@
 package org.simulatest.restmock;
 
-import java.io.IOException;
-
 /**
  * Configures the response for a stubbed route.
  *
@@ -15,6 +13,8 @@ import java.io.IOException;
  * serialize through Jackson; raw {@code String} overloads pass the body through
  * verbatim. The {@code FromResource} variants load from the classpath, the same
  * place {@code Thread.currentThread().getContextClassLoader().getResource(path)} looks.
+ * A missing or unreadable file throws {@link java.io.UncheckedIOException}: it is
+ * a mistake in the test, not something to catch.
  * Text resources are decoded as UTF-8 and have leading and trailing whitespace
  * stripped; binary resources are passed through byte-for-byte.
  *
@@ -45,7 +45,7 @@ public interface RestMockResponse {
 	ResponseOptions thenReturnJSON(String json);
 
 	/** Loads a JSON file from the test classpath. */
-	ResponseOptions thenReturnJSONFromResource(String path) throws IOException;
+	ResponseOptions thenReturnJSONFromResource(String path);
 
 	/** Serializes {@code object} to XML via {@link RestMock#xml()}. Throws {@link java.io.UncheckedIOException} if Jackson cannot serialize. */
 	ResponseOptions thenReturnXML(Object object);
@@ -54,19 +54,19 @@ public interface RestMockResponse {
 	ResponseOptions thenReturnXML(String xml);
 
 	/** Loads an XML file from the test classpath. */
-	ResponseOptions thenReturnXMLFromResource(String path) throws IOException;
+	ResponseOptions thenReturnXMLFromResource(String path);
 
 	/** Returns {@code html} with content type {@code text/html}. */
 	ResponseOptions thenReturnHTML(String html);
 
 	/** Loads an HTML file from the test classpath. */
-	ResponseOptions thenReturnHTMLFromResource(String path) throws IOException;
+	ResponseOptions thenReturnHTMLFromResource(String path);
 
 	/** Returns {@code txt} with content type {@code text/plain}. */
 	ResponseOptions thenReturnText(String txt);
 
 	/** Loads a text file from the test classpath. */
-	ResponseOptions thenReturnTextFromResource(String path) throws IOException;
+	ResponseOptions thenReturnTextFromResource(String path);
 
 	/** Returns {@code bytes} as {@code application/octet-stream}. Bytes are sent verbatim, no parameter substitution. */
 	ResponseOptions thenReturnFile(byte[] bytes);
@@ -75,10 +75,10 @@ public interface RestMockResponse {
 	ResponseOptions thenReturnFile(byte[] bytes, String contentType);
 
 	/** Loads a file from the test classpath. Content type is guessed from the path extension. */
-	ResponseOptions thenReturnFileFromResource(String path) throws IOException;
+	ResponseOptions thenReturnFileFromResource(String path);
 
 	/** Loads a file from the test classpath with an explicit content type. */
-	ResponseOptions thenReturnFileFromResource(String path, String contentType) throws IOException;
+	ResponseOptions thenReturnFileFromResource(String path, String contentType);
 
 	/** Returns {@code message} with the given HTTP status code as a plain-text body. */
 	ResponseOptions thenReturnErrorCodeWithMessage(int errorCode, String message);

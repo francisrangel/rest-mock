@@ -49,6 +49,11 @@ public class RouteManager {
 		return routes.get(route);
 	}
 
+	/**
+	 * The most specific match wins, measured by how few placeholders a route
+	 * captures, so {@code /users/me} beats {@code /users/{id}}. Between routes
+	 * that capture the same number, the last registered wins.
+	 */
 	public Optional<Match> lookup(HttpMethod method, String path) {
 		Match best = null;
 		int matchCount = 0;

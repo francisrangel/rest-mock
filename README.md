@@ -441,6 +441,11 @@ static void configureSerialization() {
 }
 ```
 
+These mappers are shared for the life of the JVM, and `clean()` does not reset
+them: configuration set by one test class is still in force for the next one in
+the same run. Configure them the same way everywhere, or set them per class if
+two classes need different rules.
+
 If even that's not enough, pre-serialize the response yourself and use the string overload; `thenReturnJSON(String)` accepts whatever you give it.
 
 ---

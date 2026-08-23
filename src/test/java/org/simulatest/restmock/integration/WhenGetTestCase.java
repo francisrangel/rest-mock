@@ -113,25 +113,16 @@ public class WhenGetTestCase extends IntegrationTestBase {
 		assertEquals(List.of("second"), response.headers().allValues("X-Custom"));
 	}
 
+	/**
+	 * No Origin means no CORS negotiation, whatever the status. A 404 for a
+	 * request that *did* carry an Origin does get the headers - see CorsTestCase.
+	 */
 	@Test
-	public void corsHeadersAreSentOnEveryResponse() throws Exception {
-		RestMock.whenGet("/test").thenReturnText("ok");
-
-		HttpResponse<String> response = sendRequest("/test", HttpMethod.GET);
-
-		assertEquals("*", response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN).orElseThrow());
-		assertEquals("360", response.headers().firstValue(HttpHeader.ACCESS_CONTROL_MAX_AGE).orElseThrow());
-		assertEquals("x-requested-with", response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS).orElseThrow());
-		assertEquals("true", response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_CREDENTIALS).orElseThrow());
-	}
-
-	@Test
-	public void unmatchedRequestsCarryNoCorsHeaders() throws Exception {
+	public void unmatchedRequestsFromANonBrowserClientCarryNoCorsHeaders() throws Exception {
 		HttpResponse<String> response = sendRequest("/nothing-here", HttpMethod.GET);
 
 		assertEquals(404, response.statusCode());
-		assertTrue(response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN).isEmpty(),
-			"404 responses should not carry CORS headers");
+		assertTrue(response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN).isEmpty());
 	}
 
 }

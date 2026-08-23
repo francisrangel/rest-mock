@@ -94,16 +94,4 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 		assertEquals(501, response.statusCode());
 	}
 
-	@Test
-	public void corsAllowMethodsHeaderListsAllSupportedVerbs() throws Exception {
-		RestMock.whenGet("/test").thenReturnText("ok");
-
-		HttpResponse<String> response = sendRequest("/test", HttpMethod.GET);
-
-		String allowMethods = response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS).orElse("");
-		assertEquals(
-			Set.of("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"),
-			Set.of(allowMethods.split(",\\s*")));
-	}
-
 }

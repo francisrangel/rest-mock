@@ -6,7 +6,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +33,6 @@ public class FrontController implements HttpHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(FrontController.class);
 
-	private static final String ALL_METHODS = joinMethodNames(Arrays.asList(HttpMethod.values()));
-
 	private final RouteManager routeManager;
 	private final RequestLog requestLog;
 
@@ -60,6 +57,7 @@ public class FrontController implements HttpHandler {
 			httpMethod = HttpMethod.byString(method);
 		} catch (IllegalArgumentException unsupported) {
 			log.warn("Unsupported HTTP method {} for {} - returning 501", method, uri.getPath());
+			Cors.apply(exchange.getRequestHeaders(), exchange.getResponseHeaders());
 			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_IMPLEMENTED, -1);
 			return;
 		}
@@ -82,7 +80,16 @@ public class FrontController implements HttpHandler {
 			Instant.now()
 		));
 
+		Cors.apply(exchange.getRequestHeaders(), exchange.getResponseHeaders());
+
 		Optional<Match> match = routeManager.lookup(httpMethod, uri.getPath());
+
+		// An explicit whenOptions() stub wins; otherwise the preflight is answered
+		// from the routes registered for the path, before any matching happens.
+		if (match.isEmpty() && Cors.isPreflight(httpMethod, exchange.getRequestHeaders())) {
+			answerPreflight(exchange, uri.getPath());
+			return;
+		}
 
 		if (match.isEmpty()) {
 			log.warn("No route matches {} {} - returning 404", httpMethod, uri.getPath());
@@ -143,6 +150,29 @@ public class FrontController implements HttpHandler {
 		return parameters;
 	}
 
+	/**
+	 * A preflight for a path with no routes stays a 404 - but a CORS-decorated
+	 * one, so the browser reports the 404 instead of an opaque failure.
+	 */
+	private void answerPreflight(HttpExchange exchange, String path) throws IOException {
+		Set<HttpMethod> methods = routeManager.methodsFor(path);
+
+		if (methods.isEmpty()) {
+			log.warn("CORS preflight for {} but no route is registered for that path - returning 404", path);
+			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1);
+			return;
+		}
+
+		methods.add(HttpMethod.OPTIONS);
+		String allow = joinMethodNames(methods);
+
+		Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
+		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
+		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
+
+		log.debug("CORS preflight {} -> 204 (Allow: {})", path, allow);
+	}
+
 	private String allowHeaderFor(String path) {
 		Set<HttpMethod> methods = routeManager.methodsFor(path);
 		methods.add(HttpMethod.OPTIONS);
@@ -161,11 +191,6 @@ public class FrontController implements HttpHandler {
 		Headers responseHeaders = exchange.getResponseHeaders();
 
 		responseHeaders.set(HttpHeader.CONTENT_TYPE, content.getContentType().type());
-		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS, ALL_METHODS);
-		responseHeaders.set(HttpHeader.ACCESS_CONTROL_MAX_AGE, "360");
-		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS, "x-requested-with");
-		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
 
 		for (Entry<String, String> header : content.getHeader().entrySet()) {
 			responseHeaders.set(header.getKey(), header.getValue());

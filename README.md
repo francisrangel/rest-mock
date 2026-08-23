@@ -73,7 +73,7 @@ Everything you actually need, nothing you don’t:
 - Response delays for timeout testing  
 - Request inspection and counting  
 - JUnit extension for automatic lifecycle  
-- Built-in CORS support  
+- Built-in CORS support, preflight included  
 
 And that’s it.
 
@@ -125,6 +125,38 @@ It’s for:
 - mocking dependencies quickly  
 
 If you need full API simulation or traffic proxying → use something else.
+
+---
+
+## Browser-driven tests (CORS)
+
+If the code under test runs in a browser, rest-mock answers the preflight for
+you. Stub the route you actually care about; the `OPTIONS` call is handled from
+whatever methods you registered for that path:
+
+```java
+RestMock.whenGet("/api/data").thenReturnJSON("{\"ok\":true}");
+```
+
+```
+OPTIONS /api/data
+  Origin: http://localhost:3000
+  Access-Control-Request-Method: GET
+->
+  204
+  Access-Control-Allow-Origin: http://localhost:3000
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Credentials: true
+```
+
+The origin you send is echoed back rather than `*`, so credentialed requests
+work, and `Access-Control-Request-Headers` is mirrored, so posting JSON with an
+`Authorization` header passes preflight. Errors carry the headers too: a 404
+reaches the browser as a readable 404 instead of an opaque CORS failure.
+
+Requests without an `Origin` get no CORS headers at all, so plain JVM clients
+see clean responses. An explicit `whenOptions()` stub always wins over the
+automatic preflight.
 
 ---
 

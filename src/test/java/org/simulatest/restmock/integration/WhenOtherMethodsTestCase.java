@@ -55,7 +55,10 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 
 		String allow = response.headers().firstValue(HttpHeader.ALLOW).orElse("");
 		Set<String> methods = Set.of(allow.split(",\\s*"));
-		assertEquals(Set.of(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.OPTIONS.name()), methods);
+		assertEquals(
+			Set.of(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name()),
+			methods,
+			"HEAD is advertised because the path answers GET");
 	}
 
 	@Test

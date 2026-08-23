@@ -84,10 +84,15 @@ public class FrontController implements HttpHandler {
 
 		Optional<Match> match = routeManager.lookup(httpMethod, uri.getPath());
 
-		// An explicit whenOptions() stub wins; otherwise the preflight is answered
-		// from the routes registered for the path, before any matching happens.
-		if (match.isEmpty() && Cors.isPreflight(httpMethod, exchange.getRequestHeaders())) {
-			answerPreflight(exchange, uri.getPath());
+		// An explicit whenHead()/whenOptions() stub wins. Failing that, both are
+		// derived from what is registered: HEAD from the GET route, OPTIONS from
+		// every method the path answers.
+		if (match.isEmpty() && httpMethod == HttpMethod.HEAD) {
+			match = routeManager.lookup(HttpMethod.GET, uri.getPath());
+		}
+
+		if (match.isEmpty() && httpMethod == HttpMethod.OPTIONS) {
+			answerOptions(exchange, uri.getPath());
 			return;
 		}
 
@@ -151,32 +156,46 @@ public class FrontController implements HttpHandler {
 	}
 
 	/**
-	 * A preflight for a path with no routes stays a 404 - but a CORS-decorated
-	 * one, so the browser reports the 404 instead of an opaque failure.
+	 * Answers OPTIONS from the route table. A path with no routes stays a 404 -
+	 * but a CORS-decorated one, so a browser reports the 404 instead of an
+	 * opaque cross-origin failure.
 	 */
-	private void answerPreflight(HttpExchange exchange, String path) throws IOException {
-		Set<HttpMethod> methods = routeManager.methodsFor(path);
+	private void answerOptions(HttpExchange exchange, String path) throws IOException {
+		Set<HttpMethod> methods = advertisedMethods(path);
 
 		if (methods.isEmpty()) {
-			log.warn("CORS preflight for {} but no route is registered for that path - returning 404", path);
+			log.warn("OPTIONS {} but no route is registered for that path - returning 404", path);
 			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1);
 			return;
 		}
 
-		methods.add(HttpMethod.OPTIONS);
 		String allow = joinMethodNames(methods);
 
-		Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
+		if (Cors.isPreflight(HttpMethod.OPTIONS, exchange.getRequestHeaders())) {
+			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
+		}
+
 		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
 		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
 
-		log.debug("CORS preflight {} -> 204 (Allow: {})", path, allow);
+		log.debug("OPTIONS {} -> 204 (Allow: {})", path, allow);
 	}
 
 	private String allowHeaderFor(String path) {
+		return joinMethodNames(advertisedMethods(path));
+	}
+
+	/**
+	 * What the path actually answers, which is more than what was registered:
+	 * OPTIONS is always served, and HEAD is served wherever GET is.
+	 */
+	private Set<HttpMethod> advertisedMethods(String path) {
 		Set<HttpMethod> methods = routeManager.methodsFor(path);
+		if (methods.isEmpty()) return methods;
+
+		if (methods.contains(HttpMethod.GET)) methods.add(HttpMethod.HEAD);
 		methods.add(HttpMethod.OPTIONS);
-		return joinMethodNames(methods);
+		return methods;
 	}
 
 	private static String joinMethodNames(Collection<HttpMethod> methods) {

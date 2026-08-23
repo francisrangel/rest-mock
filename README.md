@@ -65,6 +65,7 @@ No ceremony.
 Everything you actually need, nothing you don’t:
 
 - All HTTP verbs: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS  
+- HEAD and OPTIONS answered from the routes you already stubbed  
 - Path templates: `/users/{id}`  
 - Dynamic responses: `${id}`, `${query}`, `${body}`  
 - JSON, XML, HTML, text  
@@ -125,6 +126,27 @@ It’s for:
 - mocking dependencies quickly  
 
 If you need full API simulation or traffic proxying → use something else.
+
+---
+
+## HEAD and OPTIONS come for free
+
+Stub `GET` and you get `HEAD` on the same path: same status, same headers, the
+body's length in `Content-Length`, and no body. `OPTIONS` is answered from
+whatever the path actually serves:
+
+```java
+RestMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Bob\"}");
+RestMock.whenDelete("/users/1").thenReturnText("gone");
+```
+
+```
+HEAD    /users/1 → 200, Content-Length: 14, no body
+OPTIONS /users/1 → 204, Allow: GET, HEAD, DELETE, OPTIONS
+```
+
+Stub them explicitly with `whenHead()` or `whenOptions()` when you want
+something else; an explicit stub always wins.
 
 ---
 

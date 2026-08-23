@@ -26,7 +26,7 @@ public class CorsTestCase extends IntegrationTestBase {
 
 		assertEquals(204, response.statusCode());
 		assertEquals(ORIGIN, header(response, HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN));
-		assertEquals(Set.of("GET", "OPTIONS"), methods(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
+		assertEquals(Set.of("GET", "HEAD", "OPTIONS"), methods(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
 	}
 
 	@Test

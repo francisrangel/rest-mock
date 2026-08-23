@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
@@ -96,6 +97,17 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 
 	private String contentType(HttpResponse<?> response) {
 		return response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow();
+	}
+
+	/** Stubbing takes a copy, so a caller reusing its buffer cannot rewrite the response. */
+	@Test
+	public void mutatingTheCallersArrayAfterStubbingChangesNothing() throws Exception {
+		byte[] buffer = "original".getBytes(StandardCharsets.UTF_8);
+		RestMock.whenGet("/bin").thenReturnFile(buffer, ContentType.APPLICATION_OCTET_STREAM.type());
+
+		Arrays.fill(buffer, (byte) 'Z');
+
+		assertArrayEquals("original".getBytes(StandardCharsets.UTF_8), getBytes("/bin").body());
 	}
 
 }

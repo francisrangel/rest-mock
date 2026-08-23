@@ -1,6 +1,7 @@
 package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -84,11 +85,20 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 		assertEquals("from-path", response.body());
 	}
 
+	/**
+	 * A typo used to ship as literal ${nobody} in the body, so a test asserting
+	 * only the status still passed. It now fails, and the message lists what
+	 * was actually available.
+	 */
 	@Test
-	public void anUnknownPlaceholderIsLeftVerbatim() throws Exception {
+	public void anUnknownPlaceholderFailsLoudlyAndListsWhatWasAvailable() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("hello ${nobody}");
 
-		assertResponseBody("/test", "hello ${nobody}", HttpMethod.GET);
+		HttpResponse<String> response = sendRequest("/test", HttpMethod.GET);
+
+		assertEquals(500, response.statusCode());
+		assertTrue(response.body().startsWith("No value for ${nobody}. Available names:"), response.body());
+		assertTrue(response.body().contains("Host"), "the available names should include the headers: " + response.body());
 	}
 
 }

@@ -15,6 +15,11 @@ public final class XML extends Response {
 	}
 
 	@Override
+	String escape(String value) {
+		return Escape.markup(value);
+	}
+
+	@Override
 	public ContentType getContentType() {
 		return ContentType.TEXT_XML;
 	}

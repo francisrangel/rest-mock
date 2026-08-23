@@ -15,6 +15,11 @@ public final class JSON extends Response {
 	}
 
 	@Override
+	String escape(String value) {
+		return Escape.json(value);
+	}
+
+	@Override
 	public ContentType getContentType() {
 		return ContentType.APPLICATION_JSON;
 	}

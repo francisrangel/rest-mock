@@ -3,7 +3,9 @@ package org.simulatest.restmock.internal.response;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -15,6 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public abstract class Response {
 
 	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+
+	/** Enough names to spot the typo, few enough to stay readable in a failure. */
+	private static final int NAMES_IN_ERROR = 20;
 
 	private final String content;
 	private final Map<String, String> header;
@@ -40,13 +45,43 @@ public abstract class Response {
 		return true;
 	}
 
-	/** The bytes to write for this response, with {@code ${...}} placeholders substituted. */
+	/**
+	 * The bytes to write for this response, with {@code ${...}} placeholders
+	 * substituted. A name with no value is a mistake in the stub, so it fails
+	 * here rather than shipping {@code ${nmae}} to the client and letting a test
+	 * that only checks the status pass.
+	 */
 	public byte[] render(Map<String, String> parameters) {
 		String rendered = PARAMETER_PATTERN.matcher(content).replaceAll(match -> {
-			String key = match.group(1);
-			return Matcher.quoteReplacement(parameters.getOrDefault(key, match.group(0)));
+			String value = parameters.get(match.group(1));
+			if (value == null) throw unresolved(match.group(1), parameters);
+			return Matcher.quoteReplacement(escape(value));
 		});
 		return rendered.getBytes(StandardCharsets.UTF_8);
+	}
+
+	/**
+	 * Escapes a substituted value for this body's format. Plain text needs
+	 * nothing; JSON, XML, and HTML override it so a value carrying a quote or an
+	 * angle bracket cannot produce a malformed document.
+	 */
+	String escape(String value) {
+		return value;
+	}
+
+	private static IllegalStateException unresolved(String name, Map<String, String> parameters) {
+		return new IllegalStateException(
+			"No value for ${" + name + "}. Available names: " + available(parameters));
+	}
+
+	private static String available(Map<String, String> parameters) {
+		if (parameters.isEmpty()) return "(none)";
+
+		List<String> names = new ArrayList<>(parameters.keySet());
+		if (names.size() <= NAMES_IN_ERROR) return String.join(", ", names);
+
+		return String.join(", ", names.subList(0, NAMES_IN_ERROR))
+			+ " and " + (names.size() - NAMES_IN_ERROR) + " more";
 	}
 
 	public String getContent() {

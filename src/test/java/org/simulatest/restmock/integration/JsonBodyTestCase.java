@@ -1,6 +1,7 @@
 package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.http.HttpResponse;
 
@@ -40,21 +41,38 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 		postJson("/test", "{\"age\":25,\"active\":true}", "age=25 active=true");
 	}
 
+	/** A JSON body sent as text/plain is never parsed, so its fields are not available. */
 	@Test
-	public void nonJsonContentTypeLeavesPlaceholderLiteral() throws Exception {
+	public void nonJsonContentTypeMeansTheBodyFieldsAreNotAvailable() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("hello ${name}");
 
 		HttpResponse<String> response =
 			sendRequest("/test", HttpMethod.POST, ContentType.TEXT_PLAIN.type(), "{\"name\":\"Bob\"}");
 
-		assertEquals("hello ${name}", response.body());
+		assertEquals(500, response.statusCode());
+		assertTrue(response.body().startsWith("No value for ${name}"), response.body());
 	}
 
 	@Test
-	public void malformedJsonIsIgnoredAndRouteStillResponds() throws Exception {
+	public void malformedJsonYieldsNoFieldsAndSaysSo() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("hello ${name}");
 
-		postJson("/test", "{not json", "hello ${name}");
+		HttpResponse<String> response =
+			sendRequest("/test", HttpMethod.POST, ContentType.APPLICATION_JSON.type(), "{not json");
+
+		assertEquals(500, response.statusCode());
+		assertTrue(response.body().startsWith("No value for ${name}"), response.body());
+	}
+
+	/** A body field that does resolve is escaped, so a quote cannot break the JSON. */
+	@Test
+	public void aValueWithAQuoteStaysValidJson() throws Exception {
+		RestMock.whenPost("/echo").thenReturnJSON("{\"name\":\"${name}\"}");
+
+		HttpResponse<String> response = sendRequest("/echo", HttpMethod.POST,
+			ContentType.APPLICATION_JSON.type(), "{\"name\":\"Bob \\\"the builder\\\"\"}");
+
+		assertEquals("{\"name\":\"Bob \\\"the builder\\\"\"}", response.body());
 	}
 
 	private void postJson(String path, String jsonBody, String expectedAnswer) throws Exception {

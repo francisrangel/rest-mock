@@ -231,8 +231,30 @@ RestMock.whenPost("/orders")
 
 Names are matched case-insensitively, so `${X-Tenant}` finds the header you sent.
 When a name exists in more than one place the most specific wins: path captures,
-then body fields, then query params, then headers. A placeholder that matches
-nothing is left in the body as-is.
+then body fields, then query params, then headers.
+
+A placeholder that matches nothing is a mistake in the stub, so it fails instead
+of shipping `${nmae}` to your client and letting an assertion on the status code
+pass anyway:
+
+```
+500  No value for ${nmae}. Available names: Host, User-agent, id, nickname
+```
+
+Values are escaped for the format you're returning, so a request can't break the
+document it lands in:
+
+```java
+RestMock.whenGet("/users/{id}").thenReturnJSON("{\"id\":\"${id}\"}");
+```
+
+```
+GET /users/a"b → {"id":"a\"b"}
+```
+
+JSON gets string escaping, XML and HTML get entities, plain text is left alone.
+If you need a body passed through untouched, `thenReturnFile` skips substitution
+entirely.
 
 ---
 

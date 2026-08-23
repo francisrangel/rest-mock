@@ -32,10 +32,60 @@ public class ResponseTest {
 	}
 
 	@Test
-	public void renderLeavesUnknownPlaceholdersLiteral() {
+	public void renderRejectsAnUnknownPlaceholder() {
 		Response response = new TextPlain("Hello ${name}");
 
-		assertEquals("Hello ${name}", render(response, Map.of()));
+		IllegalStateException failure = assertThrows(IllegalStateException.class, () -> render(response, Map.of()));
+
+		assertEquals("No value for ${name}. Available names: (none)", failure.getMessage());
+	}
+
+	@Test
+	public void theFailureListsTheNamesThatWereAvailable() {
+		Response response = new TextPlain("Hello ${nmae}");
+
+		IllegalStateException failure =
+			assertThrows(IllegalStateException.class, () -> render(response, Map.of("name", "Bob")));
+
+		assertTrue(failure.getMessage().endsWith("Available names: name"), failure.getMessage());
+	}
+
+	@Test
+	public void plainTextSubstitutesValuesUntouched() {
+		Response response = new TextPlain("value=${v}");
+
+		assertEquals("value=<a href=\"x\">", render(response, Map.of("v", "<a href=\"x\">")));
+	}
+
+	@Test
+	public void jsonEscapesQuotesBackslashesAndControlCharacters() {
+		Response response = new JSON("{\"v\":\"${v}\"}");
+
+		String value = "a\"b\\c\nd";
+
+		assertEquals("{\"v\":\"a\\\"b\\\\c\\nd\"}", render(response, Map.of("v", value)));
+	}
+
+	@Test
+	public void jsonLeavesOrdinaryValuesAlone() {
+		Response response = new JSON("{\"id\":${id}}");
+
+		assertEquals("{\"id\":42}", render(response, Map.of("id", "42")));
+	}
+
+	@Test
+	public void xmlEscapesMarkupCharacters() {
+		Response response = new XML("<name>${v}</name>");
+
+		assertEquals("<name>a &amp; b &lt;c&gt;</name>", render(response, Map.of("v", "a & b <c>")));
+	}
+
+	@Test
+	public void htmlEscapesMarkupCharacters() {
+		Response response = new Html("<p>${v}</p>");
+
+		assertEquals("<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>",
+			render(response, Map.of("v", "<script>alert(1)</script>")));
 	}
 
 	@Test

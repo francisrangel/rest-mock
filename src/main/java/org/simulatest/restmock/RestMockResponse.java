@@ -28,7 +28,13 @@ import java.io.IOException;
  *
  * If a name appears in more than one source the most specific wins, in this order:
  * path captures, then body fields, then query parameters, then headers. A
- * placeholder with no matching name is left in the body verbatim.
+ * placeholder with no matching name fails the response with a 500 naming what
+ * was available, rather than shipping {@code ${nmae}} to the client.
+ *
+ * Substituted values are escaped for the response format - JSON string escaping,
+ * XML and HTML entities, nothing for plain text - so a request value carrying a
+ * quote or an angle bracket cannot produce a malformed document. The
+ * {@code thenReturnFile} methods skip substitution entirely.
  */
 public interface RestMockResponse {
 

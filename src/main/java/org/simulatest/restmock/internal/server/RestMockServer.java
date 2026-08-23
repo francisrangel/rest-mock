@@ -31,8 +31,27 @@ public class RestMockServer {
 		this.requestLog = requestLog;
 	}
 
+	/** Reported by {@link #port()} when the server is not running. */
+	public static final int NOT_RUNNING = -1;
+
+	/**
+	 * Starting an already-running server is a no-op, but only when the port
+	 * agrees. Silently ignoring a different port left the caller's requests
+	 * going nowhere with nothing to explain it - the failure mode that made
+	 * {@code new RestMockExtension(3000)} appear to do nothing when another
+	 * class had already bound the default port.
+	 *
+	 * Port 0 means "any free port", so it never conflicts.
+	 */
 	public void start(int port) {
-		if (server != null) return;
+		if (server != null) {
+			if (port != 0 && port != port()) {
+				throw new IllegalStateException(
+					"RestMock is already running on port " + port() + ", so it cannot start on port " + port
+						+ ". Stop it first, or use the port it is on.");
+			}
+			return;
+		}
 
 		try {
 			server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -47,7 +66,12 @@ public class RestMockServer {
 		server.setExecutor(workers);
 		server.start();
 
-		log.info("RestMock server started on port {}", port);
+		log.info("RestMock server started on port {}", port());
+	}
+
+	/** The bound port, or {@link #NOT_RUNNING}. Resolves the real port when started on 0. */
+	public int port() {
+		return server == null ? NOT_RUNNING : server.getAddress().getPort();
 	}
 
 	public void stop() {

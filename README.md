@@ -472,6 +472,18 @@ RestMock.clean();           // reset routes
 RestMock.stopServer();
 ```
 
+Pass `0` to let the OS pick a free port and read it back; useful when several
+builds share a CI machine and would otherwise fight over 9080:
+
+```java
+RestMock.startServer(0);
+String baseUrl = "http://localhost:" + RestMock.port();
+```
+
+`RestMock.port()` returns `-1` while the server is stopped. Starting an
+already-running server on a *different* port fails instead of quietly leaving
+you pointed at the old one.
+
 ---
 
 ## JUnit extension
@@ -509,6 +521,9 @@ If you need a different port:
 @RegisterExtension
 static RestMockExtension server = new RestMockExtension(3000);
 ```
+
+Or `new RestMockExtension(0)` for an OS-assigned one, read back with
+`RestMock.port()`.
 
 No base class. No `@BeforeAll`. No forgotten `clean()` calls. The extension handles everything so your tests only contain what matters: the mock setup and the assertion.
 

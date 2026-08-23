@@ -118,12 +118,22 @@ public final class RestMock {
 	}
 
 	/**
-	 * Starts the server on the given port. No-op if already running.
-	 * Throws {@link java.io.UncheckedIOException} if the server cannot bind
-	 * (port already in use, no permission, etc.).
+	 * Starts the server on the given port. Pass 0 to let the OS pick a free one
+	 * and read it back from {@link #port()}, which is how you keep parallel CI
+	 * jobs on one machine from fighting over {@link #DEFAULT_PORT}.
+	 *
+	 * No-op if the server is already running on that port. Throws
+	 * {@link IllegalStateException} if it is running on a different one, and
+	 * {@link java.io.UncheckedIOException} if it cannot bind (port in use, no
+	 * permission, etc.).
 	 */
 	public static void startServer(int port) {
 		server.start(port);
+	}
+
+	/** The port the server is bound to, or -1 when it is not running. */
+	public static int port() {
+		return server.port();
 	}
 
 	/** Stops the server and clears all routes and recorded requests. No-op if not running. */

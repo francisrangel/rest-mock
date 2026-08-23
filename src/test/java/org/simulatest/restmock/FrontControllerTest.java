@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,8 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import org.simulatest.restmock.internal.http.FrontController;
+import org.simulatest.restmock.internal.response.ContentType;
+import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.response.TextPlain;
 import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
@@ -99,6 +102,30 @@ public class FrontControllerTest {
 
 		verify(exchange).sendResponseHeaders(501, -1);
 		assertTrue(requestLog.isEmpty(), "an unsupported method must not be recorded");
+	}
+
+	/**
+	 * A handler that blew up used to close the exchange silently, so the caller
+	 * saw "unexpected end of file from server" with nothing to go on.
+	 */
+	@Test
+	public void aFailureWhileRenderingBecomesA500CarryingTheReason() throws IOException {
+		prepare(HttpMethod.GET.name(), "/boom");
+
+		Response exploding = mock(Response.class);
+		when(exploding.getContentType()).thenReturn(ContentType.TEXT_PLAIN);
+		when(exploding.getResponseStatus()).thenReturn(200);
+		when(exploding.render(any())).thenThrow(new IllegalStateException("no value for ${nope}"));
+		when(routeManager.lookup(HttpMethod.GET, "/boom"))
+			.thenReturn(Optional.of(new RouteManager.Match(new Route(HttpMethod.GET, "/boom"), exploding, Map.of())));
+
+		ByteArrayOutputStream body = new ByteArrayOutputStream();
+		when(exchange.getResponseBody()).thenReturn(body);
+
+		controller.handle(exchange);
+
+		verify(exchange).sendResponseHeaders(500, "no value for ${nope}".length());
+		assertEquals("no value for ${nope}", body.toString(StandardCharsets.UTF_8));
 	}
 
 }

@@ -24,6 +24,7 @@ import com.sun.net.httpserver.HttpHandler;
 import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.ReceivedRequest;
 import org.simulatest.restmock.RequestLog;
+import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.internal.routing.RouteManager.Match;
@@ -44,8 +45,41 @@ public class FrontController implements HttpHandler {
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		try (exchange) {
-			processRequest(exchange);
+			try {
+				processRequest(exchange);
+			} catch (RuntimeException failure) {
+				respondWithFailure(exchange, failure);
+			}
 		}
+	}
+
+	/**
+	 * Without this the exchange was simply closed and the caller saw "unexpected
+	 * end of file from server" - no status, no message, nothing pointing at the
+	 * cause. The mock only ever serves the test that started it, so putting the
+	 * failure in the body is the fastest route from symptom to diagnosis.
+	 */
+	private void respondWithFailure(HttpExchange exchange, RuntimeException failure) {
+		log.error("Failed to handle {} {}", exchange.getRequestMethod(), exchange.getRequestURI(), failure);
+
+		byte[] body = describe(failure).getBytes(StandardCharsets.UTF_8);
+
+		try {
+			exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.type() + "; charset=utf-8");
+			exchange.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, body.length);
+
+			try (OutputStream os = exchange.getResponseBody()) {
+				os.write(body);
+			}
+		} catch (IOException | RuntimeException tooLate) {
+			// Headers are already on the wire, so the status cannot be changed
+			// any more. The log above is the only record left.
+			log.debug("Could not send the 500 for {}", exchange.getRequestURI(), tooLate);
+		}
+	}
+
+	private static String describe(RuntimeException failure) {
+		return failure.getMessage() == null ? failure.toString() : failure.getMessage();
 	}
 
 	public void processRequest(HttpExchange exchange) throws IOException {

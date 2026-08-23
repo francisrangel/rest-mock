@@ -32,7 +32,10 @@ public abstract class Response {
 
 	public abstract ContentType getContentType();
 
-	/** True when the body is text, and so safe to preview in logs. */
+	/**
+	 * True when the body is text: it is safe to preview in logs, and the
+	 * response declares an explicit UTF-8 charset.
+	 */
 	public boolean isTextual() {
 		return true;
 	}

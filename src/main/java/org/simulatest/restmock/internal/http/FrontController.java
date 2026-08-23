@@ -209,11 +209,22 @@ public class FrontController implements HttpHandler {
 	private void writeResponseHeaders(Response content, HttpExchange exchange) {
 		Headers responseHeaders = exchange.getResponseHeaders();
 
-		responseHeaders.set(HttpHeader.CONTENT_TYPE, content.getContentType().type());
+		responseHeaders.set(HttpHeader.CONTENT_TYPE, contentTypeHeaderFor(content));
 
 		for (Entry<String, String> header : content.getHeader().entrySet()) {
 			responseHeaders.set(header.getKey(), header.getValue());
 		}
+	}
+
+	/**
+	 * Text bodies are encoded UTF-8, so the header has to say so. Without it a
+	 * client applying the historical text/* default decodes "cafe" with an
+	 * accent as mojibake. Binary bodies are passed through verbatim and carry no
+	 * known encoding, so they get the bare type.
+	 */
+	private static String contentTypeHeaderFor(Response content) {
+		String type = content.getContentType().type();
+		return content.isTextual() ? type + "; charset=utf-8" : type;
 	}
 
 	/** 204 and 304 carry no body; the JDK server rejects the exchange if they declare a length. */

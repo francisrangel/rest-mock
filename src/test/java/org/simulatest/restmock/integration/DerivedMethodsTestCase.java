@@ -24,7 +24,7 @@ public class DerivedMethodsTestCase extends IntegrationTestBase {
 		assertEquals(200, response.statusCode());
 		assertEquals("", response.body(), "HEAD must not carry a body");
 		assertEquals("14", response.headers().firstValue(HttpHeader.CONTENT_LENGTH).orElse(""));
-		assertEquals("application/json", response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElse(""));
+		assertEquals("application/json; charset=utf-8", response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElse(""));
 	}
 
 	@Test

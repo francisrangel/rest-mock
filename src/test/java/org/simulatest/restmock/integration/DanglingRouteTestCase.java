@@ -33,7 +33,7 @@ public class DanglingRouteTestCase extends IntegrationTestBase {
 
 		assertEquals(200, response.statusCode());
 		assertEquals("ok", response.body());
-		assertEquals(ContentType.TEXT_PLAIN.type(), response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow());
+		assertEquals(ContentType.TEXT_PLAIN.type() + "; charset=utf-8", response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow());
 	}
 
 }

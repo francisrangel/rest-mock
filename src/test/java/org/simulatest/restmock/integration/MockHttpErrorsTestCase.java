@@ -91,7 +91,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 
 		assertEquals(404, response.statusCode());
 		assertEquals("<error>not found</error>", response.body());
-		assertEquals(ContentType.TEXT_XML.type(), response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow());
+		assertEquals(ContentType.TEXT_XML.type() + "; charset=utf-8", response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow());
 	}
 
 }

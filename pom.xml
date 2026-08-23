@@ -68,6 +68,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Required, not optional: thenReturnJSON/XML(Object) and the request
+		     body flattening are core features, so a NoClassDefFoundError at
+		     runtime would be the worse trade. Only long-stable Jackson 2 APIs
+		     are used (readTree, writeValueAsString, findAndRegisterModules), so
+		     a project that pins its own 2.x wins by nearest-wins and still
+		     works. -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
@@ -80,10 +86,15 @@
 			<version>2.21.2</version>
 		</dependency>
 
+		<!-- Optional: only RestMockExtension needs it, and anyone using that
+		     class already has JUnit on their own test classpath. Without this
+		     a TestNG or JUnit 4 project depending on rest-mock would be handed
+		     the whole JUnit 5 API it never asked for. -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>${junit.version}</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
@@ -102,6 +113,21 @@
 
 	<build>
 		<plugins>
+			<!-- Automatic-Module-Name: pins the module name for anyone on the
+			     module path. Without it the name is derived from the jar
+			     filename and shifts if the artifact is ever renamed. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.4.1</version>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Automatic-Module-Name>org.simulatest.restmock</Automatic-Module-Name>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
@@ -149,6 +175,13 @@
 					<doclint>all,-missing</doclint>
 					<quiet>true</quiet>
 					<failOnWarnings>true</failOnWarnings>
+					<!-- internal.* is documented as unstable and is enforced out of
+					     every public signature by PublicSurfaceTest, so publishing
+					     its API docs to Central would only invite use. Excluding it
+					     also settles a javadoc error: the package exists to hold a
+					     package-info and nothing else, which javadoc rejects once an
+					     explicit maven-jar-plugin puts it in package-list mode. -->
+					<excludePackageNames>org.simulatest.restmock.internal:org.simulatest.restmock.internal.*</excludePackageNames>
 				</configuration>
 				<executions>
 					<execution>

@@ -1,8 +1,6 @@
 package org.simulatest.restmock.internal.http;
 
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -59,17 +57,13 @@ final class ParameterExtractor {
 		return (values != null && !values.isEmpty()) ? values.get(0) : null;
 	}
 
+	/**
+	 * Pairs are collected first and copied in as a block, so a form body still
+	 * overrides a query parameter of the same name while repeats within one
+	 * source resolve to the first value.
+	 */
 	private static void appendQueryParameters(Map<String, String> parameters, String raw) {
-		if (raw == null || raw.isEmpty()) return;
-
-		for (String pair : raw.split("&")) {
-			int eq = pair.indexOf('=');
-			if (eq < 0) continue;
-
-			String key = URLDecoder.decode(pair.substring(0, eq), StandardCharsets.UTF_8);
-			String value = URLDecoder.decode(pair.substring(eq + 1), StandardCharsets.UTF_8);
-			parameters.put(key, value);
-		}
+		parameters.putAll(QueryString.parse(raw));
 	}
 
 }

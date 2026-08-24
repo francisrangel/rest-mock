@@ -44,4 +44,66 @@ public class ReceivedRequestTest {
 		assertTrue(requestWith(new HashMap<>()).headers().isEmpty());
 	}
 
+	private ReceivedRequest requestWithQuery(String query) {
+		return new ReceivedRequest(HttpMethod.GET, "/users", query, Map.of(), "", Instant.now());
+	}
+
+	/**
+	 * The JDK server stores a header sent as Content-Type under "Content-type",
+	 * so an exact lookup for the name the client sent finds nothing. HTTP header
+	 * names are case-insensitive and this accessor has to be too.
+	 */
+	@Test
+	public void headersAreFoundWhateverTheServerDidToTheirCase() {
+		ReceivedRequest request = requestWith(Map.of("Content-type", List.of("application/json")));
+
+		assertEquals("application/json", request.header("Content-Type").orElseThrow());
+		assertEquals("application/json", request.header("content-type").orElseThrow());
+		assertEquals("application/json", request.header("CONTENT-TYPE").orElseThrow());
+	}
+
+	@Test
+	public void aHeaderThatWasNotSentIsEmptyRatherThanNull() {
+		assertTrue(requestWith(Map.of()).header("X-Tenant").isEmpty());
+	}
+
+	@Test
+	public void aRepeatedHeaderExposesItsFirstValueAndAllOfThem() {
+		ReceivedRequest request = requestWith(Map.of("Accept", List.of("text/html", "application/json")));
+
+		assertEquals("text/html", request.header("accept").orElseThrow());
+		assertEquals(List.of("text/html", "application/json"), request.headerValues("ACCEPT"));
+	}
+
+	@Test
+	public void queryParametersAreDecoded() {
+		ReceivedRequest request = requestWithQuery("name=Bob+Smith&city=S%C3%A3o+Paulo");
+
+		assertEquals("Bob Smith", request.queryParam("name").orElseThrow());
+		assertEquals("São Paulo", request.queryParam("city").orElseThrow());
+	}
+
+	/** Query parameter names, unlike header names, are case-sensitive. */
+	@Test
+	public void queryParametersAreMatchedExactly() {
+		ReceivedRequest request = requestWithQuery("id=42");
+
+		assertEquals("42", request.queryParam("id").orElseThrow());
+		assertTrue(request.queryParam("ID").isEmpty());
+	}
+
+	@Test
+	public void aRepeatedQueryParameterExposesItsFirstValueAndAllOfThem() {
+		ReceivedRequest request = requestWithQuery("tag=a&tag=b");
+
+		assertEquals("a", request.queryParam("tag").orElseThrow());
+		assertEquals(List.of("a", "b"), request.queryParamValues("tag"));
+	}
+
+	@Test
+	public void aRequestWithNoQueryStringHasNoQueryParameters() {
+		assertTrue(requestWithQuery(null).queryParam("id").isEmpty());
+		assertTrue(requestWithQuery(null).queryParamValues("id").isEmpty());
+	}
+
 }

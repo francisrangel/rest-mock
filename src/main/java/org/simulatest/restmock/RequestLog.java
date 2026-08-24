@@ -18,6 +18,11 @@ import java.util.Optional;
  * like {@code /users/{id}} are not expanded for filtering. Filter with the literal
  * path the client called, or use {@link #all()} and stream.
  *
+ * {@link #toString()} renders the log as a readable list, so it can be passed as
+ * the message of an assertion about it:
+ *
+ *   assertEquals(1, log.countForPath("/orders"), log::toString);
+ *
  * Safe to read from any thread; every accessor takes a snapshot, so iteration is
  * never disturbed by requests arriving as you read.
  *
@@ -32,6 +37,9 @@ public class RequestLog {
 	 * thousand requests paid O(n^2) to build a list nobody read until the end.
 	 */
 	private final List<ReceivedRequest> requests = new ArrayList<>();
+
+	/** Enough requests to see what the system under test did, few enough to read. */
+	private static final int REQUESTS_LISTED = 20;
 
 	/** Every recorded request, in arrival order. */
 	public synchronized List<ReceivedRequest> all() {
@@ -101,6 +109,41 @@ public class RequestLog {
 
 	private static Optional<ReceivedRequest> last(List<ReceivedRequest> candidates) {
 		return candidates.isEmpty() ? Optional.empty() : Optional.of(candidates.get(candidates.size() - 1));
+	}
+
+	/**
+	 * The log as a readable list, so it can carry the failure of an assertion
+	 * about it:
+	 *
+	 *   assertEquals(1, log.countForPath("/orders"), log::toString);
+	 *
+	 * "expected: <1> but was: <0>" says nothing about which calls the system
+	 * under test actually made, which is the only thing worth knowing there.
+	 */
+	@Override
+	public String toString() {
+		List<ReceivedRequest> snapshot = all();
+
+		if (snapshot.isEmpty()) return "no requests received";
+
+		StringBuilder rendered = new StringBuilder()
+			.append(snapshot.size())
+			.append(snapshot.size() == 1 ? " request received:" : " requests received:");
+
+		for (int i = 0; i < Math.min(snapshot.size(), REQUESTS_LISTED); i++)
+			rendered.append("\n  ").append(i + 1).append(". ").append(describe(snapshot.get(i)));
+
+		if (snapshot.size() > REQUESTS_LISTED)
+			rendered.append("\n  and ").append(snapshot.size() - REQUESTS_LISTED).append(" more");
+
+		return rendered.toString();
+	}
+
+	private static String describe(ReceivedRequest request) {
+		String target = request.query() == null ? request.path() : request.path() + "?" + request.query();
+		String size = request.body().isEmpty() ? "" : " (" + request.body().length() + " chars)";
+
+		return String.format("%-7s %s%s", request.method(), target, size);
 	}
 
 }

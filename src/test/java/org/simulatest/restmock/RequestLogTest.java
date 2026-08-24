@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 public class RequestLogTest {
 
+	private static final String NEWLINE = "\n";
+
 	private RequestLog log;
 
 	@BeforeEach
@@ -200,6 +202,48 @@ public class RequestLogTest {
 		}
 
 		assertEquals(threads * perThread, log.count());
+	}
+
+	@Test
+	public void anEmptyLogSaysSoRatherThanPrintingAnObjectId() {
+		assertEquals("no requests received", log.toString());
+	}
+
+	/**
+	 * "expected: <1> but was: <0>" says nothing about the calls that were made,
+	 * so the log has to be readable enough to carry the failure itself.
+	 */
+	@Test
+	public void theLogRendersAsAReadableListForAssertionMessages() {
+		log.add(request(HttpMethod.GET, "/users/1"));
+		log.add(request(HttpMethod.POST, "/orders", null, "{\"sku\":\"ABC\"}"));
+
+		String rendered = log.toString();
+
+		assertEquals("2 requests received:" + NEWLINE
+			+ "  1. GET     /users/1" + NEWLINE
+			+ "  2. POST    /orders (13 chars)", rendered);
+	}
+
+	@Test
+	public void aSingleRequestIsNotDescribedInThePlural() {
+		log.add(request(HttpMethod.GET, "/health"));
+
+		assertTrue(log.toString().startsWith("1 request received:"), log.toString());
+	}
+
+	@Test
+	public void theQueryStringIsPartOfWhatWasCalled() {
+		log.add(request(HttpMethod.GET, "/users", "active=true", ""));
+
+		assertTrue(log.toString().contains("/users?active=true"), log.toString());
+	}
+
+	@Test
+	public void aFloodOfRequestsIsTruncatedInsteadOfFillingTheTerminal() {
+		for (int i = 0; i < 25; i++) log.add(request(HttpMethod.GET, "/ping/" + i));
+
+		assertTrue(log.toString().contains("and 5 more"), log.toString());
 	}
 
 }

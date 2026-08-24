@@ -26,6 +26,11 @@ import org.simulatest.restmock.internal.server.RestMockServer;
  * Path templates use brace placeholders (for example {@code /users/{id}}) and
  * captured values are exposed to the response body via {@code ${id}}.
  *
+ * A stub URI is a path and nothing else. A query string, a fragment, a missing
+ * leading slash, or a malformed placeholder is rejected by the {@code when*}
+ * call with an {@link IllegalArgumentException}, rather than compiling into a
+ * route no request can reach.
+ *
  * HEAD requests reply with the configured body's byte length as Content-Length
  * but no body. OPTIONS requests get an Allow header listing every method
  * registered for that path.

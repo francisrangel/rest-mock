@@ -26,6 +26,11 @@ package org.simulatest.restmock;
  * the path. Names are matched case-insensitively, so {@code ${X-Tenant}} resolves
  * a header however the server happened to canonicalize its name.
  *
+ * A stub URI must be a path. A query string, a missing leading slash, and an
+ * unclosed brace in a template are all rejected by the {@code when*} call with
+ * an {@link IllegalArgumentException}; each used to compile into a route that
+ * silently matched nothing.
+ *
  * If a name appears in more than one source the most specific wins, in this order:
  * path captures, then body fields, then query parameters, then headers. A
  * placeholder with no matching name fails the response with a 500 naming what

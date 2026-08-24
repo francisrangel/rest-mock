@@ -32,6 +32,9 @@ import org.simulatest.restmock.internal.server.RestMockServer;
  * route no request can reach. A request that matches no route gets a 404 whose
  * body names what is stubbed and how close the call came.
  *
+ * {@link #baseUrl()} and {@link #url(String)} build the address of the running
+ * server, so a test never has to concatenate a port into a string.
+ *
  * HEAD requests reply with the configured body's byte length as Content-Length
  * but no body. OPTIONS requests get an Allow header listing every method
  * registered for that path.
@@ -139,6 +142,37 @@ public final class RestMock {
 	/** The port the server is bound to, or -1 when it is not running. */
 	public static int port() {
 		return server.port();
+	}
+
+	/**
+	 * Where the server is listening, for example {@code http://localhost:9080}.
+	 * Saves every caller from writing {@code "http://localhost:" + RestMock.port()},
+	 * which is the only line of plumbing a test using this library still needs.
+	 *
+	 * Throws {@link IllegalStateException} when the server is not running: there
+	 * is no honest URL to return, and a placeholder would fail later as a
+	 * connection refused with nothing pointing back here.
+	 */
+	public static String baseUrl() {
+		int port = port();
+
+		if (port == RestMockServer.NOT_RUNNING)
+			throw new IllegalStateException(
+				"RestMock is not running, so it has no base URL. Call RestMock.startServer() "
+					+ "or register RestMockExtension on a static field.");
+
+		return "http://localhost:" + port;
+	}
+
+	/**
+	 * {@link #baseUrl()} joined to {@code path}, for example
+	 * {@code RestMock.url("/users/42")}. A leading slash is added if missing.
+	 */
+	public static String url(String path) {
+		String base = baseUrl();
+
+		if (path == null || path.isEmpty()) return base;
+		return path.startsWith("/") ? base + path : base + "/" + path;
 	}
 
 	/** Stops the server and clears all routes and recorded requests. No-op if not running. */

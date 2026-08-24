@@ -17,7 +17,8 @@ import org.simulatest.restmock.internal.http.HttpHeader;
 
 public class IntegrationTestBase {
 
-	protected final String baseUrl = "http://localhost:" + RestMock.DEFAULT_PORT;
+	/** Dogfooding RestMock.baseUrl(): if it stops pointing at the server, every case here fails. */
+	protected final String baseUrl = RestMock.baseUrl();
 
 	@RegisterExtension
 	static RestMockExtension server = new RestMockExtension();

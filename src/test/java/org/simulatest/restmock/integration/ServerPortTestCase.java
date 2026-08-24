@@ -91,4 +91,40 @@ public class ServerPortTestCase {
 		assertEquals(OTHER_PORT, RestMock.port());
 	}
 
+	@Test
+	public void baseUrlPointsAtTheBoundPort() {
+		RestMock.startServer(OTHER_PORT);
+
+		assertEquals("http://localhost:" + OTHER_PORT, RestMock.baseUrl());
+		assertEquals("http://localhost:" + OTHER_PORT + "/users/42", RestMock.url("/users/42"));
+	}
+
+	/** A base URL for a server that is not listening would fail later, far from the cause. */
+	@Test
+	public void baseUrlWhileStoppedSaysToStartTheServer() {
+		IllegalStateException failure = assertThrows(IllegalStateException.class, RestMock::baseUrl);
+
+		assertTrue(failure.getMessage().contains("startServer"), failure.getMessage());
+	}
+
+	@Test
+	public void urlAcceptsAPathWithOrWithoutItsLeadingSlash() {
+		RestMock.startServer(OTHER_PORT);
+
+		assertEquals(RestMock.url("/ping"), RestMock.url("ping"));
+		assertEquals(RestMock.baseUrl(), RestMock.url(""));
+	}
+
+	@Test
+	public void urlBuildsARequestThatActuallyReaches() throws Exception {
+		RestMock.startServer(0);
+		RestMock.whenGet("/ping").thenReturnText("pong");
+
+		HttpResponse<String> response = client.send(
+			HttpRequest.newBuilder().uri(URI.create(RestMock.url("/ping"))).GET().build(),
+			HttpResponse.BodyHandlers.ofString());
+
+		assertEquals("pong", response.body());
+	}
+
 }

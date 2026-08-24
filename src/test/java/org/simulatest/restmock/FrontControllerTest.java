@@ -3,6 +3,8 @@ package org.simulatest.restmock;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +16,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -34,16 +37,18 @@ public class FrontControllerTest {
 	private final RouteManager routeManager = mock(RouteManager.class);
 	private final RequestLog requestLog = new RequestLog();
 	private final Headers headers = new Headers();
+	private final ByteArrayOutputStream responseBody = new ByteArrayOutputStream();
 	private final FrontController controller = new FrontController(routeManager, requestLog::add);
 
 	private void prepare(String method, String uri) {
 		when(routeManager.lookup(any(HttpMethod.class), any(String.class))).thenReturn(Optional.empty());
+		when(routeManager.registeredRoutes()).thenReturn(List.of(new Route(HttpMethod.GET, "/known")));
 		when(exchange.getRequestMethod()).thenReturn(method);
 		when(exchange.getRequestURI()).thenReturn(URI.create(uri));
 		when(exchange.getRequestHeaders()).thenReturn(headers);
 		when(exchange.getRequestBody()).thenReturn(new ByteArrayInputStream(new byte[0]));
 		when(exchange.getResponseHeaders()).thenReturn(new Headers());
-		when(exchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
+		when(exchange.getResponseBody()).thenReturn(responseBody);
 	}
 
 	@Test
@@ -61,7 +66,19 @@ public class FrontControllerTest {
 
 		controller.processRequest(exchange);
 
-		verify(exchange).sendResponseHeaders(404, -1);
+		verify(exchange).sendResponseHeaders(eq(404), longThat(length -> length > 0));
+	}
+
+	/** An empty 404 body left "why isn't my mock matching?" to guesswork. */
+	@Test
+	public void theNotFoundBodySaysWhatIsStubbed() throws IOException {
+		prepare(HttpMethod.GET.name(), "/test");
+
+		controller.processRequest(exchange);
+
+		String body = responseBody.toString(StandardCharsets.UTF_8);
+		assertTrue(body.contains("No stub for GET /test"), body);
+		assertTrue(body.contains("GET     /known"), body);
 	}
 
 	@Test

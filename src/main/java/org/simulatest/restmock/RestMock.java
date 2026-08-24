@@ -29,7 +29,8 @@ import org.simulatest.restmock.internal.server.RestMockServer;
  * A stub URI is a path and nothing else. A query string, a fragment, a missing
  * leading slash, or a malformed placeholder is rejected by the {@code when*}
  * call with an {@link IllegalArgumentException}, rather than compiling into a
- * route no request can reach.
+ * route no request can reach. A request that matches no route gets a 404 whose
+ * body names what is stubbed and how close the call came.
  *
  * HEAD requests reply with the configured body's byte length as Content-Length
  * but no body. OPTIONS requests get an Allow header listing every method

@@ -26,6 +26,7 @@ import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.ReceivedRequest;
 import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.Response;
+import org.simulatest.restmock.internal.routing.NoRouteReport;
 import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.internal.routing.RouteManager.Match;
 import org.simulatest.restmock.internal.utils.LogSafe;
@@ -131,8 +132,7 @@ public class FrontController implements HttpHandler {
 		}
 
 		if (match.isEmpty()) {
-			log.warn("No route matches {} {} - returning 404", httpMethod, uri.getPath());
-			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1);
+			respondWithNoRoute(exchange, httpMethod, uri.getPath());
 			return;
 		}
 
@@ -198,8 +198,7 @@ public class FrontController implements HttpHandler {
 		Set<HttpMethod> methods = advertisedMethods(path);
 
 		if (methods.isEmpty()) {
-			log.warn("OPTIONS {} but no route is registered for that path - returning 404", path);
-			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1);
+			respondWithNoRoute(exchange, HttpMethod.OPTIONS, path);
 			return;
 		}
 
@@ -213,6 +212,34 @@ public class FrontController implements HttpHandler {
 		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
 
 		log.debug("OPTIONS {} -> 204 (Allow: {})", path, allow);
+	}
+
+	/**
+	 * A 404 that names what is stubbed. The empty body this used to send made
+	 * "why isn't my mock matching?" a debugging session; the routes are right
+	 * there in the test, so the server may as well print them.
+	 */
+	private void respondWithNoRoute(HttpExchange exchange, HttpMethod method, String path) throws IOException {
+		String report = NoRouteReport.describe(method, path, routeManager.registeredRoutes());
+
+		log.warn("No route matches {} {} - returning 404", method, path);
+		if (log.isDebugEnabled()) log.debug("{}", report);
+
+		byte[] body = report.getBytes(StandardCharsets.UTF_8);
+
+		// HEAD carries the length of the body it would have sent, never the body.
+		if (method == HttpMethod.HEAD) {
+			exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
+			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1);
+			return;
+		}
+
+		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.type() + "; charset=utf-8");
+		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, body.length);
+
+		try (OutputStream os = exchange.getResponseBody()) {
+			os.write(body);
+		}
 	}
 
 	private String allowHeaderFor(String path) {

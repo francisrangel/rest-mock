@@ -3,6 +3,7 @@ package org.simulatest.restmock.internal.routing;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -88,6 +89,11 @@ public class RouteManager {
 
 	public int size() {
 		return routes.size();
+	}
+
+	/** Every registered route, in registration order. Used to explain a 404. */
+	public List<Route> registeredRoutes() {
+		return List.copyOf(routes.keySet());
 	}
 
 	public record Match(Route route, Response response, Map<String, String> pathCaptures) {

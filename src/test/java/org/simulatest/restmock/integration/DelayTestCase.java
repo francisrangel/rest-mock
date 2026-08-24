@@ -1,9 +1,11 @@
 package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +37,25 @@ public class DelayTestCase extends IntegrationTestBase {
 
 		assertEquals(200, response.statusCode());
 		assertEquals("done", response.body());
+	}
+
+	/** withDelay(2000) does not say whether it means milliseconds; a Duration does. */
+	@Test
+	public void aDelayCanBeStatedAsADuration() throws Exception {
+		RestMock.whenGet("/slow-duration").thenReturnText("done").withDelay(Duration.ofMillis(50));
+
+		long start = System.currentTimeMillis();
+		HttpResponse<String> response = sendRequest("/slow-duration", HttpMethod.GET);
+		long elapsed = System.currentTimeMillis() - start;
+
+		assertEquals(200, response.statusCode());
+		assertTrue(elapsed >= 50, "Expected at least 50ms but took " + elapsed + "ms");
+	}
+
+	@Test
+	public void aNegativeDelayIsRejectedRatherThanIgnored() {
+		assertThrows(IllegalArgumentException.class,
+			() -> RestMock.whenGet("/backwards").thenReturnText("done").withDelay(-1));
 	}
 
 }

@@ -1,5 +1,8 @@
 package org.simulatest.restmock;
 
+import java.time.Duration;
+import java.util.Objects;
+
 import org.simulatest.restmock.internal.response.Response;
 
 /**
@@ -35,8 +38,18 @@ public class ResponseOptions {
 	 * routes are served concurrently and are not held up. Last call wins.
 	 */
 	public ResponseOptions withDelay(long millis) {
+		if (millis < 0) throw new IllegalArgumentException("Delay must not be negative, but was " + millis + " ms.");
+
 		response.setDelayMillis(millis);
 		return this;
+	}
+
+	/**
+	 * The same delay, said out loud: {@code withDelay(Duration.ofSeconds(2))}
+	 * cannot be misread the way {@code withDelay(2000)} can.
+	 */
+	public ResponseOptions withDelay(Duration delay) {
+		return withDelay(Objects.requireNonNull(delay, "delay").toMillis());
 	}
 
 }

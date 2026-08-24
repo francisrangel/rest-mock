@@ -75,6 +75,7 @@ Everything you actually need, nothing you don’t:
 - Request inspection and counting  
 - JUnit extension for automatic lifecycle  
 - Built-in CORS support, preflight included  
+- 404s that tell you which stub you missed  
 
 And that’s it.
 
@@ -258,6 +259,80 @@ entirely.
 
 ---
 
+## When a stub doesn't match
+
+The slowest part of mocking HTTP is usually the same question: *why isn't my
+mock matching?* An empty 404 answers none of it, so rest-mock puts the answer in
+the body.
+
+```java
+RestMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Bob\"}");
+RestMock.whenPost("/orders").thenReturnText("ok");
+```
+
+```
+GET /users/01
+->
+404
+No stub for GET /users/01
+
+Closest stub: GET /users/1
+
+Stubbed routes:
+  GET     /users/1
+  POST    /orders
+```
+
+Right verb, wrong path is one kind of mistake; right path, wrong verb is the
+other, and it gets said outright:
+
+```
+GET /orders
+->
+404
+/orders is stubbed for POST, not GET.
+```
+
+Path templates are offered back exactly as you wrote them, braces included, so
+the hint names the line you can go and fix:
+
+```
+GET /user/42  ->  Closest stub: GET /users/{id}
+```
+
+And when nothing is stubbed at all, the report is the call you forgot:
+
+```
+No stub for GET /users/1
+
+Nothing is stubbed. Call RestMock.whenGet("/users/1").thenReturn... before the request.
+```
+
+---
+
+## Stubs that could never match are rejected
+
+A stub URI is a path. Anything else fails at the `when*` line that wrote it,
+instead of turning into a route no request can reach:
+
+```java
+RestMock.whenGet("/users?active=true");
+// Stub URI "/users?active=true" must not contain a query string; stub the path
+// "/users" instead and read the query with ${name} or from RestMock.requests().
+
+RestMock.whenGet("users/1");
+// Stub URI "users/1" must start with '/'.
+
+RestMock.whenGet("/users/{id");
+// Stub URI "/users/{id" has an unclosed '{'; path placeholders look like /users/{id}.
+```
+
+That last one was the worst of the three: a template missing its closing brace
+used to compile into a literal path with a brace in it, match nothing, and look
+completely correct in the test.
+
+---
+
 ## Loading responses from files
 
 When a response is too large or complex to inline, you can load it from a file in your test resources folder (`src/test/resources`):
@@ -369,7 +444,15 @@ RestMock.whenGet("/unreliable")
         .withStatus(200);
 ```
 
-Delay chains with `withStatus()` and `withHeader()` like everything else. Routes without `withDelay()` respond immediately.
+If milliseconds are ambiguous where you're reading it, say the unit out loud:
+
+```java
+RestMock.whenGet("/slow-api")
+        .thenReturnJSON("{\"data\":\"here\"}")
+        .withDelay(Duration.ofSeconds(2));
+```
+
+Delay chains with `withStatus()` and `withHeader()` like everything else. Routes without `withDelay()` respond immediately, and a negative delay is rejected rather than ignored.
 
 ---
 
@@ -391,6 +474,13 @@ String body = RestMock.requests()
         .orElseThrow()
         .body();
 
+// What did it send along with it?
+ReceivedRequest last = RestMock.requests().lastForPath("/api/users").orElseThrow();
+
+last.header("Content-Type");     // Optional<String>, case-insensitive
+last.header("Authorization");
+last.queryParam("dry_run");      // Optional<String>, URL-decoded
+
 // Filter by method and path
 List<ReceivedRequest> posts = RestMock.requests()
         .forRoute(HttpMethod.POST, "/api/users");
@@ -399,7 +489,11 @@ List<ReceivedRequest> posts = RestMock.requests()
 RestMock.requests().forPath("/health").isEmpty();
 ```
 
-Each `ReceivedRequest` captures the method, path, query string, headers, body, and timestamp. The `RequestLog` provides common filters out of the box:
+Each `ReceivedRequest` captures the method, path, query string, headers, body, and timestamp.
+
+Read headers with `header(name)` rather than through the raw `headers()` map. The JDK HTTP server rewrites every header name to first-letter-uppercase, so a header you sent as `Content-Type` is stored under `Content-type` and an exact lookup for the name you sent finds nothing. `header()` and `headerValues()` are case-insensitive, as HTTP itself is. Query parameter names stay case-sensitive, and `queryParam()` decodes the value for you.
+
+The `RequestLog` provides common filters out of the box:
 
 - `all()`: every request in arrival order
 - `forPath(path)`: literal path match
@@ -410,6 +504,21 @@ Each `ReceivedRequest` captures the method, path, query string, headers, body, a
 - `isEmpty()`: quick check
 
 For anything more specific, `all()` gives you the raw list to filter however you want.
+
+When an assertion about the log fails, `expected: <1> but was: <0>` tells you
+nothing about the calls that were actually made. Pass the log itself as the
+message and it prints them:
+
+```java
+assertEquals(1, RestMock.requests().countForPath("/orders"), RestMock.requests()::toString);
+```
+
+```
+org.opentest4j.AssertionFailedError: 2 requests received:
+  1. GET     /users/1
+  2. POST    /order (13 chars)
+==> expected: <1> but was: <0>
+```
 
 The request log is cleared automatically when you call `RestMock.clean()` or when the `RestMockExtension` cleans between tests.
 
@@ -494,6 +603,17 @@ String baseUrl = "http://localhost:" + RestMock.port();
 `RestMock.port()` returns `-1` while the server is stopped. Starting an
 already-running server on a *different* port fails instead of quietly leaving
 you pointed at the old one.
+
+You rarely need the port itself. `baseUrl()` and `url()` build the address for
+you, whichever port you ended up on:
+
+```java
+RestMock.baseUrl();          // http://localhost:9080
+RestMock.url("/users/42");   // http://localhost:9080/users/42
+```
+
+Calling either while the server is stopped fails on the spot, rather than handing
+back a URL that connects to nothing.
 
 ---
 

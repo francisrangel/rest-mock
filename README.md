@@ -128,7 +128,7 @@ Everything you actually need, nothing you don’t:
 - All HTTP verbs: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS  
 - HEAD and OPTIONS answered from the routes you already stubbed  
 - Path templates: `/users/{id}`  
-- Dynamic responses: `${id}`, `${query}`, `${body}`  
+- Dynamic responses: any path capture, query param or body field by name, as `${name}`  
 - JSON, XML, HTML, text  
 - Load responses from files  
 - Custom status codes and headers  
@@ -137,6 +137,7 @@ Everything you actually need, nothing you don’t:
 - JUnit extension for automatic lifecycle  
 - Built-in CORS support, preflight included  
 - 404s that tell you which stub you missed  
+- One mock per test class, so classes can [run in parallel](#running-test-classes-in-parallel)  
 
 And that’s it.
 
@@ -168,13 +169,15 @@ No containers.
 
 ### 3. One mental model
 
-Everything becomes `${name}`:
+Everything you wrote becomes `${name}`:
 
 - path → `/users/{id}`
 - query → `?id=42`
 - body → `{ "id": 42 }`
 
-Same access pattern everywhere.
+Same access pattern everywhere. Request headers are the one exception: they sit
+under a `header.` prefix, because `Host` and `Accept` are things your HTTP client
+attached, not things you wrote.
 
 ---
 
@@ -700,7 +703,20 @@ static RestMockExtension server = new RestMockExtension(3000);
 Or `new RestMockExtension(0)` for an OS-assigned one, read back with
 `RestMock.port()`.
 
-### Running test classes in parallel
+No base class. No `@BeforeAll`. No forgotten `clean()` calls. The extension handles everything so your tests only contain what matters: the mock setup and the assertion.
+
+If some tests share the same routes and you don't want them cleaned between each test, use `keepRoutes()`:
+
+```java
+@RegisterExtension
+static RestMockExtension server = new RestMockExtension().keepRoutes();
+```
+
+Routes will persist for the entire test class. You can still call `RestMock.clean()` manually whenever you need to.
+
+---
+
+## Running test classes in parallel
 
 The static `RestMock` methods drive one process-wide mock, so classes sharing it
 have to run one at a time. Give a class its own `HttpMock` and that constraint
@@ -728,19 +744,21 @@ Each `HttpMock` owns its routes, its request log, and its port, so two such
 classes share nothing and can run at the same time. Port `0` matters here: it
 lets the OS hand each one a free port instead of making you allocate them.
 
-Instances share only the Jackson mappers behind `RestMock.json()` and
-`RestMock.xml()`, which stay global because Jackson configuration is.
+`@Execution` only does anything once JUnit's parallel support is switched on, in
+`src/test/resources/junit-platform.properties`:
 
-No base class. No `@BeforeAll`. No forgotten `clean()` calls. The extension handles everything so your tests only contain what matters: the mock setup and the assertion.
-
-If some tests share the same routes and you don't want them cleaned between each test, use `keepRoutes()`:
-
-```java
-@RegisterExtension
-static RestMockExtension server = new RestMockExtension().keepRoutes();
+```properties
+junit.jupiter.execution.parallel.enabled = true
+junit.jupiter.execution.parallel.mode.default = same_thread
+junit.jupiter.execution.parallel.mode.classes.default = same_thread
 ```
 
-Routes will persist for the entire test class. You can still call `RestMock.clean()` manually whenever you need to.
+Leaving both defaults at `same_thread` means nothing runs concurrently unless it
+asks to. Classes still using the static `RestMock` API keep running one at a
+time, and only the ones you annotate opt in.
+
+Instances share only the Jackson mappers behind `RestMock.json()` and
+`RestMock.xml()`, which stay global because Jackson configuration is.
 
 ---
 

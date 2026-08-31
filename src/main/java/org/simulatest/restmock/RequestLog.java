@@ -117,7 +117,7 @@ public class RequestLog {
 	 *
 	 *   assertEquals(1, log.countForPath("/orders"), log::toString);
 	 *
-	 * "expected: <1> but was: <0>" says nothing about which calls the system
+	 * {@code "expected: <1> but was: <0>"} says nothing about which calls the system
 	 * under test actually made, which is the only thing worth knowing there.
 	 */
 	@Override

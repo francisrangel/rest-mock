@@ -5,9 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.sun.net.httpserver.Headers;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,14 @@ import org.simulatest.restmock.internal.response.ContentType;
 
 public class ParameterExtractorTest {
 
-	private Map<String, List<String>> headers = new HashMap<>();
+	/**
+	 * The type FrontController actually passes. A plain HashMap agreed with it on
+	 * every answer here but for a different reason: Headers normalizes a key on
+	 * lookup, a HashMap does not, so the exact-match Content-Type lookup this
+	 * suite used to exercise was green only because the test wrote the key the
+	 * same way it read it.
+	 */
+	private Headers headers = new Headers();
 
 	private void withContentType(String contentType) {
 		headers.put(HttpHeader.CONTENT_TYPE, List.of(contentType));
@@ -170,6 +178,23 @@ public class ParameterExtractorTest {
 
 		assertEquals("acme", params.get("X-Tenant"));
 		assertEquals("acme", params.get("x-tenant"));
+	}
+
+	/**
+	 * The JDK stores a Content-Type header under "Content-type", so the lookup
+	 * that decides whether to flatten the body must not be exact-match. Passing a
+	 * plain Map here on purpose: Headers would normalize the key and hide a
+	 * regression that would silently stop every ${field} from resolving.
+	 */
+	@Test
+	public void theContentTypeLookupDoesNotDependOnTheMapNormalizingKeys() {
+		Map<String, List<String>> plainMap = new java.util.HashMap<>();
+		plainMap.put("Content-type", List.of(ContentType.APPLICATION_JSON.type()));
+
+		Map<String, String> params = ParameterExtractor.extract(
+			URI.create("/test"), "{\"sku\":\"ABC\"}", plainMap);
+
+		assertEquals("ABC", params.get("sku"), "the JSON body was not flattened, so the Content-Type lookup missed");
 	}
 
 	@Test

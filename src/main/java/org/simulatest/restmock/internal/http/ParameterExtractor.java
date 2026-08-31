@@ -52,9 +52,23 @@ final class ParameterExtractor {
 		}
 	}
 
+	/**
+	 * Case-insensitive, so it does not depend on the caller handing us a map that
+	 * normalizes on its behalf. {@code com.sun.net.httpserver.Headers} does, which
+	 * is the only reason an exact-match lookup ever worked here: the JDK stores a
+	 * {@code Content-Type} header under {@code Content-type}, so a plain Map would
+	 * miss it and silently skip body flattening, turning every {@code ${field}}
+	 * into a 500.
+	 */
 	private static String firstHeader(Map<String, List<String>> headers, String name) {
-		List<String> values = headers.get(name);
-		return (values != null && !values.isEmpty()) ? values.get(0) : null;
+		for (Map.Entry<String, List<String>> header : headers.entrySet()) {
+			if (!header.getKey().equalsIgnoreCase(name)) continue;
+
+			List<String> values = header.getValue();
+			if (values != null && !values.isEmpty()) return values.get(0);
+		}
+
+		return null;
 	}
 
 	/**

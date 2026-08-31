@@ -143,6 +143,8 @@ detail, in the order you are likely to need it.
 
 ## Dynamic data from requests
 
+Anything the request carried can be substituted into the response by name:
+
 ```java
 RestMock.whenGet("/users/{id}")
         .thenReturnText("user ${id} aka ${nickname}");
@@ -152,51 +154,41 @@ RestMock.whenGet("/users/{id}")
 GET /users/42?nickname=bob → user 42 aka bob
 ```
 
-Works with:
-- path params  
-- query params  
-- form body  
-- JSON body  
-- XML body  
-- request headers, under a `header.` prefix  
-
-Nested fields use dotted paths and array elements use indexes:
+Path captures, query params and form, JSON or XML body fields all resolve the
+same way. Nested fields use dotted paths, array elements use indexes:
 
 ```java
 RestMock.whenPost("/orders")
         .thenReturnText("first sku: ${items.0.sku} for ${customer.name}");
 ```
 
-Headers are addressed under a `header.` prefix, never as a bare `${X-Tenant}`:
+Request headers are the exception, addressed under a `header.` prefix:
 
 ```java
 RestMock.whenGet("/whoami").thenReturnText("tenant=${header.X-Tenant}");
 ```
 
-The bare namespace holds what you wrote. `Host`, `User-Agent` and `Accept` are
-attached by your HTTP client, not by your test, so keeping them out means a
-typo can't quietly resolve to one of them instead of failing. Names are matched
-case-insensitively, so `${header.X-Tenant}` finds the header however the server
-canonicalized it.
+The bare namespace holds what you wrote; `Host` and `Accept` were attached by
+your client, and keeping them out means a typo can't quietly resolve to one
+instead of failing. The prefix is matched case-insensitively, so
+`${header.X-Tenant}` finds the header however the server canonicalized it.
 
 When a name exists in more than one place the most specific wins: path captures,
-then body fields, then query params. Headers have their own namespace and can't
-collide with any of them.
+then body fields, then query params. Headers cannot collide with any of them.
 
-A placeholder that matches nothing is a mistake in the stub, so it fails instead
-of shipping `${nmae}` to your client and letting an assertion on the status code
-pass anyway:
+A placeholder that matches nothing is a mistake in the stub, so it fails rather
+than shipping `${nmae}` to your client and letting a status-code assertion pass
+anyway:
 
 ```
 500  No value for ${nmae}. Available names: id, nickname; plus 6 request headers as ${header.NAME}
 ```
 
-The names you wrote are listed; the headers are counted. An ordinary request
-carries five to ten of them, and spelling them all out buried the one name you
-were actually looking for.
+The names you wrote are listed and the headers are only counted, so the one you
+were looking for is not buried under ten of them.
 
-Values are escaped for the format you're returning, so a request can't break the
-document it lands in:
+Substituted values are escaped for the format they land in, so a request cannot
+break the document:
 
 ```java
 RestMock.whenGet("/users/{id}").thenReturnJSON("{\"id\":\"${id}\"}");
@@ -207,8 +199,7 @@ GET /users/a"b → {"id":"a\"b"}
 ```
 
 JSON gets string escaping, XML and HTML get entities, plain text is left alone.
-If you need a body passed through untouched, `thenReturnFile` skips substitution
-entirely.
+`thenReturnFile` skips substitution entirely.
 
 ---
 
@@ -294,99 +285,77 @@ completely correct in the test.
 
 ## Loading responses from files
 
-When a response is too large or complex to inline, you can load it from a file in your test resources folder (`src/test/resources`):
+When a response is too big to inline, put it in `src/test/resources` and pass the
+filename. rest-mock loads it from the classpath and serves it with the matching
+content type:
 
 ```java
-RestMock.whenGet("/invoice")
-        .thenReturnJSONFromResource("invoice.json");
-
-RestMock.whenGet("/report")
-        .thenReturnXMLFromResource("report.xml");
-
-RestMock.whenGet("/page")
-        .thenReturnHTMLFromResource("page.html");
-
-RestMock.whenGet("/readme")
-        .thenReturnTextFromResource("readme.txt");
+RestMock.whenGet("/invoice").thenReturnJSONFromResource("invoice.json");
+RestMock.whenGet("/report").thenReturnXMLFromResource("report.xml");
+RestMock.whenGet("/page").thenReturnHTMLFromResource("page.html");
+RestMock.whenGet("/readme").thenReturnTextFromResource("readme.txt");
 ```
 
-Place the file in `src/test/resources` and pass the filename. rest-mock loads it from the classpath and serves it with the matching content type. This keeps your test code short while the actual response payload lives in a dedicated file you can inspect and edit separately.
-
-A missing file fails on the spot with the name it looked for. Nothing here throws a checked exception, so stubbing never forces a `try`/`catch` or a `throws` onto your test.
+Text resources are decoded as UTF-8 and trimmed, and `${...}` placeholders still
+resolve. A missing file fails on the spot naming what it looked for. Nothing here
+throws a checked exception, so stubbing never forces a `try`/`catch` onto a test.
 
 ---
 
 ## Serving files (images, PDFs, binaries)
 
-For non-text responses, use `thenReturnFile`. It serves bytes as-is, with no template substitution and no UTF-8 round-trip:
+`thenReturnFile` serves bytes as-is: no template substitution, no UTF-8 round
+trip. The MIME type is inferred from the extension (`.png`, `.pdf`, `.zip` and
+friends), falling back to `application/octet-stream`:
 
 ```java
-RestMock.whenGet("/logo")
-        .thenReturnFileFromResource("logo.png");
+RestMock.whenGet("/logo").thenReturnFileFromResource("logo.png");
+RestMock.whenGet("/data").thenReturnFileFromResource("payload.bin", "application/x-protobuf");
 ```
 
-The MIME type is inferred from the filename extension (`.png` to `image/png`, `.pdf` to `application/pdf`, `.zip` to `application/zip`, etc.); unknown extensions fall back to `application/octet-stream`. Override it when you need a specific MIME:
+When the bytes come from somewhere other than a classpath file, pass them inline.
+Without a content type they default to `application/octet-stream`, since raw
+bytes carry no filename to infer from:
 
 ```java
-RestMock.whenGet("/data")
-        .thenReturnFileFromResource("payload.bin", "application/x-protobuf");
+RestMock.whenGet("/invoice").thenReturnFile(generatePdf(invoice), "application/pdf");
 ```
 
-When the bytes come from somewhere other than a classpath file (generated, fetched, hand-crafted), pass them inline:
-
-```java
-byte[] pdf = generatePdf(invoice);
-
-RestMock.whenGet("/invoice")
-        .thenReturnFile(pdf, "application/pdf");
-```
-
-`thenReturnFile(byte[])` without a content type defaults to `application/octet-stream`, since raw bytes carry no filename to infer from.
-
-The file methods bypass `${...}` substitution because templates require a string view of the content. For text responses with placeholders, stick with `thenReturnJSONFromResource`, `thenReturnTextFromResource`, etc.
+These methods skip `${...}` substitution, which needs a string view of the
+content. For text with placeholders, use the `*FromResource` methods above.
 
 ---
 
 ## Custom status codes and headers
 
-By default every response returns 200. You can change that with `withStatus()`:
-
-```java
-RestMock.whenPost("/users")
-        .thenReturnJSON("{\"id\":1}")
-        .withStatus(201);
-```
-
-This works with any content type, so you can return a JSON error body with the right status code:
+Every response is 200 unless you say otherwise. `withStatus()` and `withHeader()`
+chain onto any `thenReturn*`, in any combination:
 
 ```java
 RestMock.whenPost("/users")
         .thenReturnJSON("{\"error\":\"email already taken\"}")
-        .withStatus(422);
+        .withStatus(422)
+        .withHeader("Cache-Control", "no-cache")
+        .withHeader("X-Request-Id", "abc123");
 ```
 
-For simple error messages where you don't need a specific content type, there's a shorthand:
+A header you set here wins over the one rest-mock would have sent, `Content-Type`
+included.
+
+When you just want a status and a message and don't care about the content type,
+there's a shorthand:
 
 ```java
 RestMock.whenGet("/secret")
         .thenReturnErrorCodeWithMessage(403, "Forbidden");
 ```
 
-Headers work the same way. Chain as many as you need:
-
-```java
-RestMock.whenGet("/api/data")
-        .thenReturnJSON("{\"items\":[]}")
-        .withStatus(200)
-        .withHeader("Cache-Control", "no-cache")
-        .withHeader("X-Request-Id", "abc123");
-```
-
 ---
 
 ## Simulating slow responses
 
-Need to test timeouts, retries, or loading states? Use `withDelay()` to make a route wait before responding:
+Testing timeouts, retries, or loading states? `withDelay()` makes a route wait
+before responding:
 
 ```java
 RestMock.whenGet("/slow-api")
@@ -394,16 +363,8 @@ RestMock.whenGet("/slow-api")
         .withDelay(2000);
 ```
 
-The server will wait 2 seconds before sending the response. This is useful for verifying that your HTTP client handles timeouts correctly:
-
-```java
-RestMock.whenGet("/unreliable")
-        .thenReturnText("too late")
-        .withDelay(5000)
-        .withStatus(200);
-```
-
-If milliseconds are ambiguous where you're reading it, say the unit out loud:
+Milliseconds are easy to misread, so there is an overload that says the unit out
+loud:
 
 ```java
 RestMock.whenGet("/slow-api")
@@ -411,62 +372,44 @@ RestMock.whenGet("/slow-api")
         .withDelay(Duration.ofSeconds(2));
 ```
 
-Delay chains with `withStatus()` and `withHeader()` like everything else. Routes without `withDelay()` respond immediately, and a negative delay is rejected rather than ignored.
+The delay applies to that route only: other routes are served concurrently and
+are not held up behind it. Routes without `withDelay()` respond immediately, and
+a negative delay is rejected rather than ignored.
 
 ---
 
 ## Inspecting received requests
 
-rest-mock records every request the server receives. After your test code runs, you can inspect what was actually called through `RestMock.requests()`:
+Every request the server receives is recorded. Read them back through
+`RestMock.requests()` to assert what your code actually called:
 
 ```java
-RestMock.whenPost("/api/users").thenReturnJSON("{\"id\":1}").withStatus(201);
+RestMock.requests().countForPath("/api/users");            // how many hit it
+RestMock.requests().forRoute(HttpMethod.POST, "/api/users"); // filter both ways
+RestMock.requests().forPath("/health").isEmpty();          // did anything at all
 
-// ... your code makes HTTP calls ...
-
-// How many requests hit /api/users?
-RestMock.requests().countForPath("/api/users");
-
-// What was the last POST body?
-String body = RestMock.requests()
-        .lastForPath("/api/users")
-        .orElseThrow()
-        .body();
-
-// What did it send along with it?
 ReceivedRequest last = RestMock.requests().lastForPath("/api/users").orElseThrow();
 
-last.header("Content-Type");     // Optional<String>, case-insensitive
-last.header("Authorization");
-last.queryParam("dry_run");      // Optional<String>, URL-decoded
-
-// Filter by method and path
-List<ReceivedRequest> posts = RestMock.requests()
-        .forRoute(HttpMethod.POST, "/api/users");
-
-// Did anything hit this endpoint?
-RestMock.requests().forPath("/health").isEmpty();
+last.body();
+last.header("Content-Type");   // Optional<String>, case-insensitive
+last.queryParam("dry_run");    // Optional<String>, URL-decoded
 ```
 
-Each `ReceivedRequest` captures the method, path, query string, headers, body, and timestamp.
+The full set is `all()`, `forPath()`, `forMethod()`, `forRoute()`,
+`countForPath()`, `countForRoute()`, `last()`, `lastForPath()` and `isEmpty()`.
+For anything more specific, `all()` hands back the raw list to filter yourself.
+Each `ReceivedRequest` carries the method, path, query string, headers, body and
+timestamp.
 
-Read headers with `header(name)` rather than through the raw `headers()` map. The JDK HTTP server rewrites every header name to first-letter-uppercase, so a header you sent as `Content-Type` is stored under `Content-type` and an exact lookup for the name you sent finds nothing. `header()` and `headerValues()` are case-insensitive, as HTTP itself is. Query parameter names stay case-sensitive, and `queryParam()` decodes the value for you.
+Read headers with `header(name)` rather than through the raw `headers()` map.
+The JDK server rewrites every header name to first-letter-uppercase, so a header
+you sent as `Content-Type` is stored under `Content-type` and an exact lookup for
+the name you sent finds nothing. `header()` and `headerValues()` are
+case-insensitive, as HTTP itself is; query parameter names stay case-sensitive.
 
-The `RequestLog` provides common filters out of the box:
-
-- `all()`: every request in arrival order
-- `forPath(path)`: literal path match
-- `forMethod(method)`: filter by HTTP verb
-- `forRoute(method, path)`: both at once
-- `countForPath(path)`, `countForRoute(method, path)`: counts
-- `last()`, `lastForPath(path)`: most recent
-- `isEmpty()`: quick check
-
-For anything more specific, `all()` gives you the raw list to filter however you want.
-
-When an assertion about the log fails, `expected: <1> but was: <0>` tells you
-nothing about the calls that were actually made. Pass the log itself as the
-message and it prints them:
+When an assertion about the log fails, `expected: <1> but was: <0>` says nothing
+about the calls that were actually made. Pass the log itself as the message and
+it prints them:
 
 ```java
 assertEquals(1, RestMock.requests().countForPath("/orders"), RestMock.requests()::toString);
@@ -479,7 +422,7 @@ org.opentest4j.AssertionFailedError: 2 requests received:
 ==> expected: <1> but was: <0>
 ```
 
-The request log is cleared automatically when you call `RestMock.clean()` or when the `RestMockExtension` cleans between tests.
+The log is cleared by `RestMock.clean()` and by `RestMockExtension` between tests.
 
 ---
 
@@ -539,7 +482,8 @@ from it.
 
 ## Customizing JSON and XML serialization
 
-rest-mock uses Jackson under the hood. Records, POJOs, and getters just work:
+Jackson does the serializing, so records, POJOs and getters just work, and any
+module on your test classpath is picked up automatically:
 
 ```java
 record Customer(String name, int age) {}
@@ -547,28 +491,14 @@ record Customer(String name, int age) {}
 RestMock.whenGet("/me").thenReturnJSON(new Customer("Bob", 25));
 ```
 
-Jackson auto-detects modules on your test classpath. Add `jackson-datatype-jsr310` to your test dependencies and `LocalDateTime` serializes as `"2026-05-03T18:58:12"` instead of an int array, no extra config.
+When you need snake_case, pretty printing or a custom serializer,
+`RestMock.json()` and `RestMock.xml()` return the live mappers to configure in a
+`@BeforeAll`. They are shared for the life of the JVM and `clean()` does not
+reset them, so configure them the same way everywhere or set them per class; the
+javadoc on `RestMock.json()` spells the lifetime out.
 
-When you need more control (snake_case, pretty printing, custom serializers), `RestMock.json()` and `RestMock.xml()` return the live `ObjectMapper` and `XmlMapper`. Configure them once before your tests run:
-
-```java
-@BeforeAll
-static void configureSerialization() {
-    RestMock.json()
-            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-            .registerModule(new MyCustomModule());
-
-    RestMock.xml()
-            .enable(SerializationFeature.INDENT_OUTPUT);
-}
-```
-
-These mappers are shared for the life of the JVM, and `clean()` does not reset
-them: configuration set by one test class is still in force for the next one in
-the same run. Configure them the same way everywhere, or set them per class if
-two classes need different rules.
-
-If even that's not enough, pre-serialize the response yourself and use the string overload; `thenReturnJSON(String)` accepts whatever you give it.
+Or skip the mapper entirely and pass a string: `thenReturnJSON(String)` serves
+whatever you hand it, verbatim.
 
 ---
 
@@ -576,45 +506,38 @@ If even that's not enough, pre-serialize the response yourself and use the strin
 
 ```java
 RestMock.startServer();     // default: localhost:9080
-RestMock.clean();           // reset routes
+RestMock.clean();           // reset routes and the request log
 RestMock.stopServer();
 ```
 
-Those static methods are a facade over one default mock, which
-`RestMock.defaultMock()` hands back. Everything below applies equally to an
-`HttpMock` you construct yourself; see [running test classes in
+These static methods are a facade over one default mock, which
+`RestMock.defaultMock()` hands back; everything here applies equally to an
+`HttpMock` you construct yourself. See [running test classes in
 parallel](#running-test-classes-in-parallel) for when you would.
 
-Pass `0` to let the OS pick a free port and read it back; useful when several
-builds share a CI machine and would otherwise fight over 9080:
+Pass `0` to let the OS pick a free port, which is how builds sharing a CI machine
+avoid fighting over 9080. You rarely need the number itself, because `baseUrl()`
+and `url()` build the address whichever port you landed on:
 
 ```java
 RestMock.startServer(0);
-String baseUrl = "http://localhost:" + RestMock.port();
+
+RestMock.baseUrl();          // http://localhost:54321
+RestMock.url("/users/42");   // http://localhost:54321/users/42
 ```
 
-`RestMock.port()` returns `-1` while the server is stopped. Starting an
-already-running server on a *different* port fails instead of quietly leaving
-you pointed at the old one.
-
-You rarely need the port itself. `baseUrl()` and `url()` build the address for
-you, whichever port you ended up on:
-
-```java
-RestMock.baseUrl();          // http://localhost:9080
-RestMock.url("/users/42");   // http://localhost:9080/users/42
-```
-
-Calling either while the server is stopped fails on the spot, rather than handing
-back a URL that connects to nothing.
+`port()` returns `-1` while stopped, and both `baseUrl()` and `url()` fail on the
+spot rather than handing back a URL that connects to nothing. Starting an
+already-running server on a *different* port fails too, instead of quietly
+leaving you pointed at the old one.
 
 ---
 
 ## JUnit extension
 
-If you don't want to manage the server lifecycle yourself, rest-mock provides a JUnit extension that takes care of it for you.
-
-`RestMockExtension` starts the server once before your tests run, cleans all routes after each test so they don't leak into each other, and stops the server when the class is done. You just declare it and write your tests:
+`RestMockExtension` starts the server before the class, clears routes after each
+test so they cannot leak into the next, and stops it when the class is done. No
+base class, no `@BeforeAll`, no forgotten `clean()`:
 
 ```java
 class MyApiTest {
@@ -624,41 +547,23 @@ class MyApiTest {
 
     @Test
     void fetchesUser() throws Exception {
-        RestMock.whenGet("/users/1").thenReturnJSON("{\"name\": \"Bob\"}");
+        RestMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Bob\"}");
 
-        // your HTTP client call here
-    }
-
-    @Test
-    void createsUser() throws Exception {
-        RestMock.whenPost("/users").thenReturnText("created ${name}");
-
-        // routes from fetchesUser are already gone,
-        // no manual clean() needed
+        // point your client at RestMock.baseUrl()
     }
 }
 ```
 
-If you need a different port:
+Register it on a `static` field: a non-static one is rebuilt for every test, and
+you would get a server per test instead of per class.
 
-```java
-@RegisterExtension
-static RestMockExtension server = new RestMockExtension(3000);
-```
-
-Or `new RestMockExtension(0)` for an OS-assigned one, read back with
-`RestMock.port()`.
-
-No base class. No `@BeforeAll`. No forgotten `clean()` calls. The extension handles everything so your tests only contain what matters: the mock setup and the assertion.
-
-If some tests share the same routes and you don't want them cleaned between each test, use `keepRoutes()`:
+`new RestMockExtension(3000)` picks a port, `new RestMockExtension(0)` lets the OS
+pick. `keepRoutes()` turns off the per-test reset when a class shares one fixture:
 
 ```java
 @RegisterExtension
 static RestMockExtension server = new RestMockExtension().keepRoutes();
 ```
-
-Routes will persist for the entire test class. You can still call `RestMock.clean()` manually whenever you need to.
 
 ---
 

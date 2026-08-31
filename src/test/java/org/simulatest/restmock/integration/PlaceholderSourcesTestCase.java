@@ -90,6 +90,20 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 	}
 
 	/**
+	 * A response loaded from a resource is still a template. The README says so,
+	 * and nothing covered it: every FromResource test used a fixture with no
+	 * placeholder in it, so the two features had never been exercised together.
+	 */
+	@Test
+	public void placeholdersInAResourceLoadedBodyStillResolve() throws Exception {
+		RestMock.whenGet("/greet/{id}").thenReturnTextFromResource("greeting.txt");
+
+		HttpResponse<String> response = sendRequest("/greet/42?name=Bob", HttpMethod.GET);
+
+		assertEquals("hello Bob, you asked for user 42", response.body());
+	}
+
+	/**
 	 * A typo used to ship as literal ${nobody} in the body, so a test asserting
 	 * only the status still passed. It now fails, and the message lists what
 	 * was actually available.

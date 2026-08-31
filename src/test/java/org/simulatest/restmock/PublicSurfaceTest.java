@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 public class PublicSurfaceTest {
 
 	private static final List<Class<?>> PUBLIC_API = List.of(
-		RestMock.class, RestMockExtension.class, RestMockResponse.class,
+		RestMock.class, HttpMock.class, RestMockExtension.class, RestMockResponse.class,
 		ResponseOptions.class, RequestLog.class, ReceivedRequest.class, HttpMethod.class);
 
 	@Test
@@ -62,7 +62,7 @@ public class PublicSurfaceTest {
 		List<String> names = PUBLIC_API.stream().map(Class::getSimpleName).sorted().toList();
 
 		assertEquals(
-			Arrays.asList("HttpMethod", "ReceivedRequest", "RequestLog", "ResponseOptions",
+			Arrays.asList("HttpMethod", "HttpMock", "ReceivedRequest", "RequestLog", "ResponseOptions",
 				"RestMock", "RestMockExtension", "RestMockResponse"),
 			names);
 	}

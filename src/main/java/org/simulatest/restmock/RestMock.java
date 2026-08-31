@@ -5,9 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import org.simulatest.restmock.internal.response.JSON;
 import org.simulatest.restmock.internal.response.XML;
-import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
-import org.simulatest.restmock.internal.server.RestMockServer;
 
 /**
  * Entry point for stubbing HTTP responses in tests.
@@ -39,56 +37,70 @@ import org.simulatest.restmock.internal.server.RestMockServer;
  * but no body. OPTIONS requests get an Allow header listing every method
  * registered for that path.
  *
- * RestMock holds process-wide state: routes, recorded requests, the JSON/XML
- * mappers, and the server itself are static singletons. Do not run RestMock-using
- * tests in parallel within the same JVM (e.g. Surefire's {@code parallel=classes}).
- * {@link RestMockExtension} clears state between tests; if you drive the server
- * manually, call {@link #clean()} between tests.
+ * Every method here delegates to one default {@link HttpMock}, returned by
+ * {@link #defaultMock()}. That instance is process-wide, so tests sharing it
+ * must not run in parallel within the same JVM (e.g. Surefire's
+ * {@code parallel=classes}). {@link RestMockExtension} clears it between tests;
+ * if you drive the server manually, call {@link #clean()} between tests.
+ *
+ * When you do need more than one mock at a time - parallel classes, or two
+ * collaborating services stubbed at once - construct {@link HttpMock} directly
+ * and hand it to {@link RestMockExtension}. Instances share nothing but the
+ * Jackson mappers behind {@link #json()} and {@link #xml()}, which stay global
+ * because Jackson configuration is global by nature.
  */
 public final class RestMock {
 
 	/** Port used when no port is specified. */
 	public static final int DEFAULT_PORT = 9080;
 
-	private static final RouteManager routeManager = new RouteManager();
-	private static final RequestLog requestLog = new RequestLog();
-	private static final RestMockServer server = new RestMockServer(routeManager, requestLog::add);
+	private static final HttpMock DEFAULT = new HttpMock();
 
 	private RestMock() {}
 
+	/**
+	 * The instance every static method here delegates to.
+	 *
+	 * Use it to pass the default mock to code that takes an {@link HttpMock}, or
+	 * as the starting point for moving a suite off the static API.
+	 */
+	public static HttpMock defaultMock() {
+		return DEFAULT;
+	}
+
 	/** Stubs a GET response for {@code uri}. Chain a {@code thenReturn*} to set the body. */
 	public static RestMockResponse whenGet(String uri) {
-		return registerRoute(HttpMethod.GET, uri);
+		return DEFAULT.whenGet(uri);
 	}
 
 	/** Stubs a POST response for {@code uri}. */
 	public static RestMockResponse whenPost(String uri) {
-		return registerRoute(HttpMethod.POST, uri);
+		return DEFAULT.whenPost(uri);
 	}
 
 	/** Stubs a PUT response for {@code uri}. */
 	public static RestMockResponse whenPut(String uri) {
-		return registerRoute(HttpMethod.PUT, uri);
+		return DEFAULT.whenPut(uri);
 	}
 
 	/** Stubs a DELETE response for {@code uri}. */
 	public static RestMockResponse whenDelete(String uri) {
-		return registerRoute(HttpMethod.DELETE, uri);
+		return DEFAULT.whenDelete(uri);
 	}
 
 	/** Stubs a PATCH response for {@code uri}. */
 	public static RestMockResponse whenPatch(String uri) {
-		return registerRoute(HttpMethod.PATCH, uri);
+		return DEFAULT.whenPatch(uri);
 	}
 
 	/** Stubs a HEAD response for {@code uri}. See class doc for HEAD body semantics. */
 	public static RestMockResponse whenHead(String uri) {
-		return registerRoute(HttpMethod.HEAD, uri);
+		return DEFAULT.whenHead(uri);
 	}
 
 	/** Stubs an OPTIONS response for {@code uri}. See class doc for the Allow header behavior. */
 	public static RestMockResponse whenOptions(String uri) {
-		return registerRoute(HttpMethod.OPTIONS, uri);
+		return DEFAULT.whenOptions(uri);
 	}
 
 	/**
@@ -96,7 +108,7 @@ public final class RestMock {
 	 * Use it to assert that the system under test made the calls you expected.
 	 */
 	public static RequestLog requests() {
-		return requestLog;
+		return DEFAULT.requests();
 	}
 
 	/**
@@ -116,10 +128,6 @@ public final class RestMock {
 		return XML.MAPPER;
 	}
 
-	private static RestMockResponse registerRoute(HttpMethod method, String uri) {
-		return new RouteRegister(new Route(method, uri), routeManager);
-	}
-
 	/** Starts the server on {@link #DEFAULT_PORT}. No-op if already running. */
 	public static void startServer() {
 		startServer(DEFAULT_PORT);
@@ -136,12 +144,12 @@ public final class RestMock {
 	 * permission, etc.).
 	 */
 	public static void startServer(int port) {
-		server.start(port);
+		DEFAULT.startServer(port);
 	}
 
 	/** The port the server is bound to, or -1 when it is not running. */
 	public static int port() {
-		return server.port();
+		return DEFAULT.port();
 	}
 
 	/**
@@ -154,14 +162,7 @@ public final class RestMock {
 	 * connection refused with nothing pointing back here.
 	 */
 	public static String baseUrl() {
-		int port = port();
-
-		if (port == RestMockServer.NOT_RUNNING)
-			throw new IllegalStateException(
-				"RestMock is not running, so it has no base URL. Call RestMock.startServer() "
-					+ "or register RestMockExtension on a static field.");
-
-		return "http://localhost:" + port;
+		return DEFAULT.baseUrl();
 	}
 
 	/**
@@ -169,26 +170,21 @@ public final class RestMock {
 	 * {@code RestMock.url("/users/42")}. A leading slash is added if missing.
 	 */
 	public static String url(String path) {
-		String base = baseUrl();
-
-		if (path == null || path.isEmpty()) return base;
-		return path.startsWith("/") ? base + path : base + "/" + path;
+		return DEFAULT.url(path);
 	}
 
 	/** Stops the server and clears all routes and recorded requests. No-op if not running. */
 	public static void stopServer() {
-		server.stop();
-		clean();
+		DEFAULT.stopServer();
 	}
 
 	/** Removes all stubbed routes and clears the request log. The server keeps running. */
 	public static void clean() {
-		routeManager.clean();
-		requestLog.clear();
+		DEFAULT.clean();
 	}
 
 	static RouteManager routeManager() {
-		return routeManager;
+		return DEFAULT.routeManager();
 	}
 
 }

@@ -609,6 +609,11 @@ RestMock.clean();           // reset routes
 RestMock.stopServer();
 ```
 
+Those static methods are a facade over one default mock, which
+`RestMock.defaultMock()` hands back. Everything below applies equally to an
+`HttpMock` you construct yourself; see [running test classes in
+parallel](#running-test-classes-in-parallel) for when you would.
+
 Pass `0` to let the OS pick a free port and read it back; useful when several
 builds share a CI machine and would otherwise fight over 9080:
 
@@ -672,6 +677,37 @@ static RestMockExtension server = new RestMockExtension(3000);
 
 Or `new RestMockExtension(0)` for an OS-assigned one, read back with
 `RestMock.port()`.
+
+### Running test classes in parallel
+
+The static `RestMock` methods drive one process-wide mock, so classes sharing it
+have to run one at a time. Give a class its own `HttpMock` and that constraint
+goes away:
+
+```java
+@Execution(ExecutionMode.CONCURRENT)
+class PaymentsTest {
+
+    static HttpMock mock = new HttpMock();
+
+    @RegisterExtension
+    static RestMockExtension server = new RestMockExtension(mock, 0);
+
+    @Test
+    void chargesACard() throws Exception {
+        mock.whenPost("/charges").thenReturnJSON("{\"id\":1}");
+
+        // point the system under test at mock.baseUrl()
+    }
+}
+```
+
+Each `HttpMock` owns its routes, its request log, and its port, so two such
+classes share nothing and can run at the same time. Port `0` matters here: it
+lets the OS hand each one a free port instead of making you allocate them.
+
+Instances share only the Jackson mappers behind `RestMock.json()` and
+`RestMock.xml()`, which stay global because Jackson configuration is.
 
 No base class. No `@BeforeAll`. No forgotten `clean()` calls. The extension handles everything so your tests only contain what matters: the mock setup and the assertion.
 

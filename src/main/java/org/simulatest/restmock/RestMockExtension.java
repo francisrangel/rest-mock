@@ -1,5 +1,7 @@
 package org.simulatest.restmock;
 
+import java.util.Objects;
+
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -16,22 +18,49 @@ import org.slf4j.LoggerFactory;
  * server per class). A non-static field would be reinstantiated per test:
  *
  *   {@code @RegisterExtension static RestMockExtension mock = new RestMockExtension();}
+ *
+ * That form drives the process-wide default mock, the one behind the static
+ * {@link RestMock} methods. Pass an {@link HttpMock} instead to give the class
+ * its own mock, which is what lets two test classes run at once:
+ *
+ *   {@code static HttpMock mock = new HttpMock();}
+ *   {@code @RegisterExtension static RestMockExtension server = new RestMockExtension(mock, 0);}
  */
 public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
 
 	private static final Logger log = LoggerFactory.getLogger(RestMockExtension.class);
 
+	private final HttpMock mock;
 	private final int port;
 	private boolean autoClean = true;
 
-	/** Uses {@link RestMock#DEFAULT_PORT}. */
+	/** Drives the default mock on {@link RestMock#DEFAULT_PORT}. */
 	public RestMockExtension() {
-		this(RestMock.DEFAULT_PORT);
+		this(RestMock.defaultMock(), RestMock.DEFAULT_PORT);
 	}
 
-	/** Uses the given port. */
+	/** Drives the default mock on the given port. Pass 0 for an OS-assigned one. */
 	public RestMockExtension(int port) {
+		this(RestMock.defaultMock(), port);
+	}
+
+	/**
+	 * Drives {@code mock} on {@link RestMock#DEFAULT_PORT}. Give each class its
+	 * own {@link HttpMock} and they no longer share routes or a port.
+	 */
+	public RestMockExtension(HttpMock mock) {
+		this(mock, RestMock.DEFAULT_PORT);
+	}
+
+	/** Drives {@code mock} on the given port. Pass 0 for an OS-assigned one. */
+	public RestMockExtension(HttpMock mock, int port) {
+		this.mock = Objects.requireNonNull(mock, "mock");
 		this.port = port;
+	}
+
+	/** The mock this extension drives. */
+	public HttpMock mock() {
+		return mock;
 	}
 
 	/**
@@ -45,18 +74,18 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 
 	@Override
 	public void beforeAll(ExtensionContext context) {
-		RestMock.startServer(port);
+		mock.startServer(port);
 	}
 
 	@Override
 	public void afterAll(ExtensionContext context) {
-		RestMock.stopServer();
+		mock.stopServer();
 	}
 
 	@Override
 	public void afterEach(ExtensionContext context) {
 		if (autoClean) {
-			RestMock.clean();
+			mock.clean();
 			log.debug("Auto-cleaned routes and request log after {}", context.getDisplayName());
 		}
 	}

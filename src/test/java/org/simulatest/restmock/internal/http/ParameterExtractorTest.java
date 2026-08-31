@@ -94,7 +94,7 @@ public class ParameterExtractorTest {
 
 		assertNull(params.get("name"), "a text/plain body must not be parsed for parameters");
 		// the request's own headers are parameters too, so the map is not empty
-		assertEquals(ContentType.TEXT_PLAIN.type(), params.get(HttpHeader.CONTENT_TYPE));
+		assertEquals(ContentType.TEXT_PLAIN.type(), params.get("header." + HttpHeader.CONTENT_TYPE));
 	}
 
 	@Test
@@ -151,12 +151,24 @@ public class ParameterExtractorTest {
 	// --- headers, JSON/XML body fields, and path captures"
 
 	@Test
-	public void headerValuesAreExposedAsParameters() {
-		headers.put("X-Tenant", List.of("acme"));
+	public void headersAreAddressableUnderTheHeaderPrefix() {
+		headers.add("X-Tenant", "acme");
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
 
-		assertEquals("acme", params.get("X-Tenant"));
+		assertEquals("acme", params.get("header.X-Tenant"));
+	}
+
+	@Test
+	public void theHeaderPrefixIsMatchedIgnoringCase() {
+		// the JDK server rewrites X-Tenant to X-tenant, so a template that spells the
+		// header the way the client sent it still has to resolve
+		headers.add("X-Tenant", "acme");
+
+		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+
+		assertEquals("acme", params.get("header.X-Tenant"));
+		assertEquals("acme", params.get("HEADER.x-tenant"));
 	}
 
 	@Test
@@ -165,55 +177,45 @@ public class ParameterExtractorTest {
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
 
-		assertEquals("acme", params.get("X-Tenant"));
-	}
-
-	@Test
-	public void headerNamesAreMatchedIgnoringCase() {
-		// the JDK server rewrites X-Tenant to X-tenant, so a template that spells the
-		// header the way the client sent it still has to resolve
-		headers.put("X-tenant", List.of("acme"));
-
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
-
-		assertEquals("acme", params.get("X-Tenant"));
-		assertEquals("acme", params.get("x-tenant"));
+		assertEquals("acme", params.get("header.X-Tenant"));
 	}
 
 	/**
-	 * The JDK stores a Content-Type header under "Content-type", so the lookup
-	 * that decides whether to flatten the body must not be exact-match. Passing a
-	 * plain Map here on purpose: Headers would normalize the key and hide a
-	 * regression that would silently stop every ${field} from resolving.
+	 * The namespace holds what the stub author wrote, not what the HTTP client
+	 * attached. A bare ${Accept} used to resolve to the client's Accept header,
+	 * so a typo or a missing body field quietly produced a response instead of
+	 * the "No value for ${...}" that every other unresolved name gets.
 	 */
 	@Test
-	public void theContentTypeLookupDoesNotDependOnTheMapNormalizingKeys() {
-		Map<String, List<String>> plainMap = new java.util.HashMap<>();
-		plainMap.put("Content-type", List.of(ContentType.APPLICATION_JSON.type()));
+	public void headersAreNotInTheBareNamespace() {
+		headers.add("X-Tenant", "acme");
+		headers.add("Accept", "*/*");
 
-		Map<String, String> params = ParameterExtractor.extract(
-			URI.create("/test"), "{\"sku\":\"ABC\"}", plainMap);
+		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
 
-		assertEquals("ABC", params.get("sku"), "the JSON body was not flattened, so the Content-Type lookup missed");
+		assertNull(params.get("X-Tenant"), "a bare ${X-Tenant} must not resolve a header");
+		assertNull(params.get("Accept"), "a bare ${Accept} must not resolve a header");
 	}
 
 	@Test
-	public void queryParametersWinOverHeadersWithTheSameName() {
-		headers.put("name", List.of("from-header"));
+	public void anAmbientHeaderCannotCollideWithAQueryParameter() {
+		headers.add("name", "from-header");
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=from-query"), "", headers);
 
 		assertEquals("from-query", params.get("name"));
+		assertEquals("from-header", params.get("header.name"));
 	}
 
 	@Test
-	public void bodyFieldsWinOverHeadersWithTheSameName() {
+	public void anAmbientHeaderCannotCollideWithABodyField() {
 		withContentType(ContentType.APPLICATION_JSON.type());
-		headers.put("name", List.of("from-header"));
+		headers.add("name", "from-header");
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "{\"name\":\"from-body\"}", headers);
 
 		assertEquals("from-body", params.get("name"));
+		assertEquals("from-header", params.get("header.name"));
 	}
 
 	@Test

@@ -1,6 +1,7 @@
 package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
@@ -16,12 +17,15 @@ import org.simulatest.restmock.internal.response.ContentType;
 /**
  * End-to-end coverage for every {@code ${name}} source documented on RestMockResponse:
  * path captures, body fields, query parameters and request headers.
+ *
+ * Headers live under the {@code header.} prefix; the bare namespace is reserved
+ * for what the stub author wrote.
  */
 public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 
 	@Test
 	public void headersResolvePlaceholders() throws Exception {
-		RestMock.whenGet("/whoami").thenReturnText("tenant=${X-Tenant}");
+		RestMock.whenGet("/whoami").thenReturnText("tenant=${header.X-Tenant}");
 
 		HttpResponse<String> response = client.send(
 			HttpRequest.newBuilder()
@@ -55,7 +59,7 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 
 	@Test
 	public void everySourceCanBeMixedInOneBody() throws Exception {
-		RestMock.whenPost("/users/{id}").thenReturnText("${id}|${from}|${name}|${X-Tenant}");
+		RestMock.whenPost("/users/{id}").thenReturnText("${id}|${from}|${name}|${header.X-Tenant}");
 
 		HttpRequest request = HttpRequest.newBuilder()
 			.uri(URI.create(baseUrl + "/users/42?from=web"))
@@ -98,7 +102,42 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 
 		assertEquals(500, response.statusCode());
 		assertTrue(response.body().startsWith("No value for ${nobody}. Available names:"), response.body());
-		assertTrue(response.body().contains("Host"), "the available names should include the headers: " + response.body());
+		assertTrue(response.body().contains("request headers as ${header.NAME}"),
+			"the message should point at the header namespace: " + response.body());
+	}
+
+	/**
+	 * The diagnostic lists what the author wrote and only counts the headers.
+	 * Spelling out Host, User-agent, Accept and the rest buried the two names
+	 * anybody is actually looking for.
+	 */
+	@Test
+	public void theUnknownPlaceholderMessageDoesNotDrownInHeaders() throws Exception {
+		RestMock.whenGet("/users/{id}").thenReturnText("${nobody}");
+
+		HttpResponse<String> response = sendRequest("/users/42?from=web", HttpMethod.GET);
+
+		String message = response.body();
+
+		assertTrue(message.contains("id"), message);
+		assertTrue(message.contains("from"), message);
+		assertFalse(message.contains("User-agent"), "headers should be counted, not listed: " + message);
+	}
+
+	/**
+	 * The hole the header namespace closed: a bare ${Accept} used to resolve to
+	 * whatever the HTTP client attached, so a name the author never defined
+	 * produced a cheerful 200 instead of the loud failure every other unresolved
+	 * name gets.
+	 */
+	@Test
+	public void aBareHeaderNameNoLongerResolvesSilently() throws Exception {
+		RestMock.whenGet("/test").thenReturnText("accept=${Accept}");
+
+		HttpResponse<String> response = sendRequest("/test", HttpMethod.GET);
+
+		assertEquals(500, response.statusCode());
+		assertTrue(response.body().startsWith("No value for ${Accept}."), response.body());
 	}
 
 }

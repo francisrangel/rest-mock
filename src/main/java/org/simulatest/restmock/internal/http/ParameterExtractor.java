@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.simulatest.restmock.internal.Placeholders;
 import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.utils.BodyFlattener;
 
@@ -16,13 +17,17 @@ final class ParameterExtractor {
 	 * Collects everything a response template can reference as {@code ${name}}.
 	 *
 	 * Sources are applied weakest first, so the resulting precedence is
-	 * body fields > query parameters > headers. Path captures are layered on top
-	 * by the caller and win over all three.
+	 * body fields > query parameters. Path captures are layered on top by the
+	 * caller and win over both.
+	 *
+	 * Headers sit in their own namespace under {@link Placeholders#HEADER_PREFIX}
+	 * and so cannot collide with any of them. See that constant for why they are
+	 * not in the bare namespace.
 	 *
 	 * Names are matched case-insensitively. That is not cosmetic: the JDK server
 	 * rewrites header names to first-letter-uppercase, so a request sent with
 	 * {@code X-Tenant} arrives as {@code X-tenant} and an exact-match lookup for
-	 * {@code ${X-Tenant}} would silently find nothing.
+	 * {@code ${header.X-Tenant}} would silently find nothing.
 	 */
 	static Map<String, String> extract(URI uri, String body, Map<String, List<String>> headers) {
 		Map<String, String> parameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -44,11 +49,12 @@ final class ParameterExtractor {
 		}
 	}
 
-	/** Repeated headers expose their first value. */
+	/** Under the header prefix, so an ambient header cannot shadow an authored name. Repeated headers expose their first value. */
 	private static void appendHeaders(Map<String, String> parameters, Map<String, List<String>> headers) {
 		for (Map.Entry<String, List<String>> header : headers.entrySet()) {
 			List<String> values = header.getValue();
-			if (values != null && !values.isEmpty()) parameters.put(header.getKey(), values.get(0));
+			if (values != null && !values.isEmpty())
+				parameters.put(Placeholders.HEADER_PREFIX + header.getKey(), values.get(0));
 		}
 	}
 

@@ -18,13 +18,20 @@ package org.simulatest.restmock;
  * Text resources are decoded as UTF-8 and have leading and trailing whitespace
  * stripped; binary resources are passed through byte-for-byte.
  *
- * Response bodies may reference request headers, query parameters, form/JSON/XML
- * body fields, and path captures using {@code ${name}} placeholders. For example,
- * a route registered as {@code /users/{id}} can return {@code {"id":"${id}"}}.
+ * Response bodies may reference query parameters, form/JSON/XML body fields, and
+ * path captures using {@code ${name}} placeholders. For example, a route
+ * registered as {@code /users/{id}} can return {@code {"id":"${id}"}}.
  * Nested body fields use dotted paths ({@code ${user.name}}) and array elements
  * use indexes ({@code ${items.0.sku}}); for XML the root element is not part of
- * the path. Names are matched case-insensitively, so {@code ${X-Tenant}} resolves
- * a header however the server happened to canonicalize its name.
+ * the path.
+ *
+ * Request headers are addressed under a {@code header.} prefix
+ * ({@code ${header.X-Tenant}}), never as a bare {@code ${X-Tenant}}. The bare
+ * namespace holds what the stub author wrote; Host, User-Agent and Accept are
+ * attached by the HTTP client, and letting them share the namespace meant a typo
+ * could silently resolve to one of them instead of failing. Names are matched
+ * case-insensitively, so {@code ${header.X-Tenant}} resolves the header however
+ * the server happened to canonicalize its name.
  *
  * A stub URI must be a path. A query string, a missing leading slash, and an
  * unclosed brace in a template are all rejected by the {@code when*} call with
@@ -32,9 +39,10 @@ package org.simulatest.restmock;
  * silently matched nothing.
  *
  * If a name appears in more than one source the most specific wins, in this order:
- * path captures, then body fields, then query parameters, then headers. A
- * placeholder with no matching name fails the response with a 500 naming what
- * was available, rather than shipping {@code ${nmae}} to the client.
+ * path captures, then body fields, then query parameters. Headers sit in their
+ * own namespace and cannot collide with any of them. A placeholder with no
+ * matching name fails the response with a 500 naming what was available, rather
+ * than shipping {@code ${nmae}} to the client.
  *
  * Substituted values are escaped for the response format - JSON string escaping,
  * XML and HTML entities, nothing for plain text - so a request value carrying a

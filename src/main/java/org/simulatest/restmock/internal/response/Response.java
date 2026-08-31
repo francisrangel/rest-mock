@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.simulatest.restmock.internal.Placeholders;
+
 public abstract class Response {
 
 	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
@@ -74,10 +76,35 @@ public abstract class Response {
 			"No value for ${" + name + "}. Available names: " + available(parameters));
 	}
 
+	/**
+	 * Lists the names the stub author wrote, and only counts the headers. An
+	 * ordinary request carries five to ten of them, and spelling them all out
+	 * buried the two or three names anybody is actually looking for.
+	 */
 	private static String available(Map<String, String> parameters) {
 		if (parameters.isEmpty()) return "(none)";
 
-		List<String> names = new ArrayList<>(parameters.keySet());
+		List<String> authored = new ArrayList<>();
+		int headers = 0;
+
+		for (String name : parameters.keySet()) {
+			if (Placeholders.isHeader(name)) headers++;
+			else authored.add(name);
+		}
+
+		StringBuilder rendered = new StringBuilder(listed(authored));
+
+		if (headers > 0)
+			rendered.append(authored.isEmpty() ? "" : "; ")
+				.append("plus ").append(headers)
+				.append(headers == 1 ? " request header as " : " request headers as ")
+				.append("${").append(Placeholders.HEADER_PREFIX).append("NAME}");
+
+		return rendered.toString();
+	}
+
+	private static String listed(List<String> names) {
+		if (names.isEmpty()) return "";
 		if (names.size() <= NAMES_IN_ERROR) return String.join(", ", names);
 
 		return String.join(", ", names.subList(0, NAMES_IN_ERROR))

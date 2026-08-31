@@ -219,10 +219,10 @@ GET /users/42?nickname=bob → "user 42 aka bob"
 Works with:
 - path params  
 - query params  
-- request headers  
 - form body  
 - JSON body  
 - XML body  
+- request headers, under a `header.` prefix  
 
 Nested fields use dotted paths and array elements use indexes:
 
@@ -231,17 +231,33 @@ RestMock.whenPost("/orders")
         .thenReturnText("first sku: ${items.0.sku} for ${customer.name}");
 ```
 
-Names are matched case-insensitively, so `${X-Tenant}` finds the header you sent.
+Headers are addressed under a `header.` prefix, never as a bare `${X-Tenant}`:
+
+```java
+RestMock.whenGet("/whoami").thenReturnText("tenant=${header.X-Tenant}");
+```
+
+The bare namespace holds what you wrote. `Host`, `User-Agent` and `Accept` are
+attached by your HTTP client, not by your test, so keeping them out means a
+typo can't quietly resolve to one of them instead of failing. Names are matched
+case-insensitively, so `${header.X-Tenant}` finds the header however the server
+canonicalized it.
+
 When a name exists in more than one place the most specific wins: path captures,
-then body fields, then query params, then headers.
+then body fields, then query params. Headers have their own namespace and can't
+collide with any of them.
 
 A placeholder that matches nothing is a mistake in the stub, so it fails instead
 of shipping `${nmae}` to your client and letting an assertion on the status code
 pass anyway:
 
 ```
-500  No value for ${nmae}. Available names: Host, User-agent, id, nickname
+500  No value for ${nmae}. Available names: id, nickname; plus 4 request headers as ${header.NAME}
 ```
+
+The names you wrote are listed; the headers are counted. An ordinary request
+carries five to ten of them, and spelling them all out buried the one name you
+were actually looking for.
 
 Values are escaped for the format you're returning, so a request can't break the
 document it lands in:

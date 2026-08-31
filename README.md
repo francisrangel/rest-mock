@@ -178,8 +178,9 @@ work, and `Access-Control-Request-Headers` is mirrored, so posting JSON with an
 reaches the browser as a readable 404 instead of an opaque CORS failure.
 
 Requests without an `Origin` get no CORS headers at all, so plain JVM clients
-see clean responses. An explicit `whenOptions()` stub always wins over the
-automatic preflight.
+see clean responses. An explicit `whenOptions()` stub supplies the body and
+status, and still answers the preflight: stubbing a route never takes CORS away
+from it.
 
 ---
 

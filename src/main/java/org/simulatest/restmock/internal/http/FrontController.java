@@ -148,13 +148,11 @@ public class FrontController implements HttpHandler {
 			}
 		}
 
-		writeResponseHeaders(content, exchange);
+		// Before writeResponseHeaders, so a header the stub set via withHeader
+		// still overrides what is derived here.
+		if (httpMethod == HttpMethod.OPTIONS) applyOptionsHeaders(exchange, uri.getPath());
 
-		if (httpMethod == HttpMethod.OPTIONS) {
-			String allow = allowHeaderFor(uri.getPath());
-			exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
-			log.debug("Returning Allow: {} for OPTIONS {}", allow, uri.getPath());
-		}
+		writeResponseHeaders(content, exchange);
 
 		byte[] body = content.render(
 			parametersFor(uri, requestBody, exchange.getRequestHeaders(), resolved.pathCaptures()));
@@ -195,23 +193,13 @@ public class FrontController implements HttpHandler {
 	 * opaque cross-origin failure.
 	 */
 	private void answerOptions(HttpExchange exchange, String path) throws IOException {
-		Set<HttpMethod> methods = advertisedMethods(path);
-
-		if (methods.isEmpty()) {
+		if (advertisedMethods(path).isEmpty()) {
 			respondWithNoRoute(exchange, HttpMethod.OPTIONS, path);
 			return;
 		}
 
-		String allow = joinMethodNames(methods);
-
-		if (Cors.isPreflight(HttpMethod.OPTIONS, exchange.getRequestHeaders())) {
-			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
-		}
-
-		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
+		applyOptionsHeaders(exchange, path);
 		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
-
-		log.debug("OPTIONS {} -> 204 (Allow: {})", path, allow);
 	}
 
 	/**
@@ -240,6 +228,25 @@ public class FrontController implements HttpHandler {
 		try (OutputStream os = exchange.getResponseBody()) {
 			os.write(body);
 		}
+	}
+
+	/**
+	 * Everything an OPTIONS answer owes the caller: the Allow header, plus the
+	 * CORS preflight headers when a browser asked for them.
+	 *
+	 * Shared by the derived answer and an explicit {@code whenOptions()} stub.
+	 * The stub used to skip this, so stubbing a route switched its preflight
+	 * off - the browser got a body but no Access-Control-Allow-Methods, and CORS
+	 * that worked before the stub stopped working after it.
+	 */
+	private void applyOptionsHeaders(HttpExchange exchange, String path) {
+		String allow = allowHeaderFor(path);
+		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
+
+		if (Cors.isPreflight(HttpMethod.OPTIONS, exchange.getRequestHeaders()))
+			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
+
+		log.debug("OPTIONS {} -> Allow: {}", path, allow);
 	}
 
 	private String allowHeaderFor(String path) {

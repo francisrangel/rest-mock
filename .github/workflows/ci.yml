@@ -19,5 +19,8 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Run tests
-        run: mvn -B test
+      # verify, not test: the release runs `mvn -B verify`, and a javadoc or
+      # packaging break is invisible to `mvn test`. Catching it here rather than
+      # on the tag keeps a broken build off Central.
+      - name: Build and test
+        run: mvn -B verify

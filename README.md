@@ -21,6 +21,67 @@ That’s it.
 
 ---
 
+## Install
+
+```xml
+<dependency>
+  <groupId>org.simulatest</groupId>
+  <artifactId>restmock</artifactId>
+  <version>0.2.0</version>
+  <scope>test</scope>
+</dependency>
+```
+
+Gradle:
+
+```groovy
+testImplementation 'org.simulatest:restmock:0.2.0'
+```
+
+Requires Java 17 or later.
+
+The JUnit dependency is optional: you only need it for `RestMockExtension`, and
+if you use that you already have JUnit. On the module path the artifact is
+`org.simulatest.restmock`.
+
+---
+
+## Quick example
+
+A complete test, start to finish:
+
+```java
+class UserServiceTest {
+
+    record Person(String name) {}
+
+    @RegisterExtension
+    static RestMockExtension server = new RestMockExtension();
+
+    @Test
+    void fetchesAUser() throws Exception {
+        RestMock.whenGet("/users/42").thenReturnJSON("{\"name\":\"Bob\"}");
+        RestMock.whenGet("/users/43").thenReturnJSON(new Person("John"));
+
+        var users = new UserService(RestMock.baseUrl());
+
+        assertEquals("Bob", users.byId(42).name());
+        assertEquals(1, RestMock.requests().countForPath("/users/42"));
+    }
+}
+```
+
+```
+GET /users/42 → {"name":"Bob"}
+GET /users/43 → {"name":"John"}
+```
+
+The extension starts the server before the class and clears routes between
+tests, so nothing leaks from one test to the next. `RestMock.baseUrl()` is the
+address to point your client at.
+
+---
+
 ## Why this exists
 
 Most HTTP mocking libraries start simple…  
@@ -130,78 +191,10 @@ If you need full API simulation or traffic proxying → use something else.
 
 ---
 
-## HEAD and OPTIONS come for free
+## Reference
 
-Stub `GET` and you get `HEAD` on the same path: same status, same headers, the
-body's length in `Content-Length`, and no body. `OPTIONS` is answered from
-whatever the path actually serves:
-
-```java
-RestMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Bob\"}");
-RestMock.whenDelete("/users/1").thenReturnText("gone");
-```
-
-```
-HEAD    /users/1 → 200, Content-Length: 14, no body
-OPTIONS /users/1 → 204, Allow: GET, HEAD, DELETE, OPTIONS
-```
-
-Stub them explicitly with `whenHead()` or `whenOptions()` when you want
-something else; an explicit stub always wins.
-
----
-
-## Browser-driven tests (CORS)
-
-If the code under test runs in a browser, rest-mock answers the preflight for
-you. Stub the route you actually care about; the `OPTIONS` call is handled from
-whatever methods you registered for that path:
-
-```java
-RestMock.whenGet("/api/data").thenReturnJSON("{\"ok\":true}");
-```
-
-```
-OPTIONS /api/data
-  Origin: http://localhost:3000
-  Access-Control-Request-Method: GET
-->
-  204
-  Access-Control-Allow-Origin: http://localhost:3000
-  Access-Control-Allow-Methods: GET, OPTIONS
-  Access-Control-Allow-Credentials: true
-```
-
-The origin you send is echoed back rather than `*`, so credentialed requests
-work, and `Access-Control-Request-Headers` is mirrored, so posting JSON with an
-`Authorization` header passes preflight. Errors carry the headers too: a 404
-reaches the browser as a readable 404 instead of an opaque CORS failure.
-
-Requests without an `Origin` get no CORS headers at all, so plain JVM clients
-see clean responses. An explicit `whenOptions()` stub supplies the body and
-status, and still answers the preflight: stubbing a route never takes CORS away
-from it.
-
----
-
-## Quick example
-
-```java
-record Person(String name) {}
-
-RestMock.whenGet("/users/42")
-        .thenReturnJSON("{\"name\":\"Bob\"}");
-
-RestMock.whenGet("/users/43")
-        .thenReturnJSON(new Person("John"));
-
-RestMock.startServer();
-```
-
-```
-GET /users/42 → {"name":"Bob"}
-GET /users/43 → {"name":"John"}
-```
+Everything above is the whole library in five minutes. What follows is the
+detail, in the order you are likely to need it.
 
 ---
 
@@ -541,6 +534,60 @@ The request log is cleared automatically when you call `RestMock.clean()` or whe
 
 ---
 
+## HEAD and OPTIONS come for free
+
+Stub `GET` and you get `HEAD` on the same path: same status, same headers, the
+body's length in `Content-Length`, and no body. `OPTIONS` is answered from
+whatever the path actually serves:
+
+```java
+RestMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Bob\"}");
+RestMock.whenDelete("/users/1").thenReturnText("gone");
+```
+
+```
+HEAD    /users/1 → 200, Content-Length: 14, no body
+OPTIONS /users/1 → 204, Allow: GET, HEAD, DELETE, OPTIONS
+```
+
+Stub them explicitly with `whenHead()` or `whenOptions()` when you want
+something else; an explicit stub always wins.
+
+---
+
+## Browser-driven tests (CORS)
+
+If the code under test runs in a browser, rest-mock answers the preflight for
+you. Stub the route you actually care about; the `OPTIONS` call is handled from
+whatever methods you registered for that path:
+
+```java
+RestMock.whenGet("/api/data").thenReturnJSON("{\"ok\":true}");
+```
+
+```
+OPTIONS /api/data
+  Origin: http://localhost:3000
+  Access-Control-Request-Method: GET
+->
+  204
+  Access-Control-Allow-Origin: http://localhost:3000
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Credentials: true
+```
+
+The origin you send is echoed back rather than `*`, so credentialed requests
+work, and `Access-Control-Request-Headers` is mirrored, so posting JSON with an
+`Authorization` header passes preflight. Errors carry the headers too: a 404
+reaches the browser as a readable 404 instead of an opaque CORS failure.
+
+Requests without an `Origin` get no CORS headers at all, so plain JVM clients
+see clean responses. An explicit `whenOptions()` stub supplies the body and
+status, and still answers the preflight: stubbing a route never takes CORS away
+from it.
+
+---
+
 ## Customizing JSON and XML serialization
 
 rest-mock uses Jackson under the hood. Records, POJOs, and getters just work:
@@ -573,31 +620,6 @@ the same run. Configure them the same way everywhere, or set them per class if
 two classes need different rules.
 
 If even that's not enough, pre-serialize the response yourself and use the string overload; `thenReturnJSON(String)` accepts whatever you give it.
-
----
-
-## Install
-
-```xml
-<dependency>
-  <groupId>org.simulatest</groupId>
-  <artifactId>restmock</artifactId>
-  <version>0.2.0</version>
-  <scope>test</scope>
-</dependency>
-```
-
-Gradle:
-
-```groovy
-testImplementation 'org.simulatest:restmock:0.2.0'
-```
-
-Requires Java 17 or later.
-
-The JUnit dependency is optional: you only need it for `RestMockExtension`, and
-if you use that you already have JUnit. On the module path the artifact is
-`org.simulatest.restmock`.
 
 ---
 

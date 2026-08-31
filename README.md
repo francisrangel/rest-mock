@@ -209,7 +209,7 @@ RestMock.whenGet("/users/{id}")
 ```
 
 ```
-GET /users/42?nickname=bob → "user 42 aka bob"
+GET /users/42?nickname=bob → user 42 aka bob
 ```
 
 Works with:
@@ -248,7 +248,7 @@ of shipping `${nmae}` to your client and letting an assertion on the status code
 pass anyway:
 
 ```
-500  No value for ${nmae}. Available names: id, nickname; plus 4 request headers as ${header.NAME}
+500  No value for ${nmae}. Available names: id, nickname; plus 6 request headers as ${header.NAME}
 ```
 
 The names you wrote are listed; the headers are counted. An ordinary request
@@ -303,7 +303,13 @@ other, and it gets said outright:
 GET /orders
 ->
 404
+No stub for GET /orders
+
 /orders is stubbed for POST, not GET.
+
+Stubbed routes:
+  GET     /users/1
+  POST    /orders
 ```
 
 Path templates are offered back exactly as you wrote them, braces included, so
@@ -550,7 +556,7 @@ RestMock.whenDelete("/users/1").thenReturnText("gone");
 
 ```
 HEAD    /users/1 → 200, Content-Length: 14, no body
-OPTIONS /users/1 → 204, Allow: GET, HEAD, DELETE, OPTIONS
+OPTIONS /users/1 → 204, Allow: GET, DELETE, HEAD, OPTIONS
 ```
 
 Stub them explicitly with `whenHead()` or `whenOptions()` when you want
@@ -575,7 +581,7 @@ OPTIONS /api/data
 ->
   204
   Access-Control-Allow-Origin: http://localhost:3000
-  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
   Access-Control-Allow-Credentials: true
 ```
 

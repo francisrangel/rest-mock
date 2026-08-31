@@ -17,7 +17,7 @@ RestMock.whenGet("/users/42").thenReturnJSON("{\"name\":\"Bob\"}");
 RestMock.startServer();
 ```
 
-That’s it.
+That's it.
 
 ---
 
@@ -84,46 +84,37 @@ address to point your client at.
 
 ## Why this exists
 
-Most HTTP mocking libraries start simple…  
-and turn into frameworks.
+Most HTTP mocking libraries start simple and turn into frameworks: dozens of
+config options, verbose DSLs, JSON files everywhere. If you have used WireMock
+or MockServer, you know the deal.
 
-- dozens of config options  
-- verbose DSLs  
-- JSON files everywhere  
-- hard to read, harder to maintain  
-
-If you’ve used WireMock or MockServer, you know the deal.
-
-**rest-mock goes the opposite direction:**
-
-> Write the mock inline, next to your test, in one line.
-
----
-
-## The core idea
-
-Mocking an endpoint should feel like writing a return statement.
+rest-mock goes the opposite direction. Mocking an endpoint should feel like
+writing a return statement:
 
 ```java
 RestMock.whenGet("/users/{id}")
         .thenReturnJSON("{\"id\":\"${id}\"}");
 ```
 
-Call it:
-
 ```
 GET /users/42 → {"id":"42"}
 ```
 
-No matchers.  
-No request builders.  
-No ceremony.
+No matchers. No request builders. No jumping between files.
+
+**Zero setup.** It runs on the HTTP server already in the JDK. No Jetty, no
+Netty, no containers; nothing to start but the mock itself.
+
+**One mental model.** Anything the request carried is `${name}`: a path capture,
+a query param, a body field. Request headers are the one exception, under a
+`header.` prefix, because `Host` and `Accept` are things your client attached
+rather than things you wrote.
 
 ---
 
 ## What you get
 
-Everything you actually need, nothing you don’t:
+Everything you actually need, nothing you don't:
 
 - All HTTP verbs: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS  
 - HEAD and OPTIONS answered from the routes you already stubbed  
@@ -139,58 +130,7 @@ Everything you actually need, nothing you don’t:
 - 404s that tell you which stub you missed  
 - One mock per test class, so classes can [run in parallel](#running-test-classes-in-parallel)  
 
-And that’s it.
-
----
-
-## Why developers like it
-
-### 1. Tests stay readable
-
-```java
-RestMock.whenPost("/login")
-        .thenReturnText("hello ${username}");
-```
-
-No jumping between files.  
-No mental overhead.
-
----
-
-### 2. Zero setup
-
-Uses the JDK built-in HTTP server.
-
-No Jetty.  
-No Netty.  
-No containers.
-
----
-
-### 3. One mental model
-
-Everything you wrote becomes `${name}`:
-
-- path → `/users/{id}`
-- query → `?id=42`
-- body → `{ "id": 42 }`
-
-Same access pattern everywhere. Request headers are the one exception: they sit
-under a `header.` prefix, because `Host` and `Accept` are things your HTTP client
-attached, not things you wrote.
-
----
-
-### 4. Designed for speed
-
-This is not a “full simulation framework”.
-
-It’s for:
-- fast unit tests  
-- integration tests  
-- mocking dependencies quickly  
-
-If you need full API simulation or traffic proxying → use something else.
+And that's it.
 
 ---
 
@@ -775,7 +715,7 @@ Instances share only the Jackson mappers behind `RestMock.json()` and
 - No hidden magic  
 - No feature creep  
 
-If a feature adds complexity, it doesn’t get added.
+If a feature adds complexity, it doesn't get added.
 
 ---
 

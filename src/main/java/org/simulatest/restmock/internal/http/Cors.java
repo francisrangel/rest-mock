@@ -44,14 +44,13 @@ final class Cors {
 	}
 
 	/**
-	 * Answers the preflight. Allowed methods come from the routes actually
-	 * registered for the path, and allowed headers mirror whatever the browser
-	 * asked for - a fixed list cannot know that this particular test posts JSON
-	 * with a bearer token.
+	 * Answers the preflight, on top of the headers {@link #apply} already sent
+	 * for the request. Allowed methods come from the routes actually registered
+	 * for the path, and allowed headers mirror whatever the browser asked for -
+	 * a fixed list cannot know that this particular test posts JSON with a
+	 * bearer token.
 	 */
 	static void applyPreflight(Headers requestHeaders, Headers responseHeaders, String allowedMethods) {
-		apply(requestHeaders, responseHeaders);
-
 		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS, allowedMethods);
 		responseHeaders.set(HttpHeader.ACCESS_CONTROL_MAX_AGE, MAX_AGE_SECONDS);
 

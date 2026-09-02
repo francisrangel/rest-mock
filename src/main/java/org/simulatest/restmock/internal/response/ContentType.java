@@ -12,6 +12,15 @@ public record ContentType(String type) {
 	public static final ContentType APPLICATION_FORM_URLENCODED = new ContentType("application/x-www-form-urlencoded");
 	public static final ContentType APPLICATION_OCTET_STREAM = new ContentType("application/octet-stream");
 
+	/**
+	 * The header value for a UTF-8 text body. Without the charset a client
+	 * applying the historical text/* default decodes "cafe" with an accent as
+	 * mojibake.
+	 */
+	public String utf8() {
+		return type + "; charset=utf-8";
+	}
+
 	/** Infers the content type from a file name, falling back to octet-stream. */
 	public static ContentType guessFrom(String path) {
 		String guessed = URLConnection.guessContentTypeFromName(path);

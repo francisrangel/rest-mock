@@ -52,8 +52,7 @@ public class RestMockServer {
 		try {
 			server = HttpServer.create(new InetSocketAddress(port), 0);
 		} catch (IOException e) {
-			log.error("Failed to bind RestMock to port {}: {}", port, e.getMessage());
-			throw new UncheckedIOException("Could not start the server!", e);
+			throw new UncheckedIOException("Could not bind RestMock to port " + port, e);
 		}
 
 		workers = Executors.newCachedThreadPool(new WorkerFactory());
@@ -65,9 +64,13 @@ public class RestMockServer {
 		log.info("RestMock server started on port {}", port());
 	}
 
+	public boolean isRunning() {
+		return server != null;
+	}
+
 	/** The bound port, or {@link #NOT_RUNNING}. Resolves the real port when started on 0. */
 	public int port() {
-		return server == null ? NOT_RUNNING : server.getAddress().getPort();
+		return isRunning() ? server.getAddress().getPort() : NOT_RUNNING;
 	}
 
 	public void stop() {

@@ -121,14 +121,12 @@ public final class HttpMock {
 	 * refused with nothing pointing back here.
 	 */
 	public String baseUrl() {
-		int port = port();
-
-		if (port == RestMockServer.NOT_RUNNING)
+		if (!server.isRunning())
 			throw new IllegalStateException(
 				"This mock is not running, so it has no base URL. Call startServer() "
 					+ "or register RestMockExtension on a static field.");
 
-		return "http://localhost:" + port;
+		return "http://localhost:" + port();
 	}
 
 	/**

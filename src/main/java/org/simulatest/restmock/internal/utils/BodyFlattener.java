@@ -48,8 +48,6 @@ public final class BodyFlattener {
 	}
 
 	private static void walk(String prefix, JsonNode node, Map<String, String> out) {
-		if (node == null) return;
-
 		if (node.isObject()) {
 			for (Map.Entry<String, JsonNode> field : node.properties()) {
 				walk(prefix.isEmpty() ? field.getKey() : prefix + "." + field.getKey(), field.getValue(), out);

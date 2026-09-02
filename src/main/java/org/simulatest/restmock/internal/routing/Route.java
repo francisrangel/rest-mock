@@ -1,6 +1,6 @@
 package org.simulatest.restmock.internal.routing;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.simulatest.restmock.HttpMethod;
 
@@ -28,10 +29,19 @@ public class Route {
 
 		validate(uri);
 
-		Compiled compiled = compile(uri);
-		this.pattern = compiled.pattern();
-		this.captureNames = compiled.captureNames();
-		validateCaptureNames(uri, this.captureNames);
+		// Each placeholder becomes one capture group; the literal text between
+		// them is quoted. split(-1) keeps a trailing literal, even an empty one.
+		this.captureNames = PLACEHOLDER.matcher(uri).results().map(found -> found.group(1)).toList();
+		this.pattern = Pattern.compile("^"
+			+ Arrays.stream(PLACEHOLDER.split(uri, -1)).map(Pattern::quote).collect(Collectors.joining("([^/]+)"))
+			+ "$");
+
+		validateCaptureNames(uri, captureNames);
+	}
+
+	/** True for a segment that is one whole placeholder, as {@code {id}} is and {@code {id}.json} is not. */
+	static boolean isPlaceholder(String segment) {
+		return PLACEHOLDER.matcher(segment).matches();
 	}
 
 	public HttpMethod getMethod() {
@@ -140,23 +150,5 @@ public class Route {
 	private static IllegalArgumentException invalid(String uri, String problem) {
 		return new IllegalArgumentException("Stub URI \"" + uri + "\" " + problem + ".");
 	}
-
-	private static Compiled compile(String uri) {
-		List<String> captureNames = new ArrayList<>();
-		Matcher m = PLACEHOLDER.matcher(uri);
-		StringBuilder regex = new StringBuilder("^");
-		int last = 0;
-		while (m.find()) {
-			regex.append(Pattern.quote(uri.substring(last, m.start())));
-			regex.append("([^/]+)");
-			captureNames.add(m.group(1));
-			last = m.end();
-		}
-		regex.append(Pattern.quote(uri.substring(last)));
-		regex.append("$");
-		return new Compiled(Pattern.compile(regex.toString()), List.copyOf(captureNames));
-	}
-
-	private record Compiled(Pattern pattern, List<String> captureNames) { }
 
 }

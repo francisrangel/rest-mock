@@ -19,10 +19,10 @@ import org.simulatest.restmock.internal.response.Response;
 /**
  * The stubbed routes, and what a request path is answered with.
  *
- * Two methods are answered beyond what was registered: HEAD is served by the
- * GET route (the server sends its headers and withholds the body), and
- * OPTIONS is served for any path that has a route at all. An explicit stub for
- * either always wins.
+ * HEAD is answered beyond what was registered: {@link #lookup} serves it from
+ * the GET route, and the server sends the headers and withholds the body. An
+ * explicit HEAD stub always wins. OPTIONS is the controller's to answer, from
+ * what {@link #methodsFor} says the path serves.
  */
 public class RouteManager {
 

@@ -83,11 +83,15 @@ public final class NoRouteReport {
 	private static Optional<Route> nearest(HttpMethod method, String path, List<Route> routes) {
 		int budget = Math.max(MINIMUM_EDIT_BUDGET, path.length() / LENGTH_DIVISOR);
 
+		record Scored(Route route, int distance) { }
+
 		return routes.stream()
-			.filter(route -> distanceTo(route, path) <= budget)
+			.map(route -> new Scored(route, distanceTo(route, path)))
+			.filter(scored -> scored.distance() <= budget)
 			.min(Comparator
-				.comparingInt((Route route) -> distanceTo(route, path))
-				.thenComparing(route -> route.getMethod() == method ? 0 : 1));
+				.comparingInt(Scored::distance)
+				.thenComparing(scored -> scored.route().getMethod() == method ? 0 : 1))
+			.map(Scored::route);
 	}
 
 	/**
@@ -109,13 +113,9 @@ public final class NoRouteReport {
 		StringBuilder filled = new StringBuilder();
 		for (int segment = 0; segment < template.length; segment++) {
 			if (segment > 0) filled.append('/');
-			filled.append(isPlaceholder(template[segment]) ? actual[segment] : template[segment]);
+			filled.append(Route.isPlaceholder(template[segment]) ? actual[segment] : template[segment]);
 		}
 		return filled.toString();
-	}
-
-	private static boolean isPlaceholder(String segment) {
-		return segment.length() > 2 && segment.startsWith("{") && segment.endsWith("}");
 	}
 
 	private static List<String> list(List<Route> routes) {

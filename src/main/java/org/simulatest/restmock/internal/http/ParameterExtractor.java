@@ -16,9 +16,9 @@ final class ParameterExtractor {
 	/**
 	 * Collects everything a response template can reference as {@code ${name}}.
 	 *
-	 * Sources are applied weakest first, so the resulting precedence is
-	 * body fields > query parameters. Path captures are layered on top by the
-	 * caller and win over both.
+	 * Sources are applied weakest first, so when a name appears in more than
+	 * one the most specific wins: path captures, then body fields, then query
+	 * parameters.
 	 *
 	 * Headers sit in their own namespace under {@link Placeholders#HEADER_PREFIX}
 	 * and so cannot collide with any of them. See that constant for why they are
@@ -29,12 +29,13 @@ final class ParameterExtractor {
 	 * server rewrites {@code X-Tenant} to {@code X-tenant}, so an exact-match
 	 * lookup for {@code ${header.X-Tenant}} would silently find nothing.
 	 */
-	static Map<String, String> extract(ReceivedRequest request) {
+	static Map<String, String> extract(ReceivedRequest request, Map<String, String> pathCaptures) {
 		Map<String, String> parameters = new LinkedHashMap<>();
 
 		appendHeaders(parameters, request.headers());
 		parameters.putAll(QueryString.parse(request.query()));
 		appendBody(parameters, request.body(), request.header(HttpHeader.CONTENT_TYPE).orElse(null));
+		parameters.putAll(pathCaptures);
 
 		return parameters;
 	}

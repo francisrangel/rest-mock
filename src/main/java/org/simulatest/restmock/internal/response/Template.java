@@ -25,14 +25,21 @@ public abstract class Template extends Response {
 	private static final int NAMES_IN_ERROR = 20;
 
 	private final String content;
+	private final boolean templated;
 
 	Template(String body) {
 		this.content = body;
+		this.templated = body.contains("${");
 	}
 
 	@Override
 	public boolean isTextual() {
 		return true;
+	}
+
+	@Override
+	public boolean usesParameters() {
+		return templated;
 	}
 
 	/**

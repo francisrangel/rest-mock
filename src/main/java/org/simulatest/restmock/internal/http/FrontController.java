@@ -9,8 +9,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -62,10 +62,8 @@ public class FrontController implements HttpHandler {
 	private void respondWithFailure(HttpExchange exchange, RuntimeException failure) {
 		log.error("Failed to handle {} {}", exchange.getRequestMethod(), exchange.getRequestURI(), failure);
 
-		boolean head = HttpMethod.HEAD.name().equalsIgnoreCase(exchange.getRequestMethod());
-
 		try {
-			sendText(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, describe(failure), head);
+			sendText(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, describe(failure));
 		} catch (IOException | RuntimeException tooLate) {
 			// Headers are already on the wire, so the status cannot be changed
 			// any more. The log above is the only record left.
@@ -89,8 +87,7 @@ public class FrontController implements HttpHandler {
 		} catch (IllegalArgumentException unsupported) {
 			log.warn("Unsupported HTTP method {} for {} - returning 501", method, uri.getPath());
 			sendText(exchange, HttpURLConnection.HTTP_NOT_IMPLEMENTED,
-				"No support for " + method + ". rest-mock answers " + joinMethodNames(Arrays.asList(HttpMethod.values())) + ".",
-				false);
+				"No support for " + method + ". rest-mock answers " + joinMethodNames(Arrays.asList(HttpMethod.values())) + ".");
 			return;
 		}
 
@@ -136,17 +133,21 @@ public class FrontController implements HttpHandler {
 
 		// Before writeResponseHeaders, so a header the stub set via withHeader
 		// still overrides what is derived here.
-		if (request.method() == HttpMethod.OPTIONS) applyOptionsHeaders(exchange, request.path());
+		if (request.method() == HttpMethod.OPTIONS)
+			applyOptionsHeaders(exchange, request.path(), routeManager.methodsFor(request.path()));
 
 		writeResponseHeaders(content, exchange);
 
-		Map<String, String> parameters = ParameterExtractor.extract(request);
-		parameters.putAll(match.pathCaptures());
+		// A body with nothing to substitute never reads the parameters, so a
+		// static stub does not pay to parse the request body on every call.
+		Map<String, String> parameters = content.usesParameters()
+			? ParameterExtractor.extract(request, match.pathCaptures())
+			: Map.of();
 		byte[] body = content.render(parameters);
 
-		boolean head = request.method() == HttpMethod.HEAD;
-		send(exchange, content.getResponseStatus(), body, head);
+		send(exchange, content.getResponseStatus(), body);
 
+		boolean head = request.method() == HttpMethod.HEAD;
 		log.debug("{} {} -> {} ({} bytes{})", request.method(), request.path(), content.getResponseStatus(), body.length,
 			head ? ", no body" : "");
 		if (log.isTraceEnabled() && !head) {
@@ -163,12 +164,14 @@ public class FrontController implements HttpHandler {
 	 * opaque cross-origin failure.
 	 */
 	private void answerOptions(HttpExchange exchange, String path) throws IOException {
-		if (routeManager.methodsFor(path).isEmpty()) {
+		Set<HttpMethod> methods = routeManager.methodsFor(path);
+
+		if (methods.isEmpty()) {
 			respondWithNoRoute(exchange, HttpMethod.OPTIONS, path);
 			return;
 		}
 
-		applyOptionsHeaders(exchange, path);
+		applyOptionsHeaders(exchange, path, methods);
 		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
 	}
 
@@ -181,9 +184,9 @@ public class FrontController implements HttpHandler {
 		String report = NoRouteReport.describe(method, path, routeManager.registeredRoutes());
 
 		log.warn("No route matches {} {} - returning 404", method, path);
-		if (log.isDebugEnabled()) log.debug("{}", report);
+		log.debug("{}", report);
 
-		sendText(exchange, HttpURLConnection.HTTP_NOT_FOUND, report, method == HttpMethod.HEAD);
+		sendText(exchange, HttpURLConnection.HTTP_NOT_FOUND, report);
 	}
 
 	/**
@@ -195,8 +198,8 @@ public class FrontController implements HttpHandler {
 	 * off - the browser got a body but no Access-Control-Allow-Methods, and CORS
 	 * that worked before the stub stopped working after it.
 	 */
-	private void applyOptionsHeaders(HttpExchange exchange, String path) {
-		String allow = joinMethodNames(routeManager.methodsFor(path));
+	private void applyOptionsHeaders(HttpExchange exchange, String path, Set<HttpMethod> methods) {
+		String allow = joinMethodNames(methods);
 		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
 
 		if (Cors.isPreflight(exchange.getRequestHeaders()))
@@ -217,35 +220,28 @@ public class FrontController implements HttpHandler {
 		Headers responseHeaders = exchange.getResponseHeaders();
 
 		responseHeaders.set(HttpHeader.CONTENT_TYPE, contentTypeHeaderFor(content));
-
-		for (Entry<String, String> header : content.getHeaders().entrySet()) {
-			responseHeaders.set(header.getKey(), header.getValue());
-		}
+		content.getHeaders().forEach(responseHeaders::set);
 	}
 
-	/**
-	 * Text bodies are encoded UTF-8, so the header has to say so. Without it a
-	 * client applying the historical text/* default decodes "cafe" with an
-	 * accent as mojibake. Binary bodies are passed through verbatim and carry no
-	 * known encoding, so they get the bare type.
-	 */
+	/** Text bodies are encoded UTF-8 and say so; binary bodies carry no known encoding and get the bare type. */
 	private static String contentTypeHeaderFor(Response content) {
-		String type = content.getContentType().type();
-		return content.isTextual() ? type + "; charset=utf-8" : type;
+		ContentType type = content.getContentType();
+		return content.isTextual() ? type.utf8() : type.type();
 	}
 
 	/** A UTF-8 plain-text answer: the shape of every diagnostic the server writes itself. */
-	private static void sendText(HttpExchange exchange, int status, String text, boolean head) throws IOException {
-		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.type() + "; charset=utf-8");
-		send(exchange, status, text.getBytes(StandardCharsets.UTF_8), head);
+	private static void sendText(HttpExchange exchange, int status, String text) throws IOException {
+		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.utf8());
+		send(exchange, status, text.getBytes(StandardCharsets.UTF_8));
 	}
 
 	/**
 	 * The one place a status and a body go onto the wire. HEAD carries the
-	 * length of the body it would have sent, never the body itself.
+	 * length of the body it would have sent, never the body itself; deciding
+	 * that here means no caller can forget it.
 	 */
-	private static void send(HttpExchange exchange, int status, byte[] body, boolean head) throws IOException {
-		if (head) {
+	private static void send(HttpExchange exchange, int status, byte[] body) throws IOException {
+		if (HttpMethod.HEAD.name().equalsIgnoreCase(exchange.getRequestMethod())) {
 			if (allowsContentLength(status)) {
 				exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
 			}

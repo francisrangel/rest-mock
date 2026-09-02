@@ -33,6 +33,15 @@ public abstract class Response {
 	/** The bytes to write for this response, given what the request carried. */
 	public abstract byte[] render(Map<String, String> parameters);
 
+	/**
+	 * False when {@link #render} never reads its parameters, so the caller can
+	 * skip collecting them: parsing a request body is the expensive part of
+	 * serving a static stub.
+	 */
+	public boolean usesParameters() {
+		return true;
+	}
+
 	public int getResponseStatus() {
 		return responseStatus;
 	}

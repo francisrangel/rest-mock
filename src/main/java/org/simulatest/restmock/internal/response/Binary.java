@@ -32,6 +32,11 @@ public final class Binary extends Response {
 	}
 
 	@Override
+	public boolean usesParameters() {
+		return false;
+	}
+
+	@Override
 	public ContentType getContentType() {
 		return contentType;
 	}

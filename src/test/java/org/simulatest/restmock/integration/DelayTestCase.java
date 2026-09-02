@@ -27,7 +27,7 @@ public class DelayTestCase extends IntegrationTestBase {
 	}
 
 	// The "no delay configured means zero delay" invariant is verified deterministically by
-	// HttpResponseForGETMethodTest.defaultDelayIsZero; asserting it here against the wall clock
+	// RouteRegisterTest.defaultDelayIsZero; asserting it here against the wall clock
 	// made the test fail on a loaded machine without any defect.
 	@Test
 	public void aRouteWithoutDelayRespondsNormally() throws Exception {

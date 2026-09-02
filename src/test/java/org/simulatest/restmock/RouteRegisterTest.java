@@ -20,7 +20,8 @@ import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.mock.Developer;
 
-public class HttpResponseForGETMethodTest {
+/** Every {@code thenReturn*} registers the response it promises, whatever the method. */
+public class RouteRegisterTest {
 
 	private RouteManager routeManager;
 	private RouteRegister subject;
@@ -33,46 +34,50 @@ public class HttpResponseForGETMethodTest {
 		subject = new RouteRegister(route, routeManager);
 	}
 
+	private Response registered() {
+		return routeManager.get(route);
+	}
+
 	@Test
-	public void thenReturnTextRegistersAPlainTextResponse() throws Exception {
+	public void thenReturnTextRegistersAPlainTextResponse() {
 		subject.thenReturnText("Hello World!");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
-		assertEquals("Hello World!", response.getContent());
+		assertEquals(ContentType.TEXT_PLAIN, registered().getContentType());
+		assertEquals("Hello World!", registered().getContent());
 	}
 
 	@Test
-	public void thenReturnHTMLRegistersAnHtmlResponse() throws Exception {
+	public void theMethodIsPartOfTheRoute() {
+		Route post = new Route(HttpMethod.POST, "/test");
+		new RouteRegister(post, routeManager).thenReturnText("Test succeed");
+
+		assertEquals("Test succeed", routeManager.get(post).getContent());
+		assertEquals(NotConfigured.class, registered().getClass(), "the GET route must be untouched");
+	}
+
+	@Test
+	public void thenReturnHTMLRegistersAnHtmlResponse() {
 		subject.thenReturnHTML("<h1>Mock rules</h1>");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.TEXT_HTML, response.getContentType());
-		assertEquals("<h1>Mock rules</h1>", response.getContent());
+		assertEquals(ContentType.TEXT_HTML, registered().getContentType());
+		assertEquals("<h1>Mock rules</h1>", registered().getContent());
 	}
 
 	@Test
-	public void thenReturnJSONWithAStringKeepsItVerbatim() throws Exception {
+	public void thenReturnJSONWithAStringKeepsItVerbatim() {
 		String simpleJSON = "{ \"name\": \"Bob\", \"age\": \"25\" }";
 		subject.thenReturnJSON(simpleJSON);
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
-		assertEquals(simpleJSON, response.getContent());
+		assertEquals(ContentType.APPLICATION_JSON, registered().getContentType());
+		assertEquals(simpleJSON, registered().getContent());
 	}
 
 	@Test
-	public void thenReturnJSONWithAnObjectSerializesIt() throws Exception {
+	public void thenReturnJSONWithAnObjectSerializesIt() {
 		subject.thenReturnJSON(new Developer("Bob", 25));
 
-		String expectedJSON = "{\"name\":\"Bob\",\"age\":25}";
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
-		assertEquals(expectedJSON, response.getContent());
+		assertEquals(ContentType.APPLICATION_JSON, registered().getContentType());
+		assertEquals("{\"name\":\"Bob\",\"age\":25}", registered().getContent());
 	}
 
 	@Test
@@ -80,40 +85,31 @@ public class HttpResponseForGETMethodTest {
 		String simpleXML = "<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>";
 		subject.thenReturnXML(simpleXML);
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.TEXT_XML, response.getContentType());
-		assertEquals(simpleXML, response.getContent());
+		assertEquals(ContentType.TEXT_XML, registered().getContentType());
+		assertEquals(simpleXML, registered().getContent());
 	}
 
 	@Test
 	public void thenReturnXMLWithAnObjectSerializesIt() {
 		subject.thenReturnXML(new Developer("Bob", 25));
 
-		String expectedXML = "<Developer><name>Bob</name><age>25</age></Developer>";
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.TEXT_XML, response.getContentType());
-		assertEquals(expectedXML, response.getContent());
+		assertEquals(ContentType.TEXT_XML, registered().getContentType());
+		assertEquals("<Developer><name>Bob</name><age>25</age></Developer>", registered().getContent());
 	}
 
 	@Test
 	public void withHeaderAttachesTheHeaderToTheResponse() {
 		subject.thenReturnText("ok").withHeader("Cache-Control", "no-cache");
 
-		Response response = routeManager.get(route);
-
-		assertEquals("no-cache", response.getHeader().get("Cache-Control"));
+		assertEquals("no-cache", registered().getHeader().get("Cache-Control"));
 	}
 
 	@Test
 	public void lastValueWinsForARepeatedHeader() {
 		subject.thenReturnText("ok").withHeader("X-Retry", "1").withHeader("X-Retry", "2");
 
-		Response response = routeManager.get(route);
-
-		assertEquals("2", response.getHeader().get("X-Retry"));
-		assertEquals(1, response.getHeader().size());
+		assertEquals("2", registered().getHeader().get("X-Retry"));
+		assertEquals(1, registered().getHeader().size());
 	}
 
 	@Test
@@ -137,41 +133,33 @@ public class HttpResponseForGETMethodTest {
 	public void thenReturnJSONFromResourceLoadsTheFile() {
 		subject.thenReturnJSONFromResource("developer.json");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
-		assertEquals("{\"name\":\"Bob\",\"age\":25}", response.getContent());
+		assertEquals(ContentType.APPLICATION_JSON, registered().getContentType());
+		assertEquals("{\"name\":\"Bob\",\"age\":25}", registered().getContent());
 	}
 
 	@Test
 	public void thenReturnXMLFromResourceLoadsTheFile() {
 		subject.thenReturnXMLFromResource("developer.xml");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.TEXT_XML, response.getContentType());
+		assertEquals(ContentType.TEXT_XML, registered().getContentType());
 		assertEquals("<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>",
-			response.getContent());
+			registered().getContent());
 	}
 
 	@Test
 	public void thenReturnHTMLFromResourceLoadsTheFile() {
 		subject.thenReturnHTMLFromResource("page.html");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.TEXT_HTML, response.getContentType());
-		assertEquals("<h1>Hello</h1>", response.getContent());
+		assertEquals(ContentType.TEXT_HTML, registered().getContentType());
+		assertEquals("<h1>Hello</h1>", registered().getContent());
 	}
 
 	@Test
 	public void thenReturnTextFromResourceLoadsTheFile() {
 		subject.thenReturnTextFromResource("example.txt");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
-		assertEquals("rest-mock rock! :-)", response.getContent());
+		assertEquals(ContentType.TEXT_PLAIN, registered().getContentType());
+		assertEquals("rest-mock rock! :-)", registered().getContent());
 	}
 
 	@Test
@@ -201,38 +189,30 @@ public class HttpResponseForGETMethodTest {
 	public void withStatusSetsCustomStatusCode() {
 		subject.thenReturnJSON("{\"id\":1}").withStatus(201);
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.APPLICATION_JSON, response.getContentType());
-		assertEquals(201, response.getResponseStatus());
+		assertEquals(ContentType.APPLICATION_JSON, registered().getContentType());
+		assertEquals(201, registered().getResponseStatus());
 	}
 
 	@Test
 	public void withStatusChainsWithHeader() {
 		subject.thenReturnJSON("{\"error\":\"bad\"}").withStatus(422).withHeader("X-Reason", "validation");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(422, response.getResponseStatus());
-		assertEquals("validation", response.getHeader().get("X-Reason"));
+		assertEquals(422, registered().getResponseStatus());
+		assertEquals("validation", registered().getHeader().get("X-Reason"));
 	}
 
 	@Test
 	public void withDelaySetsDelayOnResponse() {
 		subject.thenReturnText("ok").withDelay(500);
 
-		Response response = routeManager.get(route);
-
-		assertEquals(500, response.getDelayMillis());
+		assertEquals(500, registered().getDelayMillis());
 	}
 
 	@Test
 	public void defaultDelayIsZero() {
 		subject.thenReturnText("ok");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(0, response.getDelayMillis());
+		assertEquals(0, registered().getDelayMillis());
 	}
 
 	@Test
@@ -240,7 +220,7 @@ public class HttpResponseForGETMethodTest {
 		byte[] bytes = {1, 2, 3};
 		subject.thenReturnFile(bytes);
 
-		Binary response = assertInstanceOf(Binary.class, routeManager.get(route));
+		Binary response = assertInstanceOf(Binary.class, registered());
 
 		assertArrayEquals(bytes, response.render(Map.of()));
 		assertEquals(ContentType.APPLICATION_OCTET_STREAM, response.getContentType());
@@ -248,39 +228,31 @@ public class HttpResponseForGETMethodTest {
 
 	@Test
 	public void thenReturnFileWithExplicitContentType() {
-		byte[] bytes = {1, 2, 3};
-		subject.thenReturnFile(bytes, "application/x-protobuf");
+		subject.thenReturnFile(new byte[] {1, 2, 3}, "application/x-protobuf");
 
-		Response response = routeManager.get(route);
-
-		assertEquals("application/x-protobuf", response.getContentType().type());
+		assertEquals("application/x-protobuf", registered().getContentType().type());
 	}
 
 	@Test
 	public void thenReturnFileFromResourceInfersContentType() {
 		subject.thenReturnFileFromResource("page.html");
 
-		Response response = assertInstanceOf(Binary.class, routeManager.get(route));
-
-		assertEquals(ContentType.TEXT_HTML, response.getContentType());
+		assertInstanceOf(Binary.class, registered());
+		assertEquals(ContentType.TEXT_HTML, registered().getContentType());
 	}
 
 	@Test
-	public void thenReturnFileFromResourceFallsBackToOctetStreamForUnknownExtension() throws Exception {
+	public void thenReturnFileFromResourceFallsBackToOctetStreamForUnknownExtension() {
 		subject.thenReturnFileFromResource("fixture.xyz");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.APPLICATION_OCTET_STREAM, response.getContentType());
+		assertEquals(ContentType.APPLICATION_OCTET_STREAM, registered().getContentType());
 	}
 
 	@Test
-	public void thenReturnFileFromResourceWithExplicitContentType() throws Exception {
+	public void thenReturnFileFromResourceWithExplicitContentType() {
 		subject.thenReturnFileFromResource("page.html", "application/octet-stream");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(ContentType.APPLICATION_OCTET_STREAM, response.getContentType());
+		assertEquals(ContentType.APPLICATION_OCTET_STREAM, registered().getContentType());
 	}
 
 	@Test
@@ -290,11 +262,9 @@ public class HttpResponseForGETMethodTest {
 			.withDelay(100)
 			.withHeader("X-Slow", "yes");
 
-		Response response = routeManager.get(route);
-
-		assertEquals(201, response.getResponseStatus());
-		assertEquals(100, response.getDelayMillis());
-		assertEquals("yes", response.getHeader().get("X-Slow"));
+		assertEquals(201, registered().getResponseStatus());
+		assertEquals(100, registered().getDelayMillis());
+		assertEquals("yes", registered().getHeader().get("X-Slow"));
 	}
 
 }

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.RestMock;
 
-public class ServerCleanTest extends IntegrationTestBase {
+public class ServerCleanTestCase extends IntegrationTestBase {
 
 	@Test
 	public void routesShouldBeEliminatedOnClean() throws Exception {

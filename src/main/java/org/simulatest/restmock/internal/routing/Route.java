@@ -34,10 +34,6 @@ public class Route {
 		validateCaptureNames(uri, this.captureNames);
 	}
 
-	public Route(String method, String uri) {
-		this(HttpMethod.byString(method), uri);
-	}
-
 	public HttpMethod getMethod() {
 		return method;
 	}

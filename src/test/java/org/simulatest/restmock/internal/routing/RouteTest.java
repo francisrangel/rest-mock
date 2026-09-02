@@ -15,8 +15,8 @@ import org.simulatest.restmock.HttpMethod;
 public class RouteTest {
 
 	@Test
-	public void buildRouteViaString() {
-		Route route = new Route("GET", "/search");
+	public void exposesItsMethodAndUri() {
+		Route route = new Route(HttpMethod.GET, "/search");
 
 		assertEquals(HttpMethod.GET, route.getMethod());
 		assertEquals("/search", route.getUri());

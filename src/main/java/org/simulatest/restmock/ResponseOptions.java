@@ -21,8 +21,8 @@ public class ResponseOptions {
 	}
 
 	/** Sets a response header. Replaces any previous value for the same header name. */
-	public ResponseOptions withHeader(String property, String value) {
-		response.addHeader(property, value);
+	public ResponseOptions withHeader(String name, String value) {
+		response.addHeader(name, value);
 		return this;
 	}
 

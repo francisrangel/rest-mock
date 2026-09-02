@@ -51,8 +51,7 @@ public final class BodyFlattener {
 		if (node == null) return;
 
 		if (node.isObject()) {
-			for (var fields = node.fields(); fields.hasNext(); ) {
-				var field = fields.next();
+			for (Map.Entry<String, JsonNode> field : node.properties()) {
 				walk(prefix.isEmpty() ? field.getKey() : prefix + "." + field.getKey(), field.getValue(), out);
 			}
 		} else if (node.isArray()) {

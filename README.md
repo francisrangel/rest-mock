@@ -66,6 +66,7 @@ class UserServiceTest {
         var users = new UserService(RestMock.baseUrl());
 
         assertEquals("Bob", users.byId(42).name());
+        assertEquals("John", users.byId(43).name());
         assertEquals(1, RestMock.requests().countForPath("/users/42"));
     }
 }

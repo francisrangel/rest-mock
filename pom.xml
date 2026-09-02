@@ -42,7 +42,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<!-- Reproducible builds: same source bytes in, same jar bytes out.
 		     Bump this to the release date on every release. -->
-		<project.build.outputTimestamp>2026-05-05T00:00:00Z</project.build.outputTimestamp>
+		<project.build.outputTimestamp>2026-09-02T00:00:00Z</project.build.outputTimestamp>
 		<!-- release, not source/target: a build on a newer JDK then cannot
 		     compile against an API that is missing on 17. -->
 		<maven.compiler.release>17</maven.compiler.release>

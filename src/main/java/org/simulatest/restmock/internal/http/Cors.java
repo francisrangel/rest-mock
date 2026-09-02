@@ -2,8 +2,6 @@ package org.simulatest.restmock.internal.http;
 
 import com.sun.net.httpserver.Headers;
 
-import org.simulatest.restmock.HttpMethod;
-
 /**
  * Cross-origin headers for browser-driven tests.
  *
@@ -16,10 +14,13 @@ final class Cors {
 
 	private Cors() { }
 
-	/** A browser preflight: OPTIONS announcing the method the real request will use. */
-	static boolean isPreflight(HttpMethod method, Headers requestHeaders) {
-		return method == HttpMethod.OPTIONS
-			&& requestHeaders.getFirst(HttpHeader.ORIGIN) != null
+	/**
+	 * A browser preflight: an OPTIONS request announcing the method the real
+	 * request will use. Only consulted while answering OPTIONS, so the method
+	 * itself is not checked here.
+	 */
+	static boolean isPreflight(Headers requestHeaders) {
+		return requestHeaders.getFirst(HttpHeader.ORIGIN) != null
 			&& requestHeaders.getFirst(HttpHeader.ACCESS_CONTROL_REQUEST_METHOD) != null;
 	}
 

@@ -63,15 +63,10 @@ public class FrontController implements HttpHandler {
 	private void respondWithFailure(HttpExchange exchange, RuntimeException failure) {
 		log.error("Failed to handle {} {}", exchange.getRequestMethod(), exchange.getRequestURI(), failure);
 
-		byte[] body = describe(failure).getBytes(StandardCharsets.UTF_8);
+		boolean head = HttpMethod.HEAD.name().equalsIgnoreCase(exchange.getRequestMethod());
 
 		try {
-			exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.type() + "; charset=utf-8");
-			exchange.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, body.length);
-
-			try (OutputStream os = exchange.getResponseBody()) {
-				os.write(body);
-			}
+			sendText(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, describe(failure), head);
 		} catch (IOException | RuntimeException tooLate) {
 			// Headers are already on the wire, so the status cannot be changed
 			// any more. The log above is the only record left.
@@ -157,23 +152,12 @@ public class FrontController implements HttpHandler {
 		byte[] body = content.render(
 			parametersFor(uri, requestBody, exchange.getRequestHeaders(), resolved.pathCaptures()));
 
-		if (httpMethod == HttpMethod.HEAD) {
-			if (allowsContentLength(content.getResponseStatus())) {
-				exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
-			}
-			exchange.sendResponseHeaders(content.getResponseStatus(), -1);
-			log.debug("HEAD {} -> {} (Content-Length {}, no body)", uri.getPath(), content.getResponseStatus(), body.length);
-			return;
-		}
+		boolean head = httpMethod == HttpMethod.HEAD;
+		send(exchange, content.getResponseStatus(), body, head);
 
-		exchange.sendResponseHeaders(content.getResponseStatus(), body.length);
-
-		try (OutputStream os = exchange.getResponseBody()) {
-			os.write(body);
-		}
-
-		log.debug("{} {} -> {} ({} bytes)", httpMethod, uri.getPath(), content.getResponseStatus(), body.length);
-		if (log.isTraceEnabled()) {
+		log.debug("{} {} -> {} ({} bytes{})", httpMethod, uri.getPath(), content.getResponseStatus(), body.length,
+			head ? ", no body" : "");
+		if (log.isTraceEnabled() && !head) {
 			String rendered = content.isTextual()
 				? LogSafe.previewBytes(body)
 				: LogSafe.binaryPlaceholder(body.length);
@@ -213,21 +197,7 @@ public class FrontController implements HttpHandler {
 		log.warn("No route matches {} {} - returning 404", method, path);
 		if (log.isDebugEnabled()) log.debug("{}", report);
 
-		byte[] body = report.getBytes(StandardCharsets.UTF_8);
-
-		// HEAD carries the length of the body it would have sent, never the body.
-		if (method == HttpMethod.HEAD) {
-			exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
-			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1);
-			return;
-		}
-
-		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.type() + "; charset=utf-8");
-		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, body.length);
-
-		try (OutputStream os = exchange.getResponseBody()) {
-			os.write(body);
-		}
+		sendText(exchange, HttpURLConnection.HTTP_NOT_FOUND, report, method == HttpMethod.HEAD);
 	}
 
 	/**
@@ -243,7 +213,7 @@ public class FrontController implements HttpHandler {
 		String allow = allowHeaderFor(path);
 		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
 
-		if (Cors.isPreflight(HttpMethod.OPTIONS, exchange.getRequestHeaders()))
+		if (Cors.isPreflight(exchange.getRequestHeaders()))
 			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
 
 		log.debug("OPTIONS {} -> Allow: {}", path, allow);
@@ -293,6 +263,32 @@ public class FrontController implements HttpHandler {
 	private static String contentTypeHeaderFor(Response content) {
 		String type = content.getContentType().type();
 		return content.isTextual() ? type + "; charset=utf-8" : type;
+	}
+
+	/** A UTF-8 plain-text answer: the shape of every diagnostic the server writes itself. */
+	private static void sendText(HttpExchange exchange, int status, String text, boolean head) throws IOException {
+		exchange.getResponseHeaders().set(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.type() + "; charset=utf-8");
+		send(exchange, status, text.getBytes(StandardCharsets.UTF_8), head);
+	}
+
+	/**
+	 * The one place a status and a body go onto the wire. HEAD carries the
+	 * length of the body it would have sent, never the body itself.
+	 */
+	private static void send(HttpExchange exchange, int status, byte[] body, boolean head) throws IOException {
+		if (head) {
+			if (allowsContentLength(status)) {
+				exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
+			}
+			exchange.sendResponseHeaders(status, -1);
+			return;
+		}
+
+		exchange.sendResponseHeaders(status, body.length);
+
+		try (OutputStream os = exchange.getResponseBody()) {
+			os.write(body);
+		}
 	}
 
 	/** 204 and 304 carry no body; the JDK server rejects the exchange if they declare a length. */

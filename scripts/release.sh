@@ -66,7 +66,7 @@ mvn -B verify
 
 echo "==> Committing version bump"
 git add -u
-git commit -m "release: ${NEW_VERSION}"
+git commit -m "chore(release): ${NEW_VERSION}"
 
 echo "==> Tagging ${TAG}"
 git tag -a "${TAG}" -m "Release ${NEW_VERSION}"

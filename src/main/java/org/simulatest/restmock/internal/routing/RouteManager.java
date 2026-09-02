@@ -16,6 +16,14 @@ import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.internal.response.NotConfigured;
 import org.simulatest.restmock.internal.response.Response;
 
+/**
+ * The stubbed routes, and what a request path is answered with.
+ *
+ * Two methods are answered beyond what was registered: HEAD is served by the
+ * GET route (the server sends its headers and withholds the body), and
+ * OPTIONS is served for any path that has a route at all. An explicit stub for
+ * either always wins.
+ */
 public class RouteManager {
 
 	private static final Logger log = LoggerFactory.getLogger(RouteManager.class);
@@ -28,8 +36,6 @@ public class RouteManager {
 	 * the insertion order that {@link #lookup} relies on to break ties.
 	 */
 	private volatile Map<Route, Response> routes = new LinkedHashMap<>();
-
-	public RouteManager() { }
 
 	public synchronized void registerRoute(Route route, Response response) {
 		Map<Route, Response> updated = new LinkedHashMap<>(routes);
@@ -50,36 +56,51 @@ public class RouteManager {
 		return routes.get(route);
 	}
 
+	/** The route answering {@code method} at {@code path}: an explicit stub, or for HEAD the GET route. */
+	public Optional<Match> lookup(HttpMethod method, String path) {
+		Optional<Match> match = find(method, path);
+
+		if (match.isEmpty() && method == HttpMethod.HEAD) return find(HttpMethod.GET, path);
+		return match;
+	}
+
 	/**
 	 * The most specific match wins, measured by how few placeholders a route
 	 * captures, so {@code /users/me} beats {@code /users/{id}}. Between routes
 	 * that capture the same number, the last registered wins.
 	 */
-	public Optional<Match> lookup(HttpMethod method, String path) {
+	private Optional<Match> find(HttpMethod method, String path) {
 		Match best = null;
-		int matchCount = 0;
+
 		for (Entry<Route, Response> entry : routes.entrySet()) {
 			Route route = entry.getKey();
 			Optional<Map<String, String>> captures = route.match(method, path);
 			if (captures.isEmpty()) continue;
 
-			matchCount++;
 			if (best == null || route.captureCount() <= best.route.captureCount()) {
 				best = new Match(route, entry.getValue(), captures.get());
 			}
 		}
-		if (matchCount > 1 && log.isDebugEnabled()) {
-			log.debug("{} routes matched {} {}, picked {} (captures={})",
-				matchCount, method, path, best.route.getUri(), best.pathCaptures);
-		}
+
 		return Optional.ofNullable(best);
 	}
 
+	/**
+	 * Every method {@code path} answers: what was registered, plus HEAD
+	 * wherever GET is and OPTIONS wherever anything is. Empty when nothing is
+	 * stubbed for the path.
+	 */
 	public Set<HttpMethod> methodsFor(String path) {
 		Set<HttpMethod> methods = EnumSet.noneOf(HttpMethod.class);
+
 		for (Route route : routes.keySet()) {
 			if (route.matchesPath(path)) methods.add(route.getMethod());
 		}
+
+		if (methods.isEmpty()) return methods;
+
+		if (methods.contains(HttpMethod.GET)) methods.add(HttpMethod.HEAD);
+		methods.add(HttpMethod.OPTIONS);
 		return methods;
 	}
 

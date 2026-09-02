@@ -404,11 +404,9 @@ For anything more specific, `all()` hands back the raw list to filter yourself.
 Each `ReceivedRequest` carries the method, path, query string, headers, body and
 timestamp.
 
-Read headers with `header(name)` rather than through the raw `headers()` map.
-The JDK server rewrites every header name to first-letter-uppercase, so a header
-you sent as `Content-Type` is stored under `Content-type` and an exact lookup for
-the name you sent finds nothing. `header()` and `headerValues()` are
-case-insensitive, as HTTP itself is; query parameter names stay case-sensitive.
+Header names are case-insensitive, as HTTP itself is: `header()`,
+`headerValues()` and the `headers()` map all find `Content-Type` however the JDK
+server chose to spell it. Query parameter names stay case-sensitive.
 
 When an assertion about the log fails, `expected: <1> but was: <0>` says nothing
 about the calls that were actually made. Pass the log itself as the message and

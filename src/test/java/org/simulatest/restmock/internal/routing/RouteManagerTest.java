@@ -101,7 +101,7 @@ public class RouteManagerTest {
 		manager.registerRoute(new Route(HttpMethod.POST, "/users"), new TextPlain("ok"));
 		manager.registerRoute(new Route(HttpMethod.DELETE, "/posts"), new TextPlain("ok"));
 
-		assertEquals(Set.of(HttpMethod.GET, HttpMethod.POST), manager.methodsFor("/users"));
+		assertEquals(Set.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.HEAD, HttpMethod.OPTIONS), manager.methodsFor("/users"));
 	}
 
 	@Test
@@ -109,7 +109,44 @@ public class RouteManagerTest {
 		RouteManager manager = new RouteManager();
 		manager.registerRoute(new Route(HttpMethod.PUT, "/users/{id}"), new TextPlain("ok"));
 
-		assertEquals(Set.of(HttpMethod.PUT), manager.methodsFor("/users/42"));
+		assertEquals(Set.of(HttpMethod.PUT, HttpMethod.OPTIONS), manager.methodsFor("/users/42"));
+	}
+
+	/** A path stubbed only for POST answers OPTIONS, but must not claim HEAD. */
+	@Test
+	public void methodsForAdvertisesHeadOnlyWhereGetIsStubbed() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.POST, "/submit"), new TextPlain("ok"));
+
+		assertEquals(Set.of(HttpMethod.POST, HttpMethod.OPTIONS), manager.methodsFor("/submit"));
+	}
+
+	@Test
+	public void headIsAnsweredByTheGetRoute() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/users/{id}"), new TextPlain("from get"));
+
+		RouteManager.Match match = manager.lookup(HttpMethod.HEAD, "/users/42").orElseThrow();
+
+		assertEquals("from get", body(match));
+		assertEquals(Map.of("id", "42"), match.pathCaptures());
+	}
+
+	@Test
+	public void anExplicitHeadStubWinsOverTheGetRoute() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/users"), new TextPlain("from get"));
+		manager.registerRoute(new Route(HttpMethod.HEAD, "/users"), new TextPlain("from head"));
+
+		assertEquals("from head", body(manager.lookup(HttpMethod.HEAD, "/users").orElseThrow()));
+	}
+
+	@Test
+	public void headIsNotAnsweredByAnyOtherMethod() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.POST, "/users"), new TextPlain("ok"));
+
+		assertTrue(manager.lookup(HttpMethod.HEAD, "/users").isEmpty());
 	}
 
 	@Test

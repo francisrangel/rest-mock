@@ -95,7 +95,7 @@ public class FrontControllerTest {
 		controller.processRequest(exchange);
 
 		assertEquals(501, exchange.status);
-		assertEquals(-1, exchange.declaredLength);
+		assertTrue(exchange.body().startsWith("No support for TRACE."), exchange.body());
 		assertTrue(requestLog.isEmpty(), "an unsupported method must not be recorded");
 	}
 

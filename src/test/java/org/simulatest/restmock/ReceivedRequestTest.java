@@ -62,6 +62,15 @@ public class ReceivedRequestTest {
 		assertEquals("application/json", request.header("CONTENT-TYPE").orElseThrow());
 	}
 
+	/** The map is case-insensitive too, so nobody has to know how the server spelled a name. */
+	@Test
+	public void theHeadersMapIsCaseInsensitive() {
+		ReceivedRequest request = requestWith(Map.of("Content-type", List.of("application/json")));
+
+		assertEquals(List.of("application/json"), request.headers().get("Content-Type"));
+		assertEquals(List.of("application/json"), request.headers().get("CONTENT-TYPE"));
+	}
+
 	@Test
 	public void aHeaderThatWasNotSentIsEmptyRatherThanNull() {
 		assertTrue(requestWith(Map.of()).header("X-Tenant").isEmpty());

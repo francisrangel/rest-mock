@@ -6,12 +6,11 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -79,6 +78,8 @@ public class FrontController implements HttpHandler {
 	}
 
 	public void processRequest(HttpExchange exchange) throws IOException {
+		Cors.apply(exchange.getRequestHeaders(), exchange.getResponseHeaders());
+
 		String method = exchange.getRequestMethod();
 		URI uri = exchange.getRequestURI();
 
@@ -87,39 +88,29 @@ public class FrontController implements HttpHandler {
 			httpMethod = HttpMethod.byString(method);
 		} catch (IllegalArgumentException unsupported) {
 			log.warn("Unsupported HTTP method {} for {} - returning 501", method, uri.getPath());
-			Cors.apply(exchange.getRequestHeaders(), exchange.getResponseHeaders());
-			exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_IMPLEMENTED, -1);
+			sendText(exchange, HttpURLConnection.HTTP_NOT_IMPLEMENTED,
+				"No support for " + method + ". rest-mock answers " + joinMethodNames(Arrays.asList(HttpMethod.values())) + ".",
+				false);
 			return;
 		}
 
-		String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-
-		if (log.isTraceEnabled()) {
-			log.trace("Received {} {} headers={} body={}",
-				httpMethod, uri.getPath(),
-				LogSafe.maskHeaders(exchange.getRequestHeaders()),
-				LogSafe.truncate(requestBody));
-		}
-
-		recorder.accept(new ReceivedRequest(
+		ReceivedRequest request = new ReceivedRequest(
 			httpMethod,
 			uri.getPath(),
 			uri.getRawQuery(),
 			exchange.getRequestHeaders(),
-			requestBody,
+			new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8),
 			Instant.now()
-		));
+		);
 
-		Cors.apply(exchange.getRequestHeaders(), exchange.getResponseHeaders());
+		if (log.isTraceEnabled()) {
+			log.trace("Received {} {} headers={} body={}",
+				httpMethod, uri.getPath(), LogSafe.maskHeaders(request.headers()), LogSafe.truncate(request.body()));
+		}
+
+		recorder.accept(request);
 
 		Optional<Match> match = routeManager.lookup(httpMethod, uri.getPath());
-
-		// An explicit whenHead()/whenOptions() stub wins. Failing that, both are
-		// derived from what is registered: HEAD from the GET route, OPTIONS from
-		// every method the path answers.
-		if (match.isEmpty() && httpMethod == HttpMethod.HEAD) {
-			match = routeManager.lookup(HttpMethod.GET, uri.getPath());
-		}
 
 		if (match.isEmpty() && httpMethod == HttpMethod.OPTIONS) {
 			answerOptions(exchange, uri.getPath());
@@ -149,8 +140,7 @@ public class FrontController implements HttpHandler {
 
 		writeResponseHeaders(content, exchange);
 
-		byte[] body = content.render(
-			parametersFor(uri, requestBody, exchange.getRequestHeaders(), resolved.pathCaptures()));
+		byte[] body = content.render(parametersFor(request, resolved.pathCaptures()));
 
 		boolean head = httpMethod == HttpMethod.HEAD;
 		send(exchange, content.getResponseStatus(), body, head);
@@ -159,14 +149,14 @@ public class FrontController implements HttpHandler {
 			head ? ", no body" : "");
 		if (log.isTraceEnabled() && !head) {
 			String rendered = content.isTextual()
-				? LogSafe.previewBytes(body)
-				: LogSafe.binaryPlaceholder(body.length);
+				? LogSafe.truncate(new String(body, StandardCharsets.UTF_8))
+				: "<" + body.length + " bytes binary>";
 			log.trace("Response body for {} {}: {}", httpMethod, uri.getPath(), rendered);
 		}
 	}
 
-	private static Map<String, String> parametersFor(URI uri, String requestBody, Map<String, List<String>> headers, Map<String, String> pathCaptures) {
-		Map<String, String> parameters = ParameterExtractor.extract(uri, requestBody, headers);
+	private static Map<String, String> parametersFor(ReceivedRequest request, Map<String, String> pathCaptures) {
+		Map<String, String> parameters = ParameterExtractor.extract(request);
 		parameters.putAll(pathCaptures);
 		return parameters;
 	}
@@ -177,7 +167,7 @@ public class FrontController implements HttpHandler {
 	 * opaque cross-origin failure.
 	 */
 	private void answerOptions(HttpExchange exchange, String path) throws IOException {
-		if (advertisedMethods(path).isEmpty()) {
+		if (routeManager.methodsFor(path).isEmpty()) {
 			respondWithNoRoute(exchange, HttpMethod.OPTIONS, path);
 			return;
 		}
@@ -210,30 +200,13 @@ public class FrontController implements HttpHandler {
 	 * that worked before the stub stopped working after it.
 	 */
 	private void applyOptionsHeaders(HttpExchange exchange, String path) {
-		String allow = allowHeaderFor(path);
+		String allow = joinMethodNames(routeManager.methodsFor(path));
 		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
 
 		if (Cors.isPreflight(exchange.getRequestHeaders()))
 			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
 
 		log.debug("OPTIONS {} -> Allow: {}", path, allow);
-	}
-
-	private String allowHeaderFor(String path) {
-		return joinMethodNames(advertisedMethods(path));
-	}
-
-	/**
-	 * What the path actually answers, which is more than what was registered:
-	 * OPTIONS is always served, and HEAD is served wherever GET is.
-	 */
-	private Set<HttpMethod> advertisedMethods(String path) {
-		Set<HttpMethod> methods = routeManager.methodsFor(path);
-		if (methods.isEmpty()) return methods;
-
-		if (methods.contains(HttpMethod.GET)) methods.add(HttpMethod.HEAD);
-		methods.add(HttpMethod.OPTIONS);
-		return methods;
 	}
 
 	private static String joinMethodNames(Collection<HttpMethod> methods) {

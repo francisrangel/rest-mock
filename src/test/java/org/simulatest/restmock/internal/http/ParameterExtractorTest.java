@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -12,22 +13,25 @@ import com.sun.net.httpserver.Headers;
 
 import org.junit.jupiter.api.Test;
 
+import org.simulatest.restmock.HttpMethod;
+import org.simulatest.restmock.ReceivedRequest;
 import org.simulatest.restmock.internal.Placeholders;
 import org.simulatest.restmock.internal.response.ContentType;
 
 public class ParameterExtractorTest {
 
-	/**
-	 * The type FrontController actually passes. A plain HashMap agreed with it on
-	 * every answer here but for a different reason: Headers normalizes a key on
-	 * lookup, a HashMap does not, so the exact-match Content-Type lookup this
-	 * suite used to exercise was green only because the test wrote the key the
-	 * same way it read it.
-	 */
+	/** The type the JDK server hands FrontController, so names arrive canonicalized the way production sees them. */
 	private Headers headers = new Headers();
 
 	private void withContentType(String contentType) {
 		headers.put(HttpHeader.CONTENT_TYPE, List.of(contentType));
+	}
+
+	/** What FrontController hands the extractor: the request as recorded, {@code headers} included. */
+	private Map<String, String> extract(String uri, String body) {
+		URI parsed = URI.create(uri);
+		return ParameterExtractor.extract(
+			new ReceivedRequest(HttpMethod.POST, parsed.getPath(), parsed.getRawQuery(), headers, body, Instant.now()));
 	}
 
 	/** Looks a name up the way a template does, so a header spelled either way resolves. */
@@ -42,7 +46,7 @@ public class ParameterExtractorTest {
 	 */
 	@Test
 	public void bareNamesAreMatchedExactly() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=Bob"), "", headers);
+		Map<String, String> params = extract("/test?name=Bob", "");
 
 		assertEquals("Bob", params.get("name"));
 		assertNull(params.get("Name"), "a bare name must not fold case");
@@ -50,21 +54,21 @@ public class ParameterExtractorTest {
 
 	@Test
 	public void noQueryNoBody() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+		Map<String, String> params = extract("/test", "");
 
 		assertTrue(params.isEmpty());
 	}
 
 	@Test
 	public void singleQueryParameter() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=Bob"), "", headers);
+		Map<String, String> params = extract("/test?name=Bob", "");
 
 		assertEquals("Bob", params.get("name"));
 	}
 
 	@Test
 	public void multipleQueryParameters() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?a=1&b=2&c=3"), "", headers);
+		Map<String, String> params = extract("/test?a=1&b=2&c=3", "");
 
 		assertEquals("1", params.get("a"));
 		assertEquals("2", params.get("b"));
@@ -73,14 +77,14 @@ public class ParameterExtractorTest {
 
 	@Test
 	public void urlEncodedQueryParameter() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?msg=hello%20world"), "", headers);
+		Map<String, String> params = extract("/test?msg=hello%20world", "");
 
 		assertEquals("hello world", params.get("msg"));
 	}
 
 	@Test
 	public void queryParameterWithoutValueIsSkipped() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?flag&name=Bob"), "", headers);
+		Map<String, String> params = extract("/test?flag&name=Bob", "");
 
 		assertEquals(1, params.size());
 		assertEquals("Bob", params.get("name"));
@@ -90,7 +94,7 @@ public class ParameterExtractorTest {
 	public void formEncodedBody() {
 		withContentType(ContentType.APPLICATION_FORM_URLENCODED.type() + "; charset=UTF-8");
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "name=Bob&age=25", headers);
+		Map<String, String> params = extract("/test", "name=Bob&age=25");
 
 		assertEquals("Bob", params.get("name"));
 		assertEquals("25", params.get("age"));
@@ -100,7 +104,7 @@ public class ParameterExtractorTest {
 	public void jsonBody() {
 		withContentType(ContentType.APPLICATION_JSON.type());
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "{\"user\":{\"name\":\"Bob\"}}", headers);
+		Map<String, String> params = extract("/test", "{\"user\":{\"name\":\"Bob\"}}");
 
 		assertEquals("Bob", params.get("user.name"));
 	}
@@ -109,7 +113,7 @@ public class ParameterExtractorTest {
 	public void unknownContentTypeIgnoresBody() {
 		withContentType(ContentType.TEXT_PLAIN.type());
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "name=Bob", headers);
+		Map<String, String> params = extract("/test", "name=Bob");
 
 		assertNull(params.get("name"), "a text/plain body must not be parsed for parameters");
 		// the request's own headers are parameters too, so the map is not empty
@@ -120,7 +124,7 @@ public class ParameterExtractorTest {
 	public void queryAndFormBodyMerge() {
 		withContentType(ContentType.APPLICATION_FORM_URLENCODED.type());
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?from=query"), "from_body=yes", headers);
+		Map<String, String> params = extract("/test?from=query", "from_body=yes");
 
 		assertEquals("query", params.get("from"));
 		assertEquals("yes", params.get("from_body"));
@@ -130,14 +134,14 @@ public class ParameterExtractorTest {
 	public void formBodyOverridesQueryWhenSameKey() {
 		withContentType(ContentType.APPLICATION_FORM_URLENCODED.type());
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=Alice"), "name=Bob", headers);
+		Map<String, String> params = extract("/test?name=Alice", "name=Bob");
 
 		assertEquals("Bob", params.get("name"));
 	}
 
 	@Test
 	public void trailingAmpersandInQuery() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=Bob&"), "", headers);
+		Map<String, String> params = extract("/test?name=Bob&", "");
 
 		assertEquals("Bob", params.get("name"));
 		assertEquals(1, params.size());
@@ -145,7 +149,7 @@ public class ParameterExtractorTest {
 
 	@Test
 	public void valueContainingEqualsSign() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?expr=a%3Db"), "", headers);
+		Map<String, String> params = extract("/test?expr=a%3Db", "");
 
 		assertEquals("a=b", params.get("expr"));
 	}
@@ -154,14 +158,14 @@ public class ParameterExtractorTest {
 	public void contentTypeCaseInsensitive() {
 		withContentType("APPLICATION/JSON");
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "{\"name\":\"Bob\"}", headers);
+		Map<String, String> params = extract("/test", "{\"name\":\"Bob\"}");
 
 		assertEquals("Bob", params.get("name"));
 	}
 
 	@Test
 	public void emptyQueryString() {
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?"), "", headers);
+		Map<String, String> params = extract("/test?", "");
 
 		assertTrue(params.isEmpty());
 	}
@@ -173,7 +177,7 @@ public class ParameterExtractorTest {
 	public void headersAreAddressableUnderTheHeaderPrefix() {
 		headers.add("X-Tenant", "acme");
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+		Map<String, String> params = extract("/test", "");
 
 		assertEquals("acme", resolve(params, "header.X-Tenant"));
 	}
@@ -184,7 +188,7 @@ public class ParameterExtractorTest {
 		// header the way the client sent it still has to resolve
 		headers.add("X-Tenant", "acme");
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+		Map<String, String> params = extract("/test", "");
 
 		assertEquals("acme", resolve(params, "header.X-Tenant"));
 		assertEquals("acme", resolve(params, "HEADER.x-tenant"));
@@ -194,7 +198,7 @@ public class ParameterExtractorTest {
 	public void onlyTheFirstValueOfARepeatedHeaderIsExposed() {
 		headers.put("X-Tenant", List.of("acme", "other"));
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+		Map<String, String> params = extract("/test", "");
 
 		assertEquals("acme", resolve(params, "header.X-Tenant"));
 	}
@@ -210,7 +214,7 @@ public class ParameterExtractorTest {
 		headers.add("X-Tenant", "acme");
 		headers.add("Accept", "*/*");
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
+		Map<String, String> params = extract("/test", "");
 
 		assertNull(params.get("X-Tenant"), "a bare ${X-Tenant} must not resolve a header");
 		assertNull(params.get("Accept"), "a bare ${Accept} must not resolve a header");
@@ -220,7 +224,7 @@ public class ParameterExtractorTest {
 	public void anAmbientHeaderCannotCollideWithAQueryParameter() {
 		headers.add("name", "from-header");
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=from-query"), "", headers);
+		Map<String, String> params = extract("/test?name=from-query", "");
 
 		assertEquals("from-query", params.get("name"));
 		assertEquals("from-header", resolve(params, "header.name"));
@@ -231,7 +235,7 @@ public class ParameterExtractorTest {
 		withContentType(ContentType.APPLICATION_JSON.type());
 		headers.add("name", "from-header");
 
-		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "{\"name\":\"from-body\"}", headers);
+		Map<String, String> params = extract("/test", "{\"name\":\"from-body\"}");
 
 		assertEquals("from-body", params.get("name"));
 		assertEquals("from-header", resolve(params, "header.name"));
@@ -241,8 +245,7 @@ public class ParameterExtractorTest {
 	public void xmlBodyFieldsAreExposedAsParameters() {
 		withContentType(ContentType.TEXT_XML.type());
 
-		Map<String, String> params = ParameterExtractor.extract(
-			URI.create("/test"), "<developer><name>Bob</name><age>25</age></developer>", headers);
+		Map<String, String> params = extract("/test", "<developer><name>Bob</name><age>25</age></developer>");
 
 		assertEquals("Bob", params.get("name"));
 		assertEquals("25", params.get("age"));
@@ -252,8 +255,7 @@ public class ParameterExtractorTest {
 	public void nestedXmlBodyFieldsUseDottedPaths() {
 		withContentType(ContentType.TEXT_XML.type());
 
-		Map<String, String> params = ParameterExtractor.extract(
-			URI.create("/test"), "<order><customer><name>Bob</name></customer></order>", headers);
+		Map<String, String> params = extract("/test", "<order><customer><name>Bob</name></customer></order>");
 
 		assertEquals("Bob", params.get("customer.name"));
 	}
@@ -262,8 +264,7 @@ public class ParameterExtractorTest {
 	public void applicationXmlIsTreatedAsXmlToo() {
 		withContentType("application/xml");
 
-		Map<String, String> params = ParameterExtractor.extract(
-			URI.create("/test"), "<developer><name>Bob</name></developer>", headers);
+		Map<String, String> params = extract("/test", "<developer><name>Bob</name></developer>");
 
 		assertEquals("Bob", params.get("name"));
 	}
@@ -272,8 +273,7 @@ public class ParameterExtractorTest {
 	public void malformedXmlIsIgnoredAndLeavesTheOtherSourcesIntact() {
 		withContentType(ContentType.TEXT_XML.type());
 
-		Map<String, String> params = ParameterExtractor.extract(
-			URI.create("/test?from=query"), "<not xml", headers);
+		Map<String, String> params = extract("/test?from=query", "<not xml");
 
 		assertEquals("query", params.get("from"));
 	}

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 /**
  * Reads {@code a=1&b=2} pairs, whether they arrived as a URL's query string or
@@ -24,7 +25,7 @@ public final class QueryString {
 	/** Decoded pairs in the order they appeared. */
 	public static Map<String, String> parse(String raw) {
 		Map<String, String> parameters = new LinkedHashMap<>();
-		forEachPair(raw, (name, value) -> parameters.putIfAbsent(name, value));
+		forEachPair(raw, parameters::putIfAbsent);
 		return parameters;
 	}
 
@@ -42,7 +43,7 @@ public final class QueryString {
 		return values;
 	}
 
-	private static void forEachPair(String raw, Pair consumer) {
+	private static void forEachPair(String raw, BiConsumer<String, String> consumer) {
 		if (raw == null || raw.isEmpty()) return;
 
 		for (String pair : raw.split("&")) {
@@ -55,11 +56,6 @@ public final class QueryString {
 
 	private static String decode(String value) {
 		return URLDecoder.decode(value, StandardCharsets.UTF_8);
-	}
-
-	@FunctionalInterface
-	private interface Pair {
-		void accept(String name, String value);
 	}
 
 }

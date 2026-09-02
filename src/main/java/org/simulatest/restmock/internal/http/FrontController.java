@@ -112,53 +112,49 @@ public class FrontController implements HttpHandler {
 
 		Optional<Match> match = routeManager.lookup(httpMethod, uri.getPath());
 
-		if (match.isEmpty() && httpMethod == HttpMethod.OPTIONS) {
+		if (match.isPresent()) {
+			serve(exchange, request, match.get());
+		} else if (httpMethod == HttpMethod.OPTIONS) {
 			answerOptions(exchange, uri.getPath());
-			return;
-		}
-
-		if (match.isEmpty()) {
+		} else {
 			respondWithNoRoute(exchange, httpMethod, uri.getPath());
-			return;
 		}
+	}
 
-		Match resolved = match.get();
-		Response content = resolved.response();
+	/** Writes the stubbed response for a request that matched. */
+	private void serve(HttpExchange exchange, ReceivedRequest request, Match match) throws IOException {
+		Response content = match.response();
 
 		if (content.getDelayMillis() > 0) {
 			try {
 				Thread.sleep(content.getDelayMillis());
 			} catch (InterruptedException e) {
-				log.warn("Delay interrupted for {} {}", httpMethod, uri.getPath());
+				log.warn("Delay interrupted for {} {}", request.method(), request.path());
 				Thread.currentThread().interrupt();
 			}
 		}
 
 		// Before writeResponseHeaders, so a header the stub set via withHeader
 		// still overrides what is derived here.
-		if (httpMethod == HttpMethod.OPTIONS) applyOptionsHeaders(exchange, uri.getPath());
+		if (request.method() == HttpMethod.OPTIONS) applyOptionsHeaders(exchange, request.path());
 
 		writeResponseHeaders(content, exchange);
 
-		byte[] body = content.render(parametersFor(request, resolved.pathCaptures()));
+		Map<String, String> parameters = ParameterExtractor.extract(request);
+		parameters.putAll(match.pathCaptures());
+		byte[] body = content.render(parameters);
 
-		boolean head = httpMethod == HttpMethod.HEAD;
+		boolean head = request.method() == HttpMethod.HEAD;
 		send(exchange, content.getResponseStatus(), body, head);
 
-		log.debug("{} {} -> {} ({} bytes{})", httpMethod, uri.getPath(), content.getResponseStatus(), body.length,
+		log.debug("{} {} -> {} ({} bytes{})", request.method(), request.path(), content.getResponseStatus(), body.length,
 			head ? ", no body" : "");
 		if (log.isTraceEnabled() && !head) {
 			String rendered = content.isTextual()
 				? LogSafe.truncate(new String(body, StandardCharsets.UTF_8))
 				: "<" + body.length + " bytes binary>";
-			log.trace("Response body for {} {}: {}", httpMethod, uri.getPath(), rendered);
+			log.trace("Response body for {} {}: {}", request.method(), request.path(), rendered);
 		}
-	}
-
-	private static Map<String, String> parametersFor(ReceivedRequest request, Map<String, String> pathCaptures) {
-		Map<String, String> parameters = ParameterExtractor.extract(request);
-		parameters.putAll(pathCaptures);
-		return parameters;
 	}
 
 	/**
@@ -222,7 +218,7 @@ public class FrontController implements HttpHandler {
 
 		responseHeaders.set(HttpHeader.CONTENT_TYPE, contentTypeHeaderFor(content));
 
-		for (Entry<String, String> header : content.getHeader().entrySet()) {
+		for (Entry<String, String> header : content.getHeaders().entrySet()) {
 			responseHeaders.set(header.getKey(), header.getValue());
 		}
 	}

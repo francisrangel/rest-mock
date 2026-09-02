@@ -106,15 +106,15 @@ public class RouteRegisterTest {
 	public void withHeaderAttachesTheHeaderToTheResponse() {
 		subject.thenReturnText("ok").withHeader("Cache-Control", "no-cache");
 
-		assertEquals("no-cache", registered().getHeader().get("Cache-Control"));
+		assertEquals("no-cache", registered().getHeaders().get("Cache-Control"));
 	}
 
 	@Test
 	public void lastValueWinsForARepeatedHeader() {
 		subject.thenReturnText("ok").withHeader("X-Retry", "1").withHeader("X-Retry", "2");
 
-		assertEquals("2", registered().getHeader().get("X-Retry"));
-		assertEquals(1, registered().getHeader().size());
+		assertEquals("2", registered().getHeaders().get("X-Retry"));
+		assertEquals(1, registered().getHeaders().size());
 	}
 
 	@Test
@@ -203,7 +203,7 @@ public class RouteRegisterTest {
 		subject.thenReturnJSON("{\"error\":\"bad\"}").withStatus(422).withHeader("X-Reason", "validation");
 
 		assertEquals(422, registered().getResponseStatus());
-		assertEquals("validation", registered().getHeader().get("X-Reason"));
+		assertEquals("validation", registered().getHeaders().get("X-Reason"));
 	}
 
 	@Test
@@ -269,7 +269,7 @@ public class RouteRegisterTest {
 
 		assertEquals(201, registered().getResponseStatus());
 		assertEquals(100, registered().getDelayMillis());
-		assertEquals("yes", registered().getHeader().get("X-Slow"));
+		assertEquals("yes", registered().getHeaders().get("X-Slow"));
 	}
 
 }

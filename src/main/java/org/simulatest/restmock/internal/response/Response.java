@@ -49,7 +49,7 @@ public abstract class Response {
 		this.delayMillis = delayMillis;
 	}
 
-	public Map<String, String> getHeader() {
+	public Map<String, String> getHeaders() {
 		return Collections.unmodifiableMap(header);
 	}
 

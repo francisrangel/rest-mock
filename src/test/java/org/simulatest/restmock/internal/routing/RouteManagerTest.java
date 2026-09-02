@@ -177,7 +177,7 @@ public class RouteManagerTest {
 		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/users").orElseThrow();
 
 		assertEquals("second", body(match));
-		assertEquals(1, manager.size());
+		assertEquals(1, manager.registeredRoutes().size());
 	}
 
 	@Test

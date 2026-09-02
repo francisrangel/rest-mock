@@ -138,7 +138,7 @@ public class ResponseTest {
 	@Test
 	public void theHeaderViewReflectsHeadersAddedLater() {
 		Response response = new TextPlain("ok");
-		Map<String, String> header = response.getHeader();
+		Map<String, String> header = response.getHeaders();
 
 		response.addHeader("X-Trace", "abc");
 
@@ -147,7 +147,7 @@ public class ResponseTest {
 
 	@Test
 	public void theHeaderViewCannotBeModifiedByCallers() {
-		Map<String, String> header = new TextPlain("ok").getHeader();
+		Map<String, String> header = new TextPlain("ok").getHeaders();
 
 		assertThrows(UnsupportedOperationException.class, () -> header.put("X-Trace", "abc"));
 	}

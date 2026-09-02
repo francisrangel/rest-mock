@@ -42,7 +42,7 @@ public final class BodyFlattener {
 		try {
 			walk("", mapper.readTree(body), out);
 		} catch (IOException malformed) {
-			return new LinkedHashMap<>();
+			return Map.of();
 		}
 		return out;
 	}

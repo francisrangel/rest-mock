@@ -108,10 +108,6 @@ public class RouteManager {
 		routes = new LinkedHashMap<>();
 	}
 
-	public int size() {
-		return routes.size();
-	}
-
 	/** Every registered route, in registration order. Used to explain a 404. */
 	public List<Route> registeredRoutes() {
 		return List.copyOf(routes.keySet());

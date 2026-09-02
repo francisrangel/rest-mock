@@ -3,7 +3,7 @@ package org.simulatest.restmock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
+import java.util.function.Predicate;
 
 /**
  * Records every request the mock server received, in arrival order.
@@ -48,23 +48,21 @@ public class RequestLog {
 
 	/** Recorded requests whose path equals {@code path} exactly. */
 	public List<ReceivedRequest> forPath(String path) {
-		return all().stream()
-			.filter(r -> r.path().equals(path))
-			.toList();
+		return matching(r -> r.path().equals(path));
 	}
 
 	/** Recorded requests with the given HTTP method. */
 	public List<ReceivedRequest> forMethod(HttpMethod method) {
-		return all().stream()
-			.filter(r -> r.method() == method)
-			.toList();
+		return matching(r -> r.method() == method);
 	}
 
 	/** Recorded requests matching both method and exact path. */
 	public List<ReceivedRequest> forRoute(HttpMethod method, String path) {
-		return all().stream()
-			.filter(r -> r.method() == method && r.path().equals(path))
-			.toList();
+		return matching(r -> r.method() == method && r.path().equals(path));
+	}
+
+	private List<ReceivedRequest> matching(Predicate<ReceivedRequest> condition) {
+		return all().stream().filter(condition).toList();
 	}
 
 	/** Total recorded requests. */

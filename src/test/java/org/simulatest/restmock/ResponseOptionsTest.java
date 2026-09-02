@@ -22,17 +22,17 @@ import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.mock.Developer;
 
 /** Every {@code thenReturn*} registers the response it promises, whatever the method. */
-public class RouteRegisterTest {
+public class ResponseOptionsTest {
 
 	private RouteManager routeManager;
-	private RouteRegister subject;
+	private ResponseOptions subject;
 	private Route route;
 
 	@BeforeEach
 	public void setUp() {
 		routeManager = new RouteManager();
 		route = new Route(HttpMethod.GET, "/test");
-		subject = new RouteRegister(route, routeManager);
+		subject = new ResponseOptions(route, routeManager);
 	}
 
 	private Response registered() {
@@ -54,7 +54,7 @@ public class RouteRegisterTest {
 	@Test
 	public void theMethodIsPartOfTheRoute() {
 		Route post = new Route(HttpMethod.POST, "/test");
-		new RouteRegister(post, routeManager).thenReturnText("Test succeed");
+		new ResponseOptions(post, routeManager).thenReturnText("Test succeed");
 
 		assertEquals("Test succeed", assertInstanceOf(Template.class, routeManager.get(post)).getContent());
 		assertEquals(NotConfigured.class, registered().getClass(), "the GET route must be untouched");
@@ -168,9 +168,9 @@ public class RouteRegisterTest {
 	}
 
 	@Test
-	public void danglingRouteRegistersSentinel() {
+	public void danglingResponseOptionssSentinel() {
 		Route dangling = new Route(HttpMethod.GET, "/dangling");
-		new RouteRegister(dangling, routeManager);
+		new ResponseOptions(dangling, routeManager);
 
 		Response response = routeManager.get(dangling);
 
@@ -181,7 +181,7 @@ public class RouteRegisterTest {
 	@Test
 	public void thenReturnReplacesSentinel() {
 		Route replaced = new Route(HttpMethod.GET, "/replaced");
-		new RouteRegister(replaced, routeManager).thenReturnText("real response");
+		new ResponseOptions(replaced, routeManager).thenReturnText("real response");
 
 		Response response = routeManager.get(replaced);
 

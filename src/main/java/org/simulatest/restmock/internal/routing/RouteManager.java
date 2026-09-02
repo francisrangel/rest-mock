@@ -1,5 +1,6 @@
 package org.simulatest.restmock.internal.routing;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,10 @@ import org.simulatest.restmock.internal.response.Response;
 
 /**
  * The stubbed routes, and what a request path is answered with.
+ *
+ * A route holds one or more responses. They are served in the order they were
+ * added, and the last one repeats, so a test can say "the upstream failed
+ * once" and then move on.
  *
  * HEAD is answered beyond what was registered: {@link #lookup} serves it from
  * the GET route, and the server sends the headers and withholds the body. An
@@ -35,25 +41,40 @@ public class RouteManager {
 	 * handful of times per test, so copying is free; keeping LinkedHashMap keeps
 	 * the insertion order that {@link #lookup} relies on to break ties.
 	 */
-	private volatile Map<Route, Response> routes = new LinkedHashMap<>();
+	private volatile Map<Route, Stub> routes = new LinkedHashMap<>();
 
+	/** Registers {@code response} as the only response for {@code route}, replacing any sequence it had. */
 	public synchronized void registerRoute(Route route, Response response) {
-		Map<Route, Response> updated = new LinkedHashMap<>(routes);
-		Response previous = updated.put(route, response);
+		Map<Route, Stub> updated = new LinkedHashMap<>(routes);
+		Stub previous = updated.put(route, new Stub(List.of(response)));
 		routes = updated;
 
-		if (previous != null && !(previous instanceof NotConfigured) && !(response instanceof NotConfigured)) {
+		if (previous != null && !(previous.last() instanceof NotConfigured) && !(response instanceof NotConfigured)) {
 			log.warn("Replacing existing route {} {} (previous response: {}, new response: {})",
 				route.getMethod(), route.getUri(),
-				previous.getClass().getSimpleName(), response.getClass().getSimpleName());
+				previous.last().getClass().getSimpleName(), response.getClass().getSimpleName());
 		} else {
 			log.debug("Registered route {} {} -> {}",
 				route.getMethod(), route.getUri(), response.getClass().getSimpleName());
 		}
 	}
 
+	/** Queues {@code response} after the ones {@code route} already has. */
+	public synchronized void appendRoute(Route route, Response response) {
+		Map<Route, Stub> updated = new LinkedHashMap<>(routes);
+		List<Response> responses = new ArrayList<>(updated.get(route).responses());
+		responses.add(response);
+		updated.put(route, new Stub(List.copyOf(responses)));
+		routes = updated;
+
+		log.debug("Queued response {} of {} for route {} {}",
+			responses.size(), responses.size(), route.getMethod(), route.getUri());
+	}
+
+	/** The response most recently registered for {@code route}, or null. */
 	public Response get(Route route) {
-		return routes.get(route);
+		Stub stub = routes.get(route);
+		return stub == null ? null : stub.last();
 	}
 
 	/** The route answering {@code method} at {@code path}: an explicit stub, or for HEAD the GET route. */
@@ -67,22 +88,29 @@ public class RouteManager {
 	/**
 	 * The most specific match wins, measured by how few placeholders a route
 	 * captures, so {@code /users/me} beats {@code /users/{id}}. Between routes
-	 * that capture the same number, the last registered wins.
+	 * that capture the same number, the last registered wins. Only the winner
+	 * advances its sequence.
 	 */
 	private Optional<Match> find(HttpMethod method, String path) {
-		Match best = null;
+		Route bestRoute = null;
+		Stub bestStub = null;
+		Map<String, String> bestCaptures = null;
 
-		for (Entry<Route, Response> entry : routes.entrySet()) {
+		for (Entry<Route, Stub> entry : routes.entrySet()) {
 			Route route = entry.getKey();
 			Optional<Map<String, String>> captures = route.match(method, path);
 			if (captures.isEmpty()) continue;
 
-			if (best == null || route.captureCount() <= best.route.captureCount()) {
-				best = new Match(route, entry.getValue(), captures.get());
+			if (bestRoute == null || route.captureCount() <= bestRoute.captureCount()) {
+				bestRoute = route;
+				bestStub = entry.getValue();
+				bestCaptures = captures.get();
 			}
 		}
 
-		return Optional.ofNullable(best);
+		return bestRoute == null
+			? Optional.empty()
+			: Optional.of(new Match(bestRoute, bestStub.next(), bestCaptures));
 	}
 
 	/**
@@ -117,6 +145,23 @@ public class RouteManager {
 		public Match {
 			pathCaptures = Collections.unmodifiableMap(pathCaptures);
 		}
+	}
+
+	/** The responses queued for one route and how many have been served. */
+	private record Stub(List<Response> responses, AtomicInteger served) {
+
+		Stub(List<Response> responses) {
+			this(responses, new AtomicInteger());
+		}
+
+		Response next() {
+			return responses.get(Math.min(served.getAndIncrement(), responses.size() - 1));
+		}
+
+		Response last() {
+			return responses.get(responses.size() - 1);
+		}
+
 	}
 
 }

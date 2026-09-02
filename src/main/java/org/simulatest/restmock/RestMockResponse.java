@@ -4,10 +4,11 @@ package org.simulatest.restmock;
  * Configures the response for a stubbed route.
  *
  * Returned by {@link RestMock#whenGet(String) whenGet}, {@link RestMock#whenPost(String) whenPost},
- * etc. Call exactly one {@code thenReturn*} to set the body and content type;
- * the returned {@link ResponseOptions} lets you adjust status, headers, and delay.
- * If you never chain a {@code thenReturn*}, the route responds 501 with an
- * explanatory message.
+ * etc. Call a {@code thenReturn*} to set the body and content type; the
+ * returned {@link ResponseOptions} lets you adjust status, headers, and delay,
+ * and a further {@code thenReturn*} on it queues the next response for the
+ * route. If you never chain a {@code thenReturn*}, the route responds 501 with
+ * an explanatory message.
  *
  * The {@code Object} overloads of {@code thenReturnJSON} and {@code thenReturnXML}
  * serialize through Jackson; raw {@code String} overloads pass the body through

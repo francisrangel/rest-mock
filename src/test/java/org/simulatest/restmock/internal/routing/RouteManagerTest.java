@@ -181,6 +181,32 @@ public class RouteManagerTest {
 	}
 
 	@Test
+	public void appendedResponsesAreServedInOrderThenTheLastRepeats() {
+		RouteManager manager = new RouteManager();
+		Route route = new Route(HttpMethod.GET, "/flaky");
+		manager.registerRoute(route, new TextPlain("first"));
+		manager.appendRoute(route, new TextPlain("second"));
+
+		assertEquals("first", body(manager.lookup(HttpMethod.GET, "/flaky").orElseThrow()));
+		assertEquals("second", body(manager.lookup(HttpMethod.GET, "/flaky").orElseThrow()));
+		assertEquals("second", body(manager.lookup(HttpMethod.GET, "/flaky").orElseThrow()));
+	}
+
+	/** Only the route that answers advances; a template that lost to a literal keeps its place. */
+	@Test
+	public void onlyTheServedRouteAdvancesItsSequence() {
+		RouteManager manager = new RouteManager();
+		Route template = new Route(HttpMethod.GET, "/users/{id}");
+		manager.registerRoute(template, new TextPlain("template first"));
+		manager.appendRoute(template, new TextPlain("template second"));
+		manager.registerRoute(new Route(HttpMethod.GET, "/users/me"), new TextPlain("literal"));
+
+		manager.lookup(HttpMethod.GET, "/users/me");
+
+		assertEquals("template first", body(manager.lookup(HttpMethod.GET, "/users/42").orElseThrow()));
+	}
+
+	@Test
 	public void cleanRemovesAllRoutes() {
 		RouteManager manager = new RouteManager();
 		manager.registerRoute(new Route(HttpMethod.GET, "/test"), new TextPlain("ok"));

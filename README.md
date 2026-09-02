@@ -125,6 +125,7 @@ Everything you actually need, nothing you don't:
 - Load responses from files  
 - Custom status codes and headers  
 - Response delays for timeout testing  
+- Sequenced responses for retry testing  
 - Request inspection and counting  
 - JUnit extension for automatic lifecycle  
 - Built-in CORS support, preflight included  
@@ -378,6 +379,28 @@ RestMock.whenGet("/slow-api")
 The delay applies to that route only: other routes are served concurrently and
 are not held up behind it. Routes without `withDelay()` respond immediately, and
 a negative delay is rejected rather than ignored.
+
+---
+
+## Simulating an upstream that failed once
+
+Testing a retry? Chain a second `thenReturn*` and the route serves its responses
+in order, repeating the last one:
+
+```java
+RestMock.whenGet("/flaky")
+        .thenReturnErrorCodeWithMessage(503, "down")
+        .thenReturnText("up");
+```
+
+```
+GET /flaky → 503 down
+GET /flaky → 200 up
+GET /flaky → 200 up
+```
+
+`withStatus()`, `withHeader()` and `withDelay()` apply to the response they
+follow. Stubbing the route again with a new `when*` starts over.
 
 ---
 

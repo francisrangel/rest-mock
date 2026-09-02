@@ -3,32 +3,127 @@ package org.simulatest.restmock;
 import java.time.Duration;
 import java.util.Objects;
 
+import org.simulatest.restmock.internal.response.Binary;
+import org.simulatest.restmock.internal.response.ContentType;
+import org.simulatest.restmock.internal.response.Html;
+import org.simulatest.restmock.internal.response.JSON;
+import org.simulatest.restmock.internal.response.NotConfigured;
 import org.simulatest.restmock.internal.response.Response;
+import org.simulatest.restmock.internal.response.TextPlain;
+import org.simulatest.restmock.internal.response.XML;
+import org.simulatest.restmock.internal.routing.Route;
+import org.simulatest.restmock.internal.routing.RouteManager;
+import org.simulatest.restmock.internal.utils.Resource;
 
 /**
- * Fluent options applied after the response body has been chosen.
+ * Configures the responses for a stubbed route.
  *
- * Returned by every {@code thenReturn*} method on {@code RestMockResponse}.
- * All methods return {@code this} so calls can be chained. Instances come from
- * the library; there is no public constructor.
+ * Every {@code thenReturn*} sets a body and content type and returns this, so
+ * {@link #withStatus}, {@link #withHeader} and {@link #withDelay} can follow
+ * and apply to that response. A further {@code thenReturn*} queues the next
+ * response for the same route: the route serves them in order and repeats the
+ * last, which is how a test says "the upstream failed once".
+ *
+ * Instances come from the library; there is no public constructor.
  */
-public class ResponseOptions {
+public class ResponseOptions implements RestMockResponse {
 
-	private final Response response;
+	private final Route route;
+	private final RouteManager routeManager;
+	private Response current;
+	private boolean started;
 
-	ResponseOptions(Response response) {
-		this.response = response;
+	ResponseOptions(Route route, RouteManager routeManager) {
+		this.route = route;
+		this.routeManager = routeManager;
+		this.current = new NotConfigured(route.getUri());
+		routeManager.registerRoute(route, current);
+	}
+
+	@Override
+	public ResponseOptions thenReturnXML(Object object) {
+		return register(new XML(object));
+	}
+
+	@Override
+	public ResponseOptions thenReturnXML(String value) {
+		return register(new XML(value));
+	}
+
+	@Override
+	public ResponseOptions thenReturnXMLFromResource(String path) {
+		return thenReturnXML(Resource.dataFromResource(path));
+	}
+
+	@Override
+	public ResponseOptions thenReturnHTML(String value) {
+		return register(new Html(value));
+	}
+
+	@Override
+	public ResponseOptions thenReturnHTMLFromResource(String path) {
+		return thenReturnHTML(Resource.dataFromResource(path));
+	}
+
+	@Override
+	public ResponseOptions thenReturnText(String value) {
+		return register(new TextPlain(value));
+	}
+
+	@Override
+	public ResponseOptions thenReturnTextFromResource(String path) {
+		return thenReturnText(Resource.dataFromResource(path));
+	}
+
+	@Override
+	public ResponseOptions thenReturnJSON(String value) {
+		return register(new JSON(value));
+	}
+
+	@Override
+	public ResponseOptions thenReturnJSON(Object object) {
+		return register(new JSON(object));
+	}
+
+	@Override
+	public ResponseOptions thenReturnJSONFromResource(String path) {
+		return thenReturnJSON(Resource.dataFromResource(path));
+	}
+
+	@Override
+	public ResponseOptions thenReturnFile(byte[] bytes) {
+		return register(new Binary(bytes, ContentType.APPLICATION_OCTET_STREAM));
+	}
+
+	@Override
+	public ResponseOptions thenReturnFile(byte[] bytes, String contentType) {
+		return register(new Binary(bytes, new ContentType(contentType)));
+	}
+
+	@Override
+	public ResponseOptions thenReturnFileFromResource(String path) {
+		return register(new Binary(Resource.bytesFromResource(path), ContentType.guessFrom(path)));
+	}
+
+	@Override
+	public ResponseOptions thenReturnFileFromResource(String path, String contentType) {
+		return thenReturnFile(Resource.bytesFromResource(path), contentType);
+	}
+
+	@Override
+	public ResponseOptions thenReturnErrorCodeWithMessage(int errorCode, String message) {
+		return thenReturnText(message).withStatus(errorCode);
 	}
 
 	/** Sets a response header. Replaces any previous value for the same header name. */
 	public ResponseOptions withHeader(String name, String value) {
-		response.addHeader(name, value);
+		current.addHeader(name, value);
 		return this;
 	}
 
 	/** Overrides the HTTP status code. Defaults to 200, or to the code passed to {@code thenReturnErrorCodeWithMessage}. Last call wins. */
 	public ResponseOptions withStatus(int status) {
-		response.setResponseStatus(status);
+		current.setResponseStatus(status);
 		return this;
 	}
 
@@ -40,7 +135,7 @@ public class ResponseOptions {
 	public ResponseOptions withDelay(long millis) {
 		if (millis < 0) throw new IllegalArgumentException("Delay must not be negative, but was " + millis + " ms.");
 
-		response.setDelayMillis(millis);
+		current.setDelayMillis(millis);
 		return this;
 	}
 
@@ -50,6 +145,16 @@ public class ResponseOptions {
 	 */
 	public ResponseOptions withDelay(Duration delay) {
 		return withDelay(Objects.requireNonNull(delay, "delay").toMillis());
+	}
+
+	/** The first response replaces the placeholder registered by the constructor; later ones queue behind it. */
+	private ResponseOptions register(Response body) {
+		if (started) routeManager.appendRoute(route, body);
+		else routeManager.registerRoute(route, body);
+
+		started = true;
+		current = body;
+		return this;
 	}
 
 }

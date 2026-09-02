@@ -141,7 +141,7 @@ public final class HttpMock {
 	}
 
 	private RestMockResponse registerRoute(HttpMethod method, String uri) {
-		return new RouteRegister(new Route(method, uri), routeManager);
+		return new ResponseOptions(new Route(method, uri), routeManager);
 	}
 
 	RouteManager routeManager() {

@@ -32,7 +32,7 @@ public class MapperConfigurationTest {
 		assertSame(RestMock.xml(), RestMock.xml());
 	}
 
-	// These tests mutate the JVM-wide mappers that RouteRegisterTest and
+	// These tests mutate the JVM-wide mappers that ResponseOptionsTest and
 	// WhenGetTestCase depend on for their exact expected serialization, so the restore
 	// has to be enforced by the fixture rather than by a finally block in each test.
 	private PropertyNamingStrategy originalNamingStrategy;

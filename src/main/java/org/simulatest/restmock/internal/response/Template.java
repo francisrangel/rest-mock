@@ -43,7 +43,7 @@ public abstract class Template extends Response {
 	@Override
 	public byte[] render(Map<String, String> parameters) {
 		String rendered = PARAMETER_PATTERN.matcher(content).replaceAll(match -> {
-			String value = parameters.get(match.group(1));
+			String value = parameters.get(Placeholders.key(match.group(1)));
 			if (value == null) throw unresolved(match.group(1), parameters);
 			return Matcher.quoteReplacement(escape(value));
 		});

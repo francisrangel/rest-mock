@@ -170,8 +170,10 @@ RestMock.whenGet("/whoami").thenReturnText("tenant=${header.X-Tenant}");
 
 The bare namespace holds what you wrote; `Host` and `Accept` were attached by
 your client, and keeping them out means a typo can't quietly resolve to one
-instead of failing. The prefix is matched case-insensitively, so
+instead of failing. Header names are matched case-insensitively, so
 `${header.X-Tenant}` finds the header however the server canonicalized it.
+Every other name is matched exactly, the way `queryParam()` is: `${Name}` does
+not find `name`.
 
 When a name exists in more than one place the most specific wins: path captures,
 then body fields, then query params. Headers cannot collide with any of them.

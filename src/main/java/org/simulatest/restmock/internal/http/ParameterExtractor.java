@@ -3,7 +3,7 @@ package org.simulatest.restmock.internal.http;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.LinkedHashMap;
 
 import org.simulatest.restmock.internal.Placeholders;
 import org.simulatest.restmock.internal.response.ContentType;
@@ -24,13 +24,13 @@ final class ParameterExtractor {
 	 * and so cannot collide with any of them. See that constant for why they are
 	 * not in the bare namespace.
 	 *
-	 * Names are matched case-insensitively. That is not cosmetic: the JDK server
-	 * rewrites header names to first-letter-uppercase, so a request sent with
-	 * {@code X-Tenant} arrives as {@code X-tenant} and an exact-match lookup for
-	 * {@code ${header.X-Tenant}} would silently find nothing.
+	 * Bare names are matched exactly, as {@code ReceivedRequest.queryParam} does.
+	 * Header names fold case through {@link Placeholders#headerKey}: the JDK
+	 * server rewrites {@code X-Tenant} to {@code X-tenant}, so an exact-match
+	 * lookup for {@code ${header.X-Tenant}} would silently find nothing.
 	 */
 	static Map<String, String> extract(URI uri, String body, Map<String, List<String>> headers) {
-		Map<String, String> parameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+		Map<String, String> parameters = new LinkedHashMap<>();
 
 		appendHeaders(parameters, headers);
 		appendQueryParameters(parameters, uri.getRawQuery());
@@ -54,7 +54,7 @@ final class ParameterExtractor {
 		for (Map.Entry<String, List<String>> header : headers.entrySet()) {
 			List<String> values = header.getValue();
 			if (values != null && !values.isEmpty())
-				parameters.put(Placeholders.HEADER_PREFIX + header.getKey(), values.get(0));
+				parameters.put(Placeholders.headerKey(header.getKey()), values.get(0));
 		}
 	}
 

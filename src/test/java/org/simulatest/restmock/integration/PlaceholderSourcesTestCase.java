@@ -145,6 +145,16 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 	 * name gets.
 	 */
 	@Test
+	public void aBareNameMustMatchTheCaseTheRequestUsed() throws Exception {
+		RestMock.whenGet("/test").thenReturnText("hello ${Name}");
+
+		HttpResponse<String> response = sendRequest("/test?name=Bob", HttpMethod.GET);
+
+		assertEquals(500, response.statusCode());
+		assertTrue(response.body().startsWith("No value for ${Name}. Available names: name"), response.body());
+	}
+
+	@Test
 	public void aBareHeaderNameNoLongerResolvesSilently() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("accept=${Accept}");
 

@@ -12,6 +12,7 @@ import com.sun.net.httpserver.Headers;
 
 import org.junit.jupiter.api.Test;
 
+import org.simulatest.restmock.internal.Placeholders;
 import org.simulatest.restmock.internal.response.ContentType;
 
 public class ParameterExtractorTest {
@@ -27,6 +28,24 @@ public class ParameterExtractorTest {
 
 	private void withContentType(String contentType) {
 		headers.put(HttpHeader.CONTENT_TYPE, List.of(contentType));
+	}
+
+	/** Looks a name up the way a template does, so a header spelled either way resolves. */
+	private static String resolve(Map<String, String> params, String name) {
+		return params.get(Placeholders.key(name));
+	}
+
+	/**
+	 * The map used to fold case for every name, so ${Name} quietly found a query
+	 * parameter called name while queryParam("Name") on the same request found
+	 * nothing. Bare names now match exactly, as the accessor does.
+	 */
+	@Test
+	public void bareNamesAreMatchedExactly() {
+		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=Bob"), "", headers);
+
+		assertEquals("Bob", params.get("name"));
+		assertNull(params.get("Name"), "a bare name must not fold case");
 	}
 
 	@Test
@@ -94,7 +113,7 @@ public class ParameterExtractorTest {
 
 		assertNull(params.get("name"), "a text/plain body must not be parsed for parameters");
 		// the request's own headers are parameters too, so the map is not empty
-		assertEquals(ContentType.TEXT_PLAIN.type(), params.get("header." + HttpHeader.CONTENT_TYPE));
+		assertEquals(ContentType.TEXT_PLAIN.type(), resolve(params, "header." + HttpHeader.CONTENT_TYPE));
 	}
 
 	@Test
@@ -156,7 +175,7 @@ public class ParameterExtractorTest {
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
 
-		assertEquals("acme", params.get("header.X-Tenant"));
+		assertEquals("acme", resolve(params, "header.X-Tenant"));
 	}
 
 	@Test
@@ -167,8 +186,8 @@ public class ParameterExtractorTest {
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
 
-		assertEquals("acme", params.get("header.X-Tenant"));
-		assertEquals("acme", params.get("HEADER.x-tenant"));
+		assertEquals("acme", resolve(params, "header.X-Tenant"));
+		assertEquals("acme", resolve(params, "HEADER.x-tenant"));
 	}
 
 	@Test
@@ -177,7 +196,7 @@ public class ParameterExtractorTest {
 
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "", headers);
 
-		assertEquals("acme", params.get("header.X-Tenant"));
+		assertEquals("acme", resolve(params, "header.X-Tenant"));
 	}
 
 	/**
@@ -204,7 +223,7 @@ public class ParameterExtractorTest {
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test?name=from-query"), "", headers);
 
 		assertEquals("from-query", params.get("name"));
-		assertEquals("from-header", params.get("header.name"));
+		assertEquals("from-header", resolve(params, "header.name"));
 	}
 
 	@Test
@@ -215,7 +234,7 @@ public class ParameterExtractorTest {
 		Map<String, String> params = ParameterExtractor.extract(URI.create("/test"), "{\"name\":\"from-body\"}", headers);
 
 		assertEquals("from-body", params.get("name"));
-		assertEquals("from-header", params.get("header.name"));
+		assertEquals("from-header", resolve(params, "header.name"));
 	}
 
 	@Test

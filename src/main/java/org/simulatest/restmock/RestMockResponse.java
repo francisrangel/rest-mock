@@ -29,9 +29,10 @@ package org.simulatest.restmock;
  * ({@code ${header.X-Tenant}}), never as a bare {@code ${X-Tenant}}. The bare
  * namespace holds what the stub author wrote; Host, User-Agent and Accept are
  * attached by the HTTP client, and letting them share the namespace meant a typo
- * could silently resolve to one of them instead of failing. Names are matched
- * case-insensitively, so {@code ${header.X-Tenant}} resolves the header however
- * the server happened to canonicalize its name.
+ * could silently resolve to one of them instead of failing. Header names are
+ * matched case-insensitively, so {@code ${header.X-Tenant}} resolves the header
+ * however the server happened to canonicalize its name. Every other name is
+ * matched exactly, as {@link ReceivedRequest#queryParam(String)} does.
  *
  * A stub URI must be a path. A query string, a missing leading slash, and an
  * unclosed brace in a template are all rejected by the {@code when*} call with

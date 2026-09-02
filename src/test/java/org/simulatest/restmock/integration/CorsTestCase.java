@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Set;
@@ -159,8 +158,7 @@ public class CorsTestCase extends IntegrationTestBase {
 	}
 
 	private HttpResponse<String> preflight(String path, String requestMethod, String requestHeaders) throws Exception {
-		HttpRequest.Builder request = HttpRequest.newBuilder()
-			.uri(URI.create(baseUrl + path))
+		HttpRequest.Builder request = request(path)
 			.header(HttpHeader.ORIGIN, ORIGIN)
 			.header(HttpHeader.ACCESS_CONTROL_REQUEST_METHOD, requestMethod);
 
@@ -172,14 +170,13 @@ public class CorsTestCase extends IntegrationTestBase {
 
 	private HttpResponse<String> getWithOrigin(String path) throws Exception {
 		return client.send(
-			HttpRequest.newBuilder().uri(URI.create(baseUrl + path)).header(HttpHeader.ORIGIN, ORIGIN).GET().build(),
+			request(path).header(HttpHeader.ORIGIN, ORIGIN).GET().build(),
 			HttpResponse.BodyHandlers.ofString());
 	}
 
 	private HttpResponse<String> optionsWithOrigin(String path) throws Exception {
 		return client.send(
-			HttpRequest.newBuilder()
-				.uri(URI.create(baseUrl + path))
+			request(path)
 				.header(HttpHeader.ORIGIN, ORIGIN)
 				.method("OPTIONS", HttpRequest.BodyPublishers.noBody())
 				.build(),

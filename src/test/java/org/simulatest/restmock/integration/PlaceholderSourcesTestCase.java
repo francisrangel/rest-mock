@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
@@ -28,8 +27,7 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 		RestMock.whenGet("/whoami").thenReturnText("tenant=${header.X-Tenant}");
 
 		HttpResponse<String> response = client.send(
-			HttpRequest.newBuilder()
-				.uri(URI.create(baseUrl + "/whoami"))
+			request("/whoami")
 				.header("X-Tenant", "acme")
 				.GET().build(),
 			HttpResponse.BodyHandlers.ofString());
@@ -61,8 +59,7 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 	public void everySourceCanBeMixedInOneBody() throws Exception {
 		RestMock.whenPost("/users/{id}").thenReturnText("${id}|${from}|${name}|${header.X-Tenant}");
 
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(baseUrl + "/users/42?from=web"))
+		HttpRequest request = request("/users/42?from=web")
 			.header("X-Tenant", "acme")
 			.header("Content-Type", ContentType.APPLICATION_JSON.type())
 			.POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"Bob\"}"))
@@ -77,8 +74,7 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 	public void pathCapturesWinOverEveryOtherSource() throws Exception {
 		RestMock.whenPost("/users/{name}").thenReturnText("${name}");
 
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(baseUrl + "/users/from-path?name=from-query"))
+		HttpRequest request = request("/users/from-path?name=from-query")
 			.header("name", "from-header")
 			.header("Content-Type", ContentType.APPLICATION_JSON.type())
 			.POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"from-body\"}"))

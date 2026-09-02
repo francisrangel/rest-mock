@@ -3,7 +3,6 @@ package org.simulatest.restmock.integration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Set;
@@ -88,8 +87,7 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 		RestMock.whenGet("/test").thenReturnText("ok");
 
 		HttpResponse<String> response = client.send(
-			HttpRequest.newBuilder()
-				.uri(URI.create(baseUrl + "/test"))
+			request("/test")
 				.method("TRACE", HttpRequest.BodyPublishers.noBody())
 				.build(),
 			HttpResponse.BodyHandlers.ofString());

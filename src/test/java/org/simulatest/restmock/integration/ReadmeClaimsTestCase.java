@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
@@ -49,8 +48,7 @@ public class ReadmeClaimsTestCase extends IntegrationTestBase {
 		RestMock.whenGet("/api/data").thenReturnJSON("{\"ok\":true}");
 
 		HttpResponse<String> preflight = client.send(
-			HttpRequest.newBuilder()
-				.uri(URI.create(baseUrl + "/api/data"))
+			request("/api/data")
 				.header(HttpHeader.ORIGIN, "http://localhost:3000")
 				.header(HttpHeader.ACCESS_CONTROL_REQUEST_METHOD, "GET")
 				.method("OPTIONS", HttpRequest.BodyPublishers.noBody())

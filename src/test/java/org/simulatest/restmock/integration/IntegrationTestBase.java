@@ -27,6 +27,15 @@ public class IntegrationTestBase {
 		.connectTimeout(Duration.ofSeconds(5))
 		.build();
 
+	/** A request builder already pointed at {@code path} on the running server. */
+	protected HttpRequest.Builder request(String path) {
+		return HttpRequest.newBuilder().uri(URI.create(baseUrl + path));
+	}
+
+	protected static HttpResponse<String> send(HttpRequest.Builder request) throws Exception {
+		return client.send(request.build(), HttpResponse.BodyHandlers.ofString());
+	}
+
 	/** Sends the request and asserts the response body. Every helper below takes a path, not a full URL. */
 	protected void assertResponseBody(String path, String expectedBody, HttpMethod method) throws Exception {
 		HttpResponse<String> response = sendRequest(path, method);
@@ -36,29 +45,19 @@ public class IntegrationTestBase {
 	}
 
 	protected HttpResponse<String> sendRequest(String path, HttpMethod method) throws Exception {
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(baseUrl + path))
-			.method(method.name(), HttpRequest.BodyPublishers.noBody())
-			.build();
-
-		return client.send(request, HttpResponse.BodyHandlers.ofString());
+		return send(request(path).method(method.name(), HttpRequest.BodyPublishers.noBody()));
 	}
 
 	/** Sends {@code body} to {@code path} with the given method and Content-Type. */
 	protected HttpResponse<String> sendRequest(String path, HttpMethod method, String contentType, String body) throws Exception {
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(baseUrl + path))
+		return send(request(path)
 			.header(HttpHeader.CONTENT_TYPE, contentType)
-			.method(method.name(), HttpRequest.BodyPublishers.ofString(body))
-			.build();
-
-		return client.send(request, HttpResponse.BodyHandlers.ofString());
+			.method(method.name(), HttpRequest.BodyPublishers.ofString(body)));
 	}
 
 	/** Sends a GET to {@code path} and returns the raw response bytes. */
 	protected HttpResponse<byte[]> getBytes(String path) throws Exception {
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(baseUrl + path)).GET().build();
-		return client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+		return client.send(request(path).GET().build(), HttpResponse.BodyHandlers.ofByteArray());
 	}
 
 }

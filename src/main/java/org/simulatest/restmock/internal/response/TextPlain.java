@@ -1,6 +1,6 @@
 package org.simulatest.restmock.internal.response;
 
-public final class TextPlain extends Response {
+public final class TextPlain extends Template {
 
 	public TextPlain(String body) {
 		super(body);

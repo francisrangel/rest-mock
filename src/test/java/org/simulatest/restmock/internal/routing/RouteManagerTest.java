@@ -1,6 +1,7 @@
 package org.simulatest.restmock.internal.routing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,9 +12,14 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import org.simulatest.restmock.HttpMethod;
+import org.simulatest.restmock.internal.response.Template;
 import org.simulatest.restmock.internal.response.TextPlain;
 
 public class RouteManagerTest {
+
+	private static String body(RouteManager.Match match) {
+		return assertInstanceOf(Template.class, match.response()).getContent();
+	}
 
 	@Test
 	public void literalPathBeatsTemplate() {
@@ -23,7 +29,7 @@ public class RouteManagerTest {
 
 		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/users/me").orElseThrow();
 
-		assertEquals("literal", match.response().getContent());
+		assertEquals("literal", body(match));
 	}
 
 	@Test
@@ -34,7 +40,7 @@ public class RouteManagerTest {
 
 		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/users/42").orElseThrow();
 
-		assertEquals("template", match.response().getContent());
+		assertEquals("template", body(match));
 	}
 
 	@Test
@@ -45,7 +51,7 @@ public class RouteManagerTest {
 
 		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/a/1/fixed").orElseThrow();
 
-		assertEquals("one capture", match.response().getContent());
+		assertEquals("one capture", body(match));
 	}
 
 	@Test
@@ -122,7 +128,7 @@ public class RouteManagerTest {
 
 		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/t/b/c").orElseThrow();
 
-		assertEquals("second", match.response().getContent());
+		assertEquals("second", body(match));
 	}
 
 	@Test
@@ -133,7 +139,7 @@ public class RouteManagerTest {
 
 		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/users").orElseThrow();
 
-		assertEquals("second", match.response().getContent());
+		assertEquals("second", body(match));
 		assertEquals(1, manager.size());
 	}
 

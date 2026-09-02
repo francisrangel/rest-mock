@@ -2,6 +2,7 @@ package org.simulatest.restmock.internal.response;
 
 import java.util.Map;
 
+/** Raw bytes served as-is: no template, no substitution, no charset. */
 public final class Binary extends Response {
 
 	private final byte[] bytes;
@@ -12,7 +13,6 @@ public final class Binary extends Response {
 	 * buffer after stubbing silently changed what the route serves.
 	 */
 	public Binary(byte[] bytes, ContentType contentType) {
-		super("");
 		this.bytes = bytes.clone();
 		this.contentType = contentType;
 	}
@@ -34,6 +34,11 @@ public final class Binary extends Response {
 	@Override
 	public ContentType getContentType() {
 		return contentType;
+	}
+
+	@Override
+	public String toString() {
+		return "<" + bytes.length + " bytes " + contentType.type() + ">";
 	}
 
 }

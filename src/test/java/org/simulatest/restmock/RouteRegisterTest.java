@@ -16,6 +16,7 @@ import org.simulatest.restmock.internal.response.Binary;
 import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.NotConfigured;
 import org.simulatest.restmock.internal.response.Response;
+import org.simulatest.restmock.internal.response.Template;
 import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.mock.Developer;
@@ -38,12 +39,16 @@ public class RouteRegisterTest {
 		return routeManager.get(route);
 	}
 
+	private Template template() {
+		return assertInstanceOf(Template.class, registered());
+	}
+
 	@Test
 	public void thenReturnTextRegistersAPlainTextResponse() {
 		subject.thenReturnText("Hello World!");
 
 		assertEquals(ContentType.TEXT_PLAIN, registered().getContentType());
-		assertEquals("Hello World!", registered().getContent());
+		assertEquals("Hello World!", template().getContent());
 	}
 
 	@Test
@@ -51,7 +56,7 @@ public class RouteRegisterTest {
 		Route post = new Route(HttpMethod.POST, "/test");
 		new RouteRegister(post, routeManager).thenReturnText("Test succeed");
 
-		assertEquals("Test succeed", routeManager.get(post).getContent());
+		assertEquals("Test succeed", assertInstanceOf(Template.class, routeManager.get(post)).getContent());
 		assertEquals(NotConfigured.class, registered().getClass(), "the GET route must be untouched");
 	}
 
@@ -60,7 +65,7 @@ public class RouteRegisterTest {
 		subject.thenReturnHTML("<h1>Mock rules</h1>");
 
 		assertEquals(ContentType.TEXT_HTML, registered().getContentType());
-		assertEquals("<h1>Mock rules</h1>", registered().getContent());
+		assertEquals("<h1>Mock rules</h1>", template().getContent());
 	}
 
 	@Test
@@ -69,7 +74,7 @@ public class RouteRegisterTest {
 		subject.thenReturnJSON(simpleJSON);
 
 		assertEquals(ContentType.APPLICATION_JSON, registered().getContentType());
-		assertEquals(simpleJSON, registered().getContent());
+		assertEquals(simpleJSON, template().getContent());
 	}
 
 	@Test
@@ -77,7 +82,7 @@ public class RouteRegisterTest {
 		subject.thenReturnJSON(new Developer("Bob", 25));
 
 		assertEquals(ContentType.APPLICATION_JSON, registered().getContentType());
-		assertEquals("{\"name\":\"Bob\",\"age\":25}", registered().getContent());
+		assertEquals("{\"name\":\"Bob\",\"age\":25}", template().getContent());
 	}
 
 	@Test
@@ -86,7 +91,7 @@ public class RouteRegisterTest {
 		subject.thenReturnXML(simpleXML);
 
 		assertEquals(ContentType.TEXT_XML, registered().getContentType());
-		assertEquals(simpleXML, registered().getContent());
+		assertEquals(simpleXML, template().getContent());
 	}
 
 	@Test
@@ -94,7 +99,7 @@ public class RouteRegisterTest {
 		subject.thenReturnXML(new Developer("Bob", 25));
 
 		assertEquals(ContentType.TEXT_XML, registered().getContentType());
-		assertEquals("<Developer><name>Bob</name><age>25</age></Developer>", registered().getContent());
+		assertEquals("<Developer><name>Bob</name><age>25</age></Developer>", template().getContent());
 	}
 
 	@Test
@@ -134,7 +139,7 @@ public class RouteRegisterTest {
 		subject.thenReturnJSONFromResource("developer.json");
 
 		assertEquals(ContentType.APPLICATION_JSON, registered().getContentType());
-		assertEquals("{\"name\":\"Bob\",\"age\":25}", registered().getContent());
+		assertEquals("{\"name\":\"Bob\",\"age\":25}", template().getContent());
 	}
 
 	@Test
@@ -143,7 +148,7 @@ public class RouteRegisterTest {
 
 		assertEquals(ContentType.TEXT_XML, registered().getContentType());
 		assertEquals("<?xml version=\"1.0\" ?><developer><name>Bob</name><age>25</age></developer>",
-			registered().getContent());
+			template().getContent());
 	}
 
 	@Test
@@ -151,7 +156,7 @@ public class RouteRegisterTest {
 		subject.thenReturnHTMLFromResource("page.html");
 
 		assertEquals(ContentType.TEXT_HTML, registered().getContentType());
-		assertEquals("<h1>Hello</h1>", registered().getContent());
+		assertEquals("<h1>Hello</h1>", template().getContent());
 	}
 
 	@Test
@@ -159,7 +164,7 @@ public class RouteRegisterTest {
 		subject.thenReturnTextFromResource("example.txt");
 
 		assertEquals(ContentType.TEXT_PLAIN, registered().getContentType());
-		assertEquals("rest-mock rock! :-)", registered().getContent());
+		assertEquals("rest-mock rock! :-)", template().getContent());
 	}
 
 	@Test
@@ -181,7 +186,7 @@ public class RouteRegisterTest {
 		Response response = routeManager.get(replaced);
 
 		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
-		assertEquals("real response", response.getContent());
+		assertEquals("real response", assertInstanceOf(Template.class, response).getContent());
 		assertEquals(200, response.getResponseStatus());
 	}
 

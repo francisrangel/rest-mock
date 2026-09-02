@@ -2,7 +2,7 @@ package org.simulatest.restmock.internal.response;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
-public final class XML extends Response {
+public final class XML extends Template {
 
 	public static final XmlMapper MAPPER = (XmlMapper) new XmlMapper().findAndRegisterModules();
 

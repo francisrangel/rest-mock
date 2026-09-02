@@ -2,7 +2,7 @@ package org.simulatest.restmock.internal.response;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public final class JSON extends Response {
+public final class JSON extends Template {
 
 	public static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
 

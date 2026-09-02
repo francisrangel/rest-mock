@@ -36,7 +36,7 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 
 	/** Drives the default mock on an OS-assigned port. */
 	public RestMockExtension() {
-		this(RestMock.defaultMock(), 0);
+		this(RestMock.defaultMock());
 	}
 
 	/** Drives the default mock on a fixed port. */
@@ -52,7 +52,7 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 		this(mock, 0);
 	}
 
-	/** Drives {@code mock} on a fixed port. Pass 0 for an OS-assigned one. */
+	/** Drives {@code mock} on a fixed port. */
 	public RestMockExtension(HttpMock mock, int port) {
 		this.mock = Objects.requireNonNull(mock, "mock");
 		this.port = port;

@@ -45,9 +45,7 @@ public class RouteManager {
 
 	/** Registers {@code response} as the only response for {@code route}, replacing any sequence it had. */
 	public synchronized void registerRoute(Route route, Response response) {
-		Map<Route, Stub> updated = new LinkedHashMap<>(routes);
-		Stub previous = updated.put(route, new Stub(List.of(response)));
-		routes = updated;
+		Stub previous = put(route, new Stub(List.of(response)));
 
 		if (previous != null && !(previous.last() instanceof NotConfigured) && !(response instanceof NotConfigured)) {
 			log.warn("Replacing existing route {} {} (previous response: {}, new response: {})",
@@ -61,14 +59,19 @@ public class RouteManager {
 
 	/** Queues {@code response} after the ones {@code route} already has. */
 	public synchronized void appendRoute(Route route, Response response) {
-		Map<Route, Stub> updated = new LinkedHashMap<>(routes);
-		List<Response> responses = new ArrayList<>(updated.get(route).responses());
+		List<Response> responses = new ArrayList<>(routes.get(route).responses());
 		responses.add(response);
-		updated.put(route, new Stub(List.copyOf(responses)));
-		routes = updated;
+		put(route, new Stub(List.copyOf(responses)));
 
-		log.debug("Queued response {} of {} for route {} {}",
-			responses.size(), responses.size(), route.getMethod(), route.getUri());
+		log.debug("Queued response {} for route {} {}", responses.size(), route.getMethod(), route.getUri());
+	}
+
+	/** The copy-on-write swap; see the field comment on {@link #routes}. Returns what the route held before. */
+	private Stub put(Route route, Stub stub) {
+		Map<Route, Stub> updated = new LinkedHashMap<>(routes);
+		Stub previous = updated.put(route, stub);
+		routes = updated;
+		return previous;
 	}
 
 	/** The response most recently registered for {@code route}, or null. */
@@ -92,8 +95,7 @@ public class RouteManager {
 	 * advances its sequence.
 	 */
 	private Optional<Match> find(HttpMethod method, String path) {
-		Route bestRoute = null;
-		Stub bestStub = null;
+		Entry<Route, Stub> best = null;
 		Map<String, String> bestCaptures = null;
 
 		for (Entry<Route, Stub> entry : routes.entrySet()) {
@@ -101,16 +103,15 @@ public class RouteManager {
 			Optional<Map<String, String>> captures = route.match(method, path);
 			if (captures.isEmpty()) continue;
 
-			if (bestRoute == null || route.captureCount() <= bestRoute.captureCount()) {
-				bestRoute = route;
-				bestStub = entry.getValue();
+			if (best == null || route.captureCount() <= best.getKey().captureCount()) {
+				best = entry;
 				bestCaptures = captures.get();
 			}
 		}
 
-		return bestRoute == null
+		return best == null
 			? Optional.empty()
-			: Optional.of(new Match(bestRoute, bestStub.next(), bestCaptures));
+			: Optional.of(new Match(best.getKey(), best.getValue().next(), bestCaptures));
 	}
 
 	/**

@@ -24,10 +24,11 @@ public class RestMockExtensionTest {
 
 	// This class mutates the process-wide RestMock state directly, so the reset has
 	// to run even when an assertion fails - otherwise the route leaks into every
-	// later test class in the same JVM.
+	// later test class in the same JVM. Stopping also cleans, and is a no-op when
+	// nothing was started.
 	@AfterEach
 	public void resetGlobalState() {
-		RestMock.clean();
+		RestMock.stopServer();
 	}
 
 	private void record(String path) {
@@ -46,15 +47,10 @@ public class RestMockExtensionTest {
 	/** Two modules testing on one CI agent must not fight over 9080, so no port means an OS-assigned one. */
 	@Test
 	public void theDefaultExtensionBindsAnOsAssignedPort() {
-		RestMockExtension extension = new RestMockExtension();
+		new RestMockExtension().beforeAll(null);
 
-		extension.beforeAll(null);
-		try {
-			assertNotEquals(RestMock.DEFAULT_PORT, RestMock.port());
-			assertTrue(RestMock.port() > 0);
-		} finally {
-			extension.afterAll(null);
-		}
+		assertNotEquals(RestMock.DEFAULT_PORT, RestMock.port());
+		assertTrue(RestMock.port() > 0);
 	}
 
 	@Test

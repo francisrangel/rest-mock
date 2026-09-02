@@ -21,6 +21,7 @@ public abstract class Template extends Response {
 
 	/** A placeholder, or the doubled dollar that makes one literal. */
 	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\$\\{|\\$\\{(.+?)\\}");
+	private static final String LITERAL_PLACEHOLDER = Matcher.quoteReplacement("${");
 
 	/** Enough names to spot the typo, few enough to stay readable in a failure. */
 	private static final int NAMES_IN_ERROR = 20;
@@ -30,7 +31,7 @@ public abstract class Template extends Response {
 
 	Template(String body) {
 		this.content = body;
-		this.templated = body.contains("${");
+		this.templated = PARAMETER_PATTERN.matcher(body).results().anyMatch(found -> found.group(1) != null);
 	}
 
 	@Override
@@ -51,10 +52,11 @@ public abstract class Template extends Response {
 	@Override
 	public byte[] render(Map<String, String> parameters) {
 		String rendered = PARAMETER_PATTERN.matcher(content).replaceAll(match -> {
-			if (match.group(1) == null) return Matcher.quoteReplacement("${");
+			String name = match.group(1);
+			if (name == null) return LITERAL_PLACEHOLDER;
 
-			String value = parameters.get(Placeholders.key(match.group(1)));
-			if (value == null) throw unresolved(match.group(1), parameters);
+			String value = parameters.get(Placeholders.key(name));
+			if (value == null) throw unresolved(name, parameters);
 			return Matcher.quoteReplacement(escape(value));
 		});
 		return rendered.getBytes(StandardCharsets.UTF_8);

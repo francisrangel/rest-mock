@@ -6,15 +6,17 @@ import java.util.function.BiConsumer;
 import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.routing.Route;
-import org.simulatest.restmock.internal.routing.RouteManager;
 
 /**
  * A response decided per request by the test's own callback.
  *
- * The callback is handed a fresh {@link ResponseOptions} backed by a scratch
- * route table, so it builds its answer with the same {@code thenReturn*} calls
- * as any stub and nothing new to learn. Whatever it registered last is served;
- * if it registered nothing, the usual "no response was configured" 501 is.
+ * The callback is handed a fresh {@link ResponseOptions} that registers
+ * nothing, so it builds its answer with the same {@code thenReturn*} calls as
+ * any stub. Whatever it built last is served; if it built nothing, the usual
+ * "no response was configured" 501 is.
+ *
+ * Nothing else here is ever called: the server resolves an answer against the
+ * request before it reads a status, a content type or a body.
  */
 final class Answer extends Response {
 
@@ -28,24 +30,28 @@ final class Answer extends Response {
 
 	@Override
 	public Response resolve(ReceivedRequest request) {
-		RouteManager scratch = new RouteManager();
-		answer.accept(request, new ResponseOptions(route, scratch));
-		return scratch.get(route);
+		ResponseOptions builder = new ResponseOptions(route);
+		answer.accept(request, builder);
+		return builder.current();
 	}
 
 	@Override
 	public ContentType getContentType() {
-		return ContentType.TEXT_PLAIN;
+		throw unresolved();
 	}
 
 	@Override
 	public boolean isTextual() {
-		return true;
+		throw unresolved();
 	}
 
 	@Override
 	public byte[] render(Map<String, String> parameters) {
-		throw new IllegalStateException("An answer is resolved against a request before it is rendered");
+		throw unresolved();
+	}
+
+	private static IllegalStateException unresolved() {
+		return new IllegalStateException("An answer is resolved against a request before it is served");
 	}
 
 }

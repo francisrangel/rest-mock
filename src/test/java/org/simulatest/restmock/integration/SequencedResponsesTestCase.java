@@ -17,8 +17,8 @@ public class SequencedResponsesTestCase extends IntegrationTestBase {
 			.thenReturnText("up");
 
 		assertEquals(503, sendRequest("/flaky", HttpMethod.GET).statusCode());
-		assertEquals("up", sendRequest("/flaky", HttpMethod.GET).body());
-		assertEquals("up", sendRequest("/flaky", HttpMethod.GET).body());
+		assertResponseBody("/flaky", "up", HttpMethod.GET);
+		assertResponseBody("/flaky", "up", HttpMethod.GET);
 	}
 
 	@Test
@@ -28,7 +28,7 @@ public class SequencedResponsesTestCase extends IntegrationTestBase {
 			.thenReturnText("second");
 
 		assertEquals(500, sendRequest("/flaky", HttpMethod.GET).statusCode());
-		assertEquals(200, sendRequest("/flaky", HttpMethod.GET).statusCode());
+		assertResponseBody("/flaky", "second", HttpMethod.GET);
 	}
 
 	/** A new when*() for the same route replaces the sequence rather than extending it. */
@@ -39,7 +39,7 @@ public class SequencedResponsesTestCase extends IntegrationTestBase {
 
 		RestMock.whenGet("/flaky").thenReturnText("c");
 
-		assertEquals("c", sendRequest("/flaky", HttpMethod.GET).body());
+		assertResponseBody("/flaky", "c", HttpMethod.GET);
 	}
 
 }

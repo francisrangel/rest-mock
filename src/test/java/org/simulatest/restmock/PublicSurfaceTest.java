@@ -1,6 +1,5 @@
 package org.simulatest.restmock;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -50,9 +49,9 @@ public class PublicSurfaceTest {
 
 	@Test
 	public void responseOptionsCannotBeConstructedByCallers() {
-		assertEquals(1, ResponseOptions.class.getDeclaredConstructors().length);
-		assertFalse(Modifier.isPublic(ResponseOptions.class.getDeclaredConstructors()[0].getModifiers()),
-			"ResponseOptions used to expose a public constructor taking an internal Response");
+		for (Constructor<?> constructor : ResponseOptions.class.getDeclaredConstructors())
+			assertFalse(Modifier.isPublic(constructor.getModifiers()),
+				"ResponseOptions used to expose a public constructor taking an internal Response");
 	}
 
 	private static void assertNoInternalTypes(String member, Class<?>... types) {

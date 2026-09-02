@@ -35,7 +35,7 @@ public class AnswerTestCase extends IntegrationTestBase {
 	public void anAnswerIsATemplateLikeAnyOther() throws Exception {
 		RestMock.whenGet("/greet").thenAnswer((request, respond) -> respond.thenReturnText("hi ${name}"));
 
-		assertEquals("hi Bob", sendRequest("/greet?name=Bob", HttpMethod.GET).body());
+		assertResponseBody("/greet?name=Bob", "hi Bob", HttpMethod.GET);
 	}
 
 	@Test

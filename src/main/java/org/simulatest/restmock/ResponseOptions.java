@@ -32,13 +32,20 @@ public class ResponseOptions implements RestMockResponse {
 	private final Route route;
 	private final RouteManager routeManager;
 	private Response current;
-	private boolean started;
 
+	/** Registers a placeholder for {@code route} that the first {@code thenReturn*} replaces. */
 	ResponseOptions(Route route, RouteManager routeManager) {
 		this.route = route;
 		this.routeManager = routeManager;
 		this.current = new NotConfigured(route.getUri());
 		routeManager.registerRoute(route, current);
+	}
+
+	/** A builder that registers nothing: {@link Answer} reads what it built through {@link #current()}. */
+	ResponseOptions(Route route) {
+		this.route = route;
+		this.routeManager = null;
+		this.current = new NotConfigured(route.getUri());
 	}
 
 	@Override
@@ -153,12 +160,18 @@ public class ResponseOptions implements RestMockResponse {
 		return withDelay(Objects.requireNonNull(delay, "delay").toMillis());
 	}
 
-	/** The first response replaces the placeholder registered by the constructor; later ones queue behind it. */
-	private ResponseOptions register(Response body) {
-		if (started) routeManager.appendRoute(route, body);
-		else routeManager.registerRoute(route, body);
+	/** The response the last {@code thenReturn*} built, or the placeholder if none was called. */
+	Response current() {
+		return current;
+	}
 
-		started = true;
+	/** The first response replaces the placeholder the constructor registered; later ones queue behind it. */
+	private ResponseOptions register(Response body) {
+		if (routeManager != null) {
+			if (current instanceof NotConfigured) routeManager.registerRoute(route, body);
+			else routeManager.appendRoute(route, body);
+		}
+
 		current = body;
 		return this;
 	}

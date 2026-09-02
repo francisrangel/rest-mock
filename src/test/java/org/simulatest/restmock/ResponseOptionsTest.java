@@ -168,7 +168,7 @@ public class ResponseOptionsTest {
 	}
 
 	@Test
-	public void danglingResponseOptionssSentinel() {
+	public void aDanglingRouteRegistersTheSentinel() {
 		Route dangling = new Route(HttpMethod.GET, "/dangling");
 		new ResponseOptions(dangling, routeManager);
 

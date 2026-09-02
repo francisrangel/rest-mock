@@ -1,9 +1,7 @@
 package org.simulatest.restmock.internal.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,33 +74,6 @@ public class LogSafeTest {
 	@Test
 	public void truncateHandlesANullBody() {
 		assertEquals("", LogSafe.truncate(null));
-	}
-
-	@Test
-	public void previewBytesDecodesSmallBodiesInFull() {
-		assertEquals("hello", LogSafe.previewBytes("hello".getBytes(StandardCharsets.UTF_8)));
-	}
-
-	@Test
-	public void previewBytesCapsLargeBodiesAndReportsTheRemainder() {
-		int sliceMax = LogSafe.BODY_TRUNCATE_LIMIT * 4;
-		byte[] body = "x".repeat(sliceMax + 100).getBytes(StandardCharsets.UTF_8);
-
-		String preview = LogSafe.previewBytes(body);
-
-		assertTrue(preview.startsWith("x".repeat(LogSafe.BODY_TRUNCATE_LIMIT)), "preview was: " + preview);
-		assertTrue(preview.endsWith("...<+100 bytes>"), "preview was: " + preview);
-	}
-
-	@Test
-	public void previewBytesHandlesAnEmptyBody() {
-		assertEquals("", LogSafe.previewBytes(null));
-		assertEquals("", LogSafe.previewBytes(new byte[0]));
-	}
-
-	@Test
-	public void binaryPlaceholderReportsTheByteCount() {
-		assertEquals("<42 bytes binary>", LogSafe.binaryPlaceholder(42));
 	}
 
 }

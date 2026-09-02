@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import org.simulatest.restmock.internal.response.JSON;
 import org.simulatest.restmock.internal.response.XML;
-import org.simulatest.restmock.internal.routing.RouteManager;
 
 /**
  * Entry point for stubbing HTTP responses in tests.
@@ -181,10 +180,6 @@ public final class RestMock {
 	/** Removes all stubbed routes and clears the request log. The server keeps running. */
 	public static void clean() {
 		DEFAULT.clean();
-	}
-
-	static RouteManager routeManager() {
-		return DEFAULT.routeManager();
 	}
 
 }

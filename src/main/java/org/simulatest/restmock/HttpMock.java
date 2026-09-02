@@ -1,5 +1,6 @@
 package org.simulatest.restmock;
 
+import org.simulatest.restmock.internal.http.FrontController;
 import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.internal.server.RestMockServer;
@@ -32,7 +33,7 @@ public final class HttpMock {
 
 	private final RouteManager routeManager = new RouteManager();
 	private final RequestLog requestLog = new RequestLog();
-	private final RestMockServer server = new RestMockServer(routeManager, requestLog::add);
+	private final RestMockServer server = new RestMockServer(new FrontController(routeManager, requestLog::add));
 
 	/** Stubs a GET response for {@code uri}. Chain a {@code thenReturn*} to set the body. */
 	public RestMockResponse whenGet(String uri) {

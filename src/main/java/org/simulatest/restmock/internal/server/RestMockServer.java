@@ -6,34 +6,29 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.function.Consumer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
-import org.simulatest.restmock.ReceivedRequest;
-import org.simulatest.restmock.internal.http.FrontController;
-import org.simulatest.restmock.internal.routing.RouteManager;
-
+/** The lifecycle of one JDK HTTP server: bind, hand every request to a handler, stop. */
 public class RestMockServer {
 
 	private static final Logger log = LoggerFactory.getLogger(RestMockServer.class);
 
-	private final RouteManager routeManager;
-	private final Consumer<ReceivedRequest> recorder;
+	/** Reported by {@link #port()} when the server is not running. */
+	public static final int NOT_RUNNING = -1;
+
+	private final HttpHandler handler;
 	private HttpServer server;
 	private ExecutorService workers;
 
-	public RestMockServer(RouteManager routeManager, Consumer<ReceivedRequest> recorder) {
-		this.routeManager = routeManager;
-		this.recorder = recorder;
+	public RestMockServer(HttpHandler handler) {
+		this.handler = handler;
 	}
-
-	/** Reported by {@link #port()} when the server is not running. */
-	public static final int NOT_RUNNING = -1;
 
 	/**
 	 * Starting an already-running server is a no-op, but only when the port
@@ -63,7 +58,7 @@ public class RestMockServer {
 
 		workers = Executors.newCachedThreadPool(new WorkerFactory());
 
-		server.createContext("/", new FrontController(routeManager, recorder));
+		server.createContext("/", handler);
 		server.setExecutor(workers);
 		server.start();
 

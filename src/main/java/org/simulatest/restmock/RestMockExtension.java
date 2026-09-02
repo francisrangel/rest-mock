@@ -6,8 +6,6 @@ import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * JUnit 5 extension that starts the mock server before the test class runs and
@@ -27,8 +25,6 @@ import org.slf4j.LoggerFactory;
  *   {@code @RegisterExtension static RestMockExtension server = new RestMockExtension(mock, 0);}
  */
 public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
-
-	private static final Logger log = LoggerFactory.getLogger(RestMockExtension.class);
 
 	private final HttpMock mock;
 	private final int port;
@@ -84,10 +80,7 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 
 	@Override
 	public void afterEach(ExtensionContext context) {
-		if (autoClean) {
-			mock.clean();
-			log.debug("Auto-cleaned routes and request log after {}", context.getDisplayName());
-		}
+		if (autoClean) mock.clean();
 	}
 
 }

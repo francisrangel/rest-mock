@@ -1,6 +1,7 @@
 package org.simulatest.restmock;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -40,6 +41,20 @@ public class RestMockExtensionTest {
 
 		assertSame(own, new RestMockExtension(own).mock());
 		assertSame(RestMock.defaultMock(), new RestMockExtension().mock());
+	}
+
+	/** Two modules testing on one CI agent must not fight over 9080, so no port means an OS-assigned one. */
+	@Test
+	public void theDefaultExtensionBindsAnOsAssignedPort() {
+		RestMockExtension extension = new RestMockExtension();
+
+		extension.beforeAll(null);
+		try {
+			assertNotEquals(RestMock.DEFAULT_PORT, RestMock.port());
+			assertTrue(RestMock.port() > 0);
+		} finally {
+			extension.afterAll(null);
+		}
 	}
 
 	@Test

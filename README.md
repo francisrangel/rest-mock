@@ -609,8 +609,11 @@ class MyApiTest {
 Register it on a `static` field: a non-static one is rebuilt for every test, and
 you would get a server per test instead of per class.
 
-`new RestMockExtension(3000)` picks a port, `new RestMockExtension(0)` lets the OS
-pick. `keepRoutes()` turns off the per-test reset when a class shares one fixture:
+The port is assigned by the OS, so two builds sharing a CI machine never fight
+over one; `RestMock.baseUrl()` is the address either way. `new
+RestMockExtension(3000)` pins a port when something outside the test has to
+know it. `keepRoutes()` turns off the per-test reset when a class shares one
+fixture:
 
 ```java
 @RegisterExtension
@@ -632,7 +635,7 @@ class PaymentsTest {
     static HttpMock mock = new HttpMock();
 
     @RegisterExtension
-    static RestMockExtension server = new RestMockExtension(mock, 0);
+    static RestMockExtension server = new RestMockExtension(mock);
 
     @Test
     void chargesACard() throws Exception {
@@ -644,8 +647,8 @@ class PaymentsTest {
 ```
 
 Each `HttpMock` owns its routes, its request log, and its port, so two such
-classes share nothing and can run at the same time. Port `0` matters here: it
-lets the OS hand each one a free port instead of making you allocate them.
+classes share nothing and can run at the same time. Each binds its own
+OS-assigned port, so nothing has to allocate them.
 
 `@Execution` only does anything once JUnit's parallel support is switched on, in
 `src/test/resources/junit-platform.properties`:

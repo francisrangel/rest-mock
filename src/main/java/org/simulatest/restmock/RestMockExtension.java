@@ -22,7 +22,11 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * its own mock, which is what lets two test classes run at once:
  *
  *   {@code static HttpMock mock = new HttpMock();}
- *   {@code @RegisterExtension static RestMockExtension server = new RestMockExtension(mock, 0);}
+ *   {@code @RegisterExtension static RestMockExtension server = new RestMockExtension(mock);}
+ *
+ * Without a port the server binds one the OS assigns, so two builds sharing a
+ * machine never fight over it; {@link RestMock#baseUrl()} is the address either
+ * way. Pass a port when something outside the test has to know it.
  */
 public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
 
@@ -30,25 +34,25 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 	private final int port;
 	private boolean autoClean = true;
 
-	/** Drives the default mock on {@link RestMock#DEFAULT_PORT}. */
+	/** Drives the default mock on an OS-assigned port. */
 	public RestMockExtension() {
-		this(RestMock.defaultMock(), RestMock.DEFAULT_PORT);
+		this(RestMock.defaultMock(), 0);
 	}
 
-	/** Drives the default mock on the given port. Pass 0 for an OS-assigned one. */
+	/** Drives the default mock on a fixed port. */
 	public RestMockExtension(int port) {
 		this(RestMock.defaultMock(), port);
 	}
 
 	/**
-	 * Drives {@code mock} on {@link RestMock#DEFAULT_PORT}. Give each class its
-	 * own {@link HttpMock} and they no longer share routes or a port.
+	 * Drives {@code mock} on an OS-assigned port. Give each class its own
+	 * {@link HttpMock} and they no longer share routes or a port.
 	 */
 	public RestMockExtension(HttpMock mock) {
-		this(mock, RestMock.DEFAULT_PORT);
+		this(mock, 0);
 	}
 
-	/** Drives {@code mock} on the given port. Pass 0 for an OS-assigned one. */
+	/** Drives {@code mock} on a fixed port. Pass 0 for an OS-assigned one. */
 	public RestMockExtension(HttpMock mock, int port) {
 		this.mock = Objects.requireNonNull(mock, "mock");
 		this.port = port;

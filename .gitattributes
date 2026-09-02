@@ -1,0 +1,2 @@
+# A byte-for-byte fixture: a checkout must never rewrite its line ending.
+*.xyz binary

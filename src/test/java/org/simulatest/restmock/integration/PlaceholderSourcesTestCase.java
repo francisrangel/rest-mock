@@ -140,6 +140,19 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 	 * produced a cheerful 200 instead of the loud failure every other unresolved
 	 * name gets.
 	 */
+	/**
+	 * The README's own example: a percent-encoded quote in the path is decoded
+	 * on the way in and escaped on the way out, so the JSON stays well-formed.
+	 */
+	@Test
+	public void anEncodedPathCaptureIsDecodedThenEscapedForJson() throws Exception {
+		RestMock.whenGet("/users/{id}").thenReturnJSON("{\"id\":\"${id}\"}");
+
+		HttpResponse<String> response = sendRequest("/users/a%22b", HttpMethod.GET);
+
+		assertEquals("{\"id\":\"a\\\"b\"}", response.body());
+	}
+
 	@Test
 	public void aBareNameMustMatchTheCaseTheRequestUsed() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("hello ${Name}");

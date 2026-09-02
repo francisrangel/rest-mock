@@ -74,6 +74,18 @@ public class DerivedMethodsTestCase extends IntegrationTestBase {
 		assertTrue(response.headers().firstValue(HttpHeader.ALLOW).isEmpty());
 	}
 
+	/** The derived Allow header is a default: a stub that sets its own wins. */
+	@Test
+	public void anExplicitAllowHeaderOverridesTheDerivedOne() throws Exception {
+		RestMock.whenGet("/users/1").thenReturnJSON("{}");
+		RestMock.whenDelete("/users/1").thenReturnText("gone");
+		RestMock.whenOptions("/users/1").thenReturnText("").withHeader(HttpHeader.ALLOW, "GET");
+
+		HttpResponse<String> response = sendRequest("/users/1", HttpMethod.OPTIONS);
+
+		assertEquals("GET", response.headers().firstValue(HttpHeader.ALLOW).orElseThrow());
+	}
+
 	/** A path stubbed only for POST answers OPTIONS, but must not claim HEAD. */
 	@Test
 	public void headIsNotAdvertisedWithoutAGetRoute() throws Exception {

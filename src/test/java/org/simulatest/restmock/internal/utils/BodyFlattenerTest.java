@@ -113,6 +113,21 @@ public class BodyFlattenerTest {
 		assertTrue(BodyFlattener.flattenJson("{not json").isEmpty());
 	}
 
+	/** A body that is a bare value has no field to name, so it contributes nothing rather than failing. */
+	@Test
+	public void aScalarOrEmptyRootYieldsNothing() {
+		assertTrue(BodyFlattener.flattenJson("42").isEmpty());
+		assertTrue(BodyFlattener.flattenJson("\"hello\"").isEmpty());
+		assertTrue(BodyFlattener.flattenJson("[]").isEmpty());
+		assertTrue(BodyFlattener.flattenJson("").isEmpty());
+	}
+
+	@Test
+	public void aRootArrayIsIndexedFromZero() {
+		Map<String, String> result = BodyFlattener.flattenJson("[\"a\",\"b\"]");
+		assertEquals(Map.of("0", "a", "1", "b"), result);
+	}
+
 	@Test
 	public void whitespaceAroundTokens() {
 		Map<String, String> result = BodyFlattener.flattenJson("  { \"name\" : \"Bob\" }  ");

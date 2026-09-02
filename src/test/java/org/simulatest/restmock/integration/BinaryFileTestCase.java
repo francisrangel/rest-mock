@@ -99,6 +99,15 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 		return response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow();
 	}
 
+	/** withHeader wins for binary bodies too, and nothing glues a charset onto what the caller set. */
+	@Test
+	public void anExplicitContentTypeHeaderOverridesTheBinaryDefault() throws Exception {
+		RestMock.whenGet("/bin").thenReturnFile(new byte[] {1, 2, 3})
+			.withHeader(HttpHeader.CONTENT_TYPE, "image/x-custom");
+
+		assertEquals("image/x-custom", contentType(getBytes("/bin")));
+	}
+
 	/** Stubbing takes a copy, so a caller reusing its buffer cannot rewrite the response. */
 	@Test
 	public void mutatingTheCallersArrayAfterStubbingChangesNothing() throws Exception {

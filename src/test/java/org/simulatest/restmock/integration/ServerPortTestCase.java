@@ -1,10 +1,14 @@
 package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.UncheckedIOException;
+import java.net.BindException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -13,6 +17,7 @@ import java.net.http.HttpResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import org.simulatest.restmock.HttpMock;
 import org.simulatest.restmock.RestMock;
 
 /**
@@ -107,12 +112,48 @@ public class ServerPortTestCase {
 		assertTrue(failure.getMessage().contains("startServer"), failure.getMessage());
 	}
 
+	/** The README's first line: no port, and it is listening on 9080. */
+	@Test
+	public void startServerWithoutAPortBindsTheDefault() {
+		RestMock.startServer();
+
+		assertEquals(RestMock.DEFAULT_PORT, RestMock.port());
+	}
+
+	@Test
+	public void anOwnMockAlsoDefaultsToThatPort() {
+		HttpMock own = new HttpMock();
+		try {
+			own.startServer();
+
+			assertEquals(RestMock.DEFAULT_PORT, own.port());
+		} finally {
+			own.stopServer();
+		}
+	}
+
+	/** A port somebody else holds is reported, not swallowed, and the mock stays stopped. */
+	@Test
+	public void aPortAlreadyInUseFailsToBindAndLeavesTheMockStopped() throws Exception {
+		try (ServerSocket occupied = new ServerSocket(OTHER_PORT)) {
+			UncheckedIOException failure =
+				assertThrows(UncheckedIOException.class, () -> RestMock.startServer(OTHER_PORT));
+
+			assertInstanceOf(BindException.class, failure.getCause());
+			assertEquals(-1, RestMock.port());
+		}
+
+		RestMock.startServer(OTHER_PORT);
+		assertEquals(OTHER_PORT, RestMock.port(), "a failed start must not poison a later one");
+	}
+
 	@Test
 	public void urlAcceptsAPathWithOrWithoutItsLeadingSlash() {
 		RestMock.startServer(OTHER_PORT);
 
 		assertEquals(RestMock.url("/ping"), RestMock.url("ping"));
 		assertEquals(RestMock.baseUrl(), RestMock.url(""));
+		assertEquals(RestMock.baseUrl(), RestMock.url(null));
 	}
 
 	@Test

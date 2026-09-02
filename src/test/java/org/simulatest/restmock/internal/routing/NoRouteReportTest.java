@@ -69,6 +69,15 @@ public class NoRouteReportTest {
 		assertTrue(report.contains("Closest stub: GET /users/{id}"), report);
 	}
 
+	/** Two stubs equally close: the one under the verb the caller used is the likelier target. */
+	@Test
+	public void betweenEquallyCloseStubsTheSameVerbIsPreferred() {
+		String report = describe(HttpMethod.GET, "/users/3",
+			route(HttpMethod.POST, "/users/1"), route(HttpMethod.GET, "/users/2"));
+
+		assertTrue(report.contains("Closest stub: GET /users/2"), report);
+	}
+
 	@Test
 	public void anUnrelatedPathIsNotOfferedAsAGuess() {
 		String report = describe(HttpMethod.GET, "/billing/invoices", route(HttpMethod.GET, "/health"));

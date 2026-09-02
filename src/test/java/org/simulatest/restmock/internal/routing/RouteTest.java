@@ -174,6 +174,11 @@ public class RouteTest {
 	}
 
 	@Test
+	public void aNestedBraceIsRejected() {
+		assertRejected("/users/{a{b}}", "malformed placeholder '{a{b}'");
+	}
+
+	@Test
 	public void aRepeatedPlaceholderNameIsRejected() {
 		assertRejected("/tenants/{id}/users/{id}", "more than once");
 	}

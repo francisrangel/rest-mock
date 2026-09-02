@@ -195,6 +195,15 @@ public class ParameterExtractorTest {
 	}
 
 	@Test
+	public void aHeaderWithNoValueIsNotExposed() {
+		headers.put("X-Empty", List.of());
+
+		Map<String, String> params = extract("/test", "");
+
+		assertNull(resolve(params, "header.X-Empty"));
+	}
+
+	@Test
 	public void onlyTheFirstValueOfARepeatedHeaderIsExposed() {
 		headers.put("X-Tenant", List.of("acme", "other"));
 

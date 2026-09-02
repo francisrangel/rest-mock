@@ -3,6 +3,8 @@ package org.simulatest.restmock;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -30,6 +32,19 @@ public class RestMockExtensionTest {
 	private void record(String path) {
 		RestMock.requests().add(
 			new ReceivedRequest(HttpMethod.GET, path, null, Map.of(), "", Instant.now()));
+	}
+
+	@Test
+	public void anExtensionExposesTheMockItDrives() {
+		HttpMock own = new HttpMock();
+
+		assertSame(own, new RestMockExtension(own).mock());
+		assertSame(RestMock.defaultMock(), new RestMockExtension().mock());
+	}
+
+	@Test
+	public void aNullMockIsRejectedUpFront() {
+		assertThrows(NullPointerException.class, () -> new RestMockExtension((HttpMock) null));
 	}
 
 	/** The extension never reads the context, so the callbacks are driven without one. */

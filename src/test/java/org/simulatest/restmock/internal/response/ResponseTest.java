@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,51 @@ public class ResponseTest {
 		String value = "a\"b\\c\nd";
 
 		assertEquals("{\"v\":\"a\\\"b\\\\c\\nd\"}", render(response, Map.of("v", value)));
+	}
+
+	@Test
+	public void jsonEscapesEveryControlCharacter() {
+		Response response = new JSON("\"${v}\"");
+
+		assertEquals("\"\\r\\t\\b\\f\\u0001\"", render(response, Map.of("v", "\r\t\b\f\u0001")));
+	}
+
+	/** Quotes are escaped as well as angle brackets, so a value is safe inside an attribute too. */
+	@Test
+	public void markupEscapesBothKindsOfQuote() {
+		Response response = new Html("<a title=\"${v}\">");
+
+		assertEquals("<a title=\"&quot;it&#39;s&quot;\">", render(response, Map.of("v", "\"it's\"")));
+	}
+
+	/** Only headers were available: no authored names to list, one header to count. */
+	@Test
+	public void theFailureCountsHeadersWhenNothingElseWasAvailable() {
+		Response response = new TextPlain("${nope}");
+
+		IllegalStateException failure = assertThrows(IllegalStateException.class,
+			() -> render(response, Map.of("header.accept", "*/*")));
+
+		assertEquals("No value for ${nope}. Available names: plus 1 request header as ${header.NAME}",
+			failure.getMessage());
+	}
+
+	@Test
+	public void theFailureTruncatesALongListOfNames() {
+		Response response = new TextPlain("${nope}");
+		Map<String, String> many = new LinkedHashMap<>();
+		for (int i = 0; i < 22; i++) many.put("name" + i, "v");
+
+		IllegalStateException failure = assertThrows(IllegalStateException.class, () -> render(response, many));
+
+		assertTrue(failure.getMessage().endsWith("name19 and 2 more"), failure.getMessage());
+	}
+
+	@Test
+	public void toStringDescribesTheBody() {
+		assertEquals("hello ${name}", new TextPlain("hello ${name}").toString());
+		assertEquals("<3 bytes image/png>",
+			new Binary(new byte[] {1, 2, 3}, new ContentType("image/png")).toString());
 	}
 
 	@Test

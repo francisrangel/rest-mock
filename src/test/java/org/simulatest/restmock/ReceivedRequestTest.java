@@ -103,7 +103,7 @@ public class ReceivedRequestTest {
 
 	@Test
 	public void aRepeatedQueryParameterExposesItsFirstValueAndAllOfThem() {
-		ReceivedRequest request = requestWithQuery("tag=a&tag=b");
+		ReceivedRequest request = requestWithQuery("tag=a&other=x&tag=b");
 
 		assertEquals("a", request.queryParam("tag").orElseThrow());
 		assertEquals(List.of("a", "b"), request.queryParamValues("tag"));

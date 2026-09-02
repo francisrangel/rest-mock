@@ -1,5 +1,7 @@
 package org.simulatest.restmock;
 
+import java.util.function.BiConsumer;
+
 /**
  * Configures the response for a stubbed route.
  *
@@ -97,5 +99,19 @@ public interface RestMockResponse {
 
 	/** Returns {@code message} with the given HTTP status code as a plain-text body. */
 	ResponseOptions thenReturnErrorCodeWithMessage(int errorCode, String message);
+
+	/**
+	 * Decides the response per request. The callback receives the request and a
+	 * builder with the same {@code thenReturn*} methods as this one; whatever it
+	 * builds last is served. It is the one place a stub may branch on what the
+	 * request carried:
+	 *
+	 *   {@code RestMock.whenPost("/orders").thenAnswer((request, respond) ->}
+	 *   {@code     respond.thenReturnJSON("{\"id\":1}").withStatus(request.body().contains("sku") ? 201 : 400));}
+	 *
+	 * A callback that throws answers 500 with the exception's message, like an
+	 * unresolved placeholder does.
+	 */
+	void thenAnswer(BiConsumer<ReceivedRequest, RestMockResponse> answer);
 
 }

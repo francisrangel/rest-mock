@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.simulatest.restmock.ReceivedRequest;
+
 /**
  * What a stubbed route sends back: a status, headers, a content type, a delay,
  * and the bytes of the body.
@@ -32,6 +34,11 @@ public abstract class Response {
 
 	/** The bytes to write for this response, given what the request carried. */
 	public abstract byte[] render(Map<String, String> parameters);
+
+	/** The response to serve for {@code request}: this one, unless a subclass decides per request. */
+	public Response resolve(ReceivedRequest request) {
+		return this;
+	}
 
 	/**
 	 * False when {@link #render} never reads its parameters, so the caller can

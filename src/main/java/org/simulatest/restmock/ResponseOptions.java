@@ -2,6 +2,7 @@ package org.simulatest.restmock;
 
 import java.time.Duration;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
 import org.simulatest.restmock.internal.response.Binary;
 import org.simulatest.restmock.internal.response.ContentType;
@@ -113,6 +114,11 @@ public class ResponseOptions implements RestMockResponse {
 	@Override
 	public ResponseOptions thenReturnErrorCodeWithMessage(int errorCode, String message) {
 		return thenReturnText(message).withStatus(errorCode);
+	}
+
+	@Override
+	public void thenAnswer(BiConsumer<ReceivedRequest, RestMockResponse> answer) {
+		register(new Answer(route, Objects.requireNonNull(answer, "answer")));
 	}
 
 	/** Sets a response header. Replaces any previous value for the same header name. */

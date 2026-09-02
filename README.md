@@ -126,6 +126,7 @@ Everything you actually need, nothing you don't:
 - Custom status codes and headers  
 - Response delays for timeout testing  
 - Sequenced responses for retry testing  
+- A callback for the response that depends on the request  
 - Request inspection and counting  
 - JUnit extension for automatic lifecycle  
 - Built-in CORS support, preflight included  
@@ -401,6 +402,30 @@ GET /flaky → 200 up
 
 `withStatus()`, `withHeader()` and `withDelay()` apply to the response they
 follow. Stubbing the route again with a new `when*` starts over.
+
+---
+
+## When the answer depends on the request
+
+Placeholders cover most dynamic responses. When the status or the shape of the
+body has to change with the request, `thenAnswer()` hands you the request and a
+builder with the same `thenReturn*` methods, and serves whatever you build:
+
+```java
+RestMock.whenPost("/orders").thenAnswer((request, respond) -> {
+    if (request.body().contains("sku")) respond.thenReturnJSON("{\"id\":1}").withStatus(201);
+    else respond.thenReturnText("no sku").withStatus(400);
+});
+```
+
+```
+POST /orders {"sku":"A1"} → 201 {"id":1}
+POST /orders {}           → 400 no sku
+```
+
+What you build is an ordinary response, so `${name}` placeholders still resolve.
+A callback that throws answers 500 with the exception's message, and one that
+builds nothing gets the same 501 as a stub with no `thenReturn*`.
 
 ---
 

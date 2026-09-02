@@ -32,6 +32,14 @@ public class ResponseTest {
 		assertEquals("Hello Bob, you are 25", render(response, Map.of("name", "Bob", "age", "25")));
 	}
 
+	/** A body that has to contain a literal ${...} doubles the dollar, the way shells do. */
+	@Test
+	public void aDoubledDollarIsALiteralPlaceholder() {
+		Response response = new TextPlain("keep $${this}, fill ${name}");
+
+		assertEquals("keep ${this}, fill Bob", render(response, Map.of("name", "Bob")));
+	}
+
 	@Test
 	public void renderRejectsAnUnknownPlaceholder() {
 		Response response = new TextPlain("Hello ${name}");

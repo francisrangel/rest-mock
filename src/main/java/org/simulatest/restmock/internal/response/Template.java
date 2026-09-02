@@ -19,7 +19,8 @@ import org.simulatest.restmock.internal.Placeholders;
  */
 public abstract class Template extends Response {
 
-	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+	/** A placeholder, or the doubled dollar that makes one literal. */
+	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$\\$\\{|\\$\\{(.+?)\\}");
 
 	/** Enough names to spot the typo, few enough to stay readable in a failure. */
 	private static final int NAMES_IN_ERROR = 20;
@@ -50,6 +51,8 @@ public abstract class Template extends Response {
 	@Override
 	public byte[] render(Map<String, String> parameters) {
 		String rendered = PARAMETER_PATTERN.matcher(content).replaceAll(match -> {
+			if (match.group(1) == null) return Matcher.quoteReplacement("${");
+
 			String value = parameters.get(Placeholders.key(match.group(1)));
 			if (value == null) throw unresolved(match.group(1), parameters);
 			return Matcher.quoteReplacement(escape(value));

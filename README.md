@@ -206,6 +206,9 @@ GET /users/a"b → {"id":"a\"b"}
 JSON gets string escaping, XML and HTML get entities, plain text is left alone.
 `thenReturnFile` skips substitution entirely.
 
+A body that has to contain a literal `${...}` doubles the dollar: `$${user}`
+is served as `${user}`, untouched.
+
 ---
 
 ## When a stub doesn't match

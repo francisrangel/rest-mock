@@ -143,6 +143,17 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 		assertEquals("{\"id\":\"a\\\"b\"}", response.body());
 	}
 
+	/** A JSON payload that legitimately carries a template string must not 500. */
+	@Test
+	public void aLiteralPlaceholderSurvivesInAJsonBody() throws Exception {
+		RestMock.whenGet("/config").thenReturnJSON("{\"greeting\":\"hello $${user}\"}");
+
+		HttpResponse<String> response = sendRequest("/config", HttpMethod.GET);
+
+		assertEquals(200, response.statusCode());
+		assertEquals("{\"greeting\":\"hello ${user}\"}", response.body());
+	}
+
 	@Test
 	public void aBareNameMustMatchTheCaseTheRequestUsed() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("hello ${Name}");

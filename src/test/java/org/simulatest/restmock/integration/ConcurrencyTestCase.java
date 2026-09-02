@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +52,7 @@ public class ConcurrencyTestCase extends IntegrationTestBase {
 
 		ExecutorService pool = Executors.newFixedThreadPool(8);
 		try {
-			List<Callable<String>> calls = java.util.stream.IntStream.range(0, 50)
+			List<Callable<String>> calls = IntStream.range(0, 50)
 				.<Callable<String>>mapToObj(i -> () -> sendRequest("/users/" + i, HttpMethod.GET).body())
 				.toList();
 

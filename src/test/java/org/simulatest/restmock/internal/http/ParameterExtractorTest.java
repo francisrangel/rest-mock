@@ -30,8 +30,24 @@ public class ParameterExtractorTest {
 	/** What FrontController hands the extractor: the request as recorded, {@code headers} included. */
 	private Map<String, String> extract(String uri, String body) {
 		URI parsed = URI.create(uri);
+		return extract(uri, body, Map.of());
+	}
+
+	private Map<String, String> extract(String uri, String body, Map<String, String> pathCaptures) {
+		URI parsed = URI.create(uri);
 		return ParameterExtractor.extract(
-			new ReceivedRequest(HttpMethod.POST, parsed.getPath(), parsed.getRawQuery(), headers, body, Instant.now()));
+			new ReceivedRequest(HttpMethod.POST, parsed.getPath(), parsed.getRawQuery(), headers, body, Instant.now()),
+			pathCaptures);
+	}
+
+	/** The top of the precedence chain lives here too, not only in the controller. */
+	@Test
+	public void pathCapturesWinOverBodyAndQuery() {
+		withContentType(ContentType.APPLICATION_JSON.type());
+
+		Map<String, String> params = extract("/test?name=from-query", "{\"name\":\"from-body\"}", Map.of("name", "from-path"));
+
+		assertEquals("from-path", params.get("name"));
 	}
 
 	/** Looks a name up the way a template does, so a header spelled either way resolves. */

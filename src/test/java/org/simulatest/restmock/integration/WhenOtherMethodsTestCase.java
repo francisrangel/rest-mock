@@ -52,11 +52,9 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 
 		HttpResponse<String> response = sendRequest("/test", HttpMethod.OPTIONS);
 
-		String allow = response.headers().firstValue(HttpHeader.ALLOW).orElse("");
-		Set<String> methods = Set.of(allow.split(",\\s*"));
 		assertEquals(
 			Set.of(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name()),
-			methods,
+			methods(response, HttpHeader.ALLOW),
 			"HEAD is advertised because the path answers GET");
 	}
 
@@ -86,11 +84,7 @@ public class WhenOtherMethodsTestCase extends IntegrationTestBase {
 	public void anUnsupportedVerbGetsNotImplemented() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("ok");
 
-		HttpResponse<String> response = client.send(
-			request("/test")
-				.method("TRACE", HttpRequest.BodyPublishers.noBody())
-				.build(),
-			HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> response = send(request("/test").method("TRACE", HttpRequest.BodyPublishers.noBody()));
 
 		assertEquals(501, response.statusCode());
 	}

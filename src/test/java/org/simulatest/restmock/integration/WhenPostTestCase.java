@@ -1,9 +1,5 @@
 package org.simulatest.restmock.integration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.net.http.HttpResponse;
-
 import org.junit.jupiter.api.Test;
 
 import org.simulatest.restmock.HttpMethod;
@@ -16,33 +12,26 @@ public class WhenPostTestCase extends IntegrationTestBase {
 	public void postWithoutParametersWithPlainTextResponse() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("Post succeed");
 
-		requestPostWithResultString("Post succeed");
+		assertResponseBody("/test", "Post succeed", HttpMethod.POST);
 	}
 
 	@Test
 	public void postWithOneParameter() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("Hello ${name}!");
 
-		requestPostWithParameters("/test", "name=Bob", "Hello Bob!");
+		postForm("name=Bob", "Hello Bob!");
 	}
 
 	@Test
 	public void postWithManyParamters() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("Hello ${name}! You are the number #${number} of #${total}.");
 
-		requestPostWithParameters("/test", "name=Bob&number=1&total=10", "Hello Bob! You are the number #1 of #10.");
+		postForm("name=Bob&number=1&total=10", "Hello Bob! You are the number #1 of #10.");
 	}
 
-	private void requestPostWithResultString(String expectedBody) throws Exception {
-		assertResponseBody("/test", expectedBody, HttpMethod.POST);
-	}
-
-	private void requestPostWithParameters(String path, String requestParametersString, String resultString) throws Exception {
-		HttpResponse<String> response = sendRequest(path, HttpMethod.POST,
-			ContentType.APPLICATION_FORM_URLENCODED.type() + "; charset=UTF-8", requestParametersString);
-
-		assertEquals(200, response.statusCode());
-		assertEquals(resultString, response.body());
+	private void postForm(String form, String expectedBody) throws Exception {
+		assertResponseBody("/test", HttpMethod.POST,
+			ContentType.APPLICATION_FORM_URLENCODED.type() + "; charset=UTF-8", form, expectedBody);
 	}
 
 }

@@ -3,9 +3,6 @@ package org.simulatest.restmock.integration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.Test;
@@ -29,8 +26,6 @@ import org.simulatest.restmock.RestMockExtension;
  */
 @Execution(ExecutionMode.CONCURRENT)
 public class ParallelMockATestCase {
-
-	private static final HttpClient client = HttpClient.newHttpClient();
 
 	static final HttpMock mock = new HttpMock();
 
@@ -62,9 +57,7 @@ public class ParallelMockATestCase {
 	}
 
 	private HttpResponse<String> get(String path) throws Exception {
-		return client.send(
-			HttpRequest.newBuilder().uri(URI.create(mock.url(path))).GET().build(),
-			HttpResponse.BodyHandlers.ofString());
+		return TestHttp.get(mock.url(path));
 	}
 
 }

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.RestMock;
-import org.simulatest.restmock.internal.http.HttpHeader;
 import org.simulatest.restmock.internal.response.ContentType;
 
 public class MockHttpErrorsTestCase extends IntegrationTestBase {
@@ -91,7 +90,7 @@ public class MockHttpErrorsTestCase extends IntegrationTestBase {
 
 		assertEquals(404, response.statusCode());
 		assertEquals("<error>not found</error>", response.body());
-		assertEquals(ContentType.TEXT_XML.type() + "; charset=utf-8", response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow());
+		assertEquals(ContentType.TEXT_XML.type() + "; charset=utf-8", contentType(response));
 	}
 
 }

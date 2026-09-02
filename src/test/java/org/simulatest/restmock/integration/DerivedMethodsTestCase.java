@@ -24,7 +24,7 @@ public class DerivedMethodsTestCase extends IntegrationTestBase {
 		assertEquals(200, response.statusCode());
 		assertEquals("", response.body(), "HEAD must not carry a body");
 		assertEquals("14", response.headers().firstValue(HttpHeader.CONTENT_LENGTH).orElse(""));
-		assertEquals("application/json; charset=utf-8", response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElse(""));
+		assertEquals("application/json; charset=utf-8", contentType(response));
 	}
 
 	@Test
@@ -61,9 +61,7 @@ public class DerivedMethodsTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = sendRequest("/users/1", HttpMethod.OPTIONS);
 
 		assertEquals(204, response.statusCode());
-		assertEquals(
-			Set.of("GET", "HEAD", "DELETE", "OPTIONS"),
-			Set.of(response.headers().firstValue(HttpHeader.ALLOW).orElseThrow().split(",\s*")));
+		assertEquals(Set.of("GET", "HEAD", "DELETE", "OPTIONS"), methods(response, HttpHeader.ALLOW));
 	}
 
 	@Test
@@ -93,8 +91,7 @@ public class DerivedMethodsTestCase extends IntegrationTestBase {
 
 		HttpResponse<String> response = sendRequest("/submit", HttpMethod.OPTIONS);
 
-		assertEquals(Set.of("POST", "OPTIONS"),
-			Set.of(response.headers().firstValue(HttpHeader.ALLOW).orElseThrow().split(",\s*")));
+		assertEquals(Set.of("POST", "OPTIONS"), methods(response, HttpHeader.ALLOW));
 	}
 
 }

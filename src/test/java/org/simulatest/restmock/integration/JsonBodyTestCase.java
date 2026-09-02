@@ -17,28 +17,28 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 	public void flatJsonKey() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("hello ${name}");
 
-		postJson("/test", "{\"name\":\"Bob\"}", "hello Bob");
+		postJson("{\"name\":\"Bob\"}", "hello Bob");
 	}
 
 	@Test
 	public void nestedJsonKey() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("hello ${user.name}");
 
-		postJson("/test", "{\"user\":{\"name\":\"Bob\"}}", "hello Bob");
+		postJson("{\"user\":{\"name\":\"Bob\"}}", "hello Bob");
 	}
 
 	@Test
 	public void arrayIndexInJson() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("first=${items.0.x}");
 
-		postJson("/test", "{\"items\":[{\"x\":\"a\"},{\"x\":\"b\"}]}", "first=a");
+		postJson("{\"items\":[{\"x\":\"a\"},{\"x\":\"b\"}]}", "first=a");
 	}
 
 	@Test
 	public void numericAndBooleanScalars() throws Exception {
 		RestMock.whenPost("/test").thenReturnText("age=${age} active=${active}");
 
-		postJson("/test", "{\"age\":25,\"active\":true}", "age=25 active=true");
+		postJson("{\"age\":25,\"active\":true}", "age=25 active=true");
 	}
 
 	/** A JSON body sent as text/plain is never parsed, so its fields are not available. */
@@ -75,12 +75,8 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 		assertEquals("{\"name\":\"Bob \\\"the builder\\\"\"}", response.body());
 	}
 
-	private void postJson(String path, String jsonBody, String expectedAnswer) throws Exception {
-		HttpResponse<String> response =
-			sendRequest(path, HttpMethod.POST, ContentType.APPLICATION_JSON.type(), jsonBody);
-
-		assertEquals(200, response.statusCode());
-		assertEquals(expectedAnswer, response.body());
+	private void postJson(String jsonBody, String expectedAnswer) throws Exception {
+		assertResponseBody("/test", HttpMethod.POST, ContentType.APPLICATION_JSON.type(), jsonBody, expectedAnswer);
 	}
 
 }

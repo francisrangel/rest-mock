@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.RestMock;
-import org.simulatest.restmock.internal.http.HttpHeader;
 import org.simulatest.restmock.internal.response.ContentType;
 
 public class DanglingRouteTestCase extends IntegrationTestBase {
@@ -33,7 +32,7 @@ public class DanglingRouteTestCase extends IntegrationTestBase {
 
 		assertEquals(200, response.statusCode());
 		assertEquals("ok", response.body());
-		assertEquals(ContentType.TEXT_PLAIN.type() + "; charset=utf-8", response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow());
+		assertEquals(ContentType.TEXT_PLAIN.type() + "; charset=utf-8", contentType(response));
 	}
 
 }

@@ -47,13 +47,10 @@ public class ReadmeClaimsTestCase extends IntegrationTestBase {
 	public void theDocumentedPreflightMethodsAreTheOnesTheServerSends() throws Exception {
 		RestMock.whenGet("/api/data").thenReturnJSON("{\"ok\":true}");
 
-		HttpResponse<String> preflight = client.send(
-			request("/api/data")
-				.header(HttpHeader.ORIGIN, "http://localhost:3000")
-				.header(HttpHeader.ACCESS_CONTROL_REQUEST_METHOD, "GET")
-				.method("OPTIONS", HttpRequest.BodyPublishers.noBody())
-				.build(),
-			HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> preflight = send(request("/api/data")
+			.header(HttpHeader.ORIGIN, "http://localhost:3000")
+			.header(HttpHeader.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+			.method(HttpMethod.OPTIONS.name(), HttpRequest.BodyPublishers.noBody()));
 
 		String methods = preflight.headers()
 			.firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS).orElseThrow();

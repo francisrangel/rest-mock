@@ -26,11 +26,7 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 	public void headersResolvePlaceholders() throws Exception {
 		RestMock.whenGet("/whoami").thenReturnText("tenant=${header.X-Tenant}");
 
-		HttpResponse<String> response = client.send(
-			request("/whoami")
-				.header("X-Tenant", "acme")
-				.GET().build(),
-			HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> response = send(request("/whoami").header("X-Tenant", "acme").GET());
 
 		assertEquals("tenant=acme", response.body());
 	}
@@ -135,12 +131,6 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 	}
 
 	/**
-	 * The hole the header namespace closed: a bare ${Accept} used to resolve to
-	 * whatever the HTTP client attached, so a name the author never defined
-	 * produced a cheerful 200 instead of the loud failure every other unresolved
-	 * name gets.
-	 */
-	/**
 	 * The README's own example: a percent-encoded quote in the path is decoded
 	 * on the way in and escaped on the way out, so the JSON stays well-formed.
 	 */
@@ -163,6 +153,12 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 		assertTrue(response.body().startsWith("No value for ${Name}. Available names: name"), response.body());
 	}
 
+	/**
+	 * The hole the header namespace closed: a bare ${Accept} used to resolve to
+	 * whatever the HTTP client attached, so a name the author never defined
+	 * produced a cheerful 200 instead of the loud failure every other unresolved
+	 * name gets.
+	 */
 	@Test
 	public void aBareHeaderNameNoLongerResolvesSilently() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("accept=${Accept}");

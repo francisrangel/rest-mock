@@ -9,9 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.UncheckedIOException;
 import java.net.BindException;
 import java.net.ServerSocket;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.AfterEach;
@@ -27,8 +24,6 @@ import org.simulatest.restmock.RestMock;
 public class ServerPortTestCase {
 
 	private static final int OTHER_PORT = 9099;
-
-	private final HttpClient client = HttpClient.newHttpClient();
 
 	@AfterEach
 	void stopServer() {
@@ -80,9 +75,7 @@ public class ServerPortTestCase {
 
 		RestMock.whenGet("/ping").thenReturnText("pong");
 
-		HttpResponse<String> response = client.send(
-			HttpRequest.newBuilder().uri(URI.create("http://localhost:" + bound + "/ping")).GET().build(),
-			HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> response = TestHttp.get("http://localhost:" + bound + "/ping");
 
 		assertEquals("pong", response.body());
 	}
@@ -161,9 +154,7 @@ public class ServerPortTestCase {
 		RestMock.startServer(0);
 		RestMock.whenGet("/ping").thenReturnText("pong");
 
-		HttpResponse<String> response = client.send(
-			HttpRequest.newBuilder().uri(URI.create(RestMock.url("/ping"))).GET().build(),
-			HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> response = TestHttp.get(RestMock.url("/ping"));
 
 		assertEquals("pong", response.body());
 	}

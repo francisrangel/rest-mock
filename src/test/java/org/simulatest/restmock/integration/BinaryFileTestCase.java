@@ -95,10 +95,6 @@ public class BinaryFileTestCase extends IntegrationTestBase {
 		assertEquals("10", response.headers().firstValue(HttpHeader.CONTENT_LENGTH).orElseThrow());
 	}
 
-	private String contentType(HttpResponse<?> response) {
-		return response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow();
-	}
-
 	/** withHeader wins for binary bodies too, and nothing glues a charset onto what the caller set. */
 	@Test
 	public void anExplicitContentTypeHeaderOverridesTheBinaryDefault() throws Exception {

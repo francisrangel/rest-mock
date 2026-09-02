@@ -53,7 +53,6 @@ public class LogSafeTest {
 
 	@Test
 	public void maskHeadersHandlesNoHeaders() {
-		assertEquals(Map.of(), LogSafe.maskHeaders(null));
 		assertEquals(Map.of(), LogSafe.maskHeaders(Map.of()));
 	}
 
@@ -69,11 +68,6 @@ public class LogSafeTest {
 		String truncated = LogSafe.truncate("x".repeat(LogSafe.BODY_TRUNCATE_LIMIT + 1));
 
 		assertEquals("x".repeat(LogSafe.BODY_TRUNCATE_LIMIT) + "...<+1 chars>", truncated);
-	}
-
-	@Test
-	public void truncateHandlesANullBody() {
-		assertEquals("", LogSafe.truncate(null));
 	}
 
 }

@@ -48,7 +48,7 @@ public class NoStubDiagnosticsTestCase extends IntegrationTestBase {
 		HttpResponse<String> response = sendRequest("/nowhere", HttpMethod.GET);
 
 		assertEquals("text/plain; charset=utf-8",
-			response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow());
+			contentType(response));
 	}
 
 	/** HEAD promises the length of a body it never sends, 404 included. */

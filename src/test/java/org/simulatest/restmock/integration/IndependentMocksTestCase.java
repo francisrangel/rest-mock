@@ -5,11 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -28,10 +24,6 @@ import org.simulatest.restmock.RestMock;
  * shared default mock, which is the thing these cases must not depend on.
  */
 public class IndependentMocksTestCase {
-
-	private static final HttpClient client = HttpClient.newBuilder()
-		.connectTimeout(Duration.ofSeconds(5))
-		.build();
 
 	private final HttpMock payments = new HttpMock();
 	private final HttpMock shipping = new HttpMock();
@@ -131,10 +123,8 @@ public class IndependentMocksTestCase {
 		assertEquals(-1, payments.port());
 	}
 
-	private HttpResponse<String> get(String url) throws Exception {
-		return client.send(
-			HttpRequest.newBuilder().uri(URI.create(url)).GET().build(),
-			HttpResponse.BodyHandlers.ofString());
+	private static HttpResponse<String> get(String url) throws Exception {
+		return TestHttp.get(url);
 	}
 
 }

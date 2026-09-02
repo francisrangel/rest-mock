@@ -172,7 +172,6 @@ public class RequestLogTest {
 
 	@Test
 	public void allReturnsASnapshotThatLaterRequestsDoNotDisturb() {
-		RequestLog log = new RequestLog();
 		log.add(request(HttpMethod.GET, "/first"));
 
 		List<ReceivedRequest> snapshot = log.all();
@@ -184,7 +183,6 @@ public class RequestLogTest {
 
 	@Test
 	public void concurrentRecordingLosesNothing() throws Exception {
-		RequestLog log = new RequestLog();
 		int threads = 8;
 		int perThread = 500;
 

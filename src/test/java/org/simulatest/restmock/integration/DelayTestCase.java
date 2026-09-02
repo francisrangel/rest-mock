@@ -18,12 +18,7 @@ public class DelayTestCase extends IntegrationTestBase {
 	public void delayedResponseTakesAtLeastTheConfiguredTime() throws Exception {
 		RestMock.whenGet("/slow").thenReturnText("done").withDelay(50);
 
-		long start = System.currentTimeMillis();
-		HttpResponse<String> response = sendRequest("/slow", HttpMethod.GET);
-		long elapsed = System.currentTimeMillis() - start;
-
-		assertEquals(200, response.statusCode());
-		assertTrue(elapsed >= 50, "Expected at least 50ms but took " + elapsed + "ms");
+		assertTakesAtLeast(50, "/slow");
 	}
 
 	// The "no delay configured means zero delay" invariant is verified deterministically by
@@ -44,12 +39,16 @@ public class DelayTestCase extends IntegrationTestBase {
 	public void aDelayCanBeStatedAsADuration() throws Exception {
 		RestMock.whenGet("/slow-duration").thenReturnText("done").withDelay(Duration.ofMillis(50));
 
+		assertTakesAtLeast(50, "/slow-duration");
+	}
+
+	private void assertTakesAtLeast(long millis, String path) throws Exception {
 		long start = System.currentTimeMillis();
-		HttpResponse<String> response = sendRequest("/slow-duration", HttpMethod.GET);
+		HttpResponse<String> response = sendRequest(path, HttpMethod.GET);
 		long elapsed = System.currentTimeMillis() - start;
 
 		assertEquals(200, response.statusCode());
-		assertTrue(elapsed >= 50, "Expected at least 50ms but took " + elapsed + "ms");
+		assertTrue(elapsed >= millis, "Expected at least " + millis + "ms but took " + elapsed + "ms");
 	}
 
 	@Test

@@ -1,7 +1,6 @@
 package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.http.HttpRequest;
@@ -164,35 +163,21 @@ public class CorsTestCase extends IntegrationTestBase {
 
 		if (requestHeaders != null) request.header(HttpHeader.ACCESS_CONTROL_REQUEST_HEADERS, requestHeaders);
 
-		return client.send(request.method("OPTIONS", HttpRequest.BodyPublishers.noBody()).build(),
-			HttpResponse.BodyHandlers.ofString());
+		return send(request.method(HttpMethod.OPTIONS.name(), HttpRequest.BodyPublishers.noBody()));
 	}
 
 	private HttpResponse<String> getWithOrigin(String path) throws Exception {
-		return client.send(
-			request(path).header(HttpHeader.ORIGIN, ORIGIN).GET().build(),
-			HttpResponse.BodyHandlers.ofString());
+		return send(request(path).header(HttpHeader.ORIGIN, ORIGIN).GET());
 	}
 
 	private HttpResponse<String> optionsWithOrigin(String path) throws Exception {
-		return client.send(
-			request(path)
-				.header(HttpHeader.ORIGIN, ORIGIN)
-				.method("OPTIONS", HttpRequest.BodyPublishers.noBody())
-				.build(),
-			HttpResponse.BodyHandlers.ofString());
+		return send(request(path)
+			.header(HttpHeader.ORIGIN, ORIGIN)
+			.method(HttpMethod.OPTIONS.name(), HttpRequest.BodyPublishers.noBody()));
 	}
 
 	private static String header(HttpResponse<String> response, String name) {
 		return response.headers().firstValue(name).orElse(null);
-	}
-
-	private static Set<String> methods(HttpResponse<String> response, String name) {
-		String value = header(response, name);
-
-		assertNotNull(value, () -> "expected a " + name + " header, but the response sent none: " + response.headers().map());
-
-		return Set.of(value.split(",\s*"));
 	}
 
 }

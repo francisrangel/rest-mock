@@ -99,7 +99,7 @@ public class WhenGetTestCase extends IntegrationTestBase {
 
 		HttpResponse<String> response = sendRequest("/test", HttpMethod.GET);
 
-		assertEquals("application/vnd.custom", response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow());
+		assertEquals("application/vnd.custom", contentType(response));
 	}
 
 	@Test

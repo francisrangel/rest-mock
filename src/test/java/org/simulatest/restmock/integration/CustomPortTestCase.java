@@ -2,9 +2,6 @@ package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.Test;
@@ -24,15 +21,11 @@ public class CustomPortTestCase {
 	@RegisterExtension
 	static RestMockExtension server = new RestMockExtension(PORT);
 
-	private static final HttpClient client = HttpClient.newHttpClient();
-
 	@Test
 	public void theServerAnswersOnTheConfiguredPort() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("custom port");
 
-		HttpResponse<String> response = client.send(
-			HttpRequest.newBuilder().uri(URI.create("http://localhost:" + PORT + "/test")).GET().build(),
-			HttpResponse.BodyHandlers.ofString());
+		HttpResponse<String> response = TestHttp.get("http://localhost:" + PORT + "/test");
 
 		assertEquals(200, response.statusCode());
 		assertEquals("custom port", response.body());

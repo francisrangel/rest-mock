@@ -2,8 +2,6 @@ package org.simulatest.restmock.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.http.HttpResponse;
-
 import org.junit.jupiter.api.Test;
 
 import org.simulatest.restmock.HttpMethod;
@@ -65,8 +63,7 @@ public class CharsetTestCase extends IntegrationTestBase {
 	}
 
 	private String contentTypeOf(String path) throws Exception {
-		HttpResponse<String> response = sendRequest(path, HttpMethod.GET);
-		return response.headers().firstValue(HttpHeader.CONTENT_TYPE).orElseThrow();
+		return contentType(sendRequest(path, HttpMethod.GET));
 	}
 
 }

@@ -43,8 +43,9 @@
 		<!-- Reproducible builds: same source bytes in, same jar bytes out.
 		     Bump this to the release date on every release. -->
 		<project.build.outputTimestamp>2026-05-05T00:00:00Z</project.build.outputTimestamp>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
+		<!-- release, not source/target: a build on a newer JDK then cannot
+		     compile against an API that is missing on 17. -->
+		<maven.compiler.release>17</maven.compiler.release>
 		<junit.version>6.0.3</junit.version>
 		<!-- slf4j-api is the only third-party jar pushed onto downstream
 		     classpaths (compile scope). Pin to the last 1.7.x so Maven's
@@ -103,12 +104,6 @@
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>5.23.0</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -130,23 +125,13 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.10.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>properties</goal>
-						</goals>
-					</execution>
-				</executions>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.15.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.5</version>
-				<configuration>
-					<argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
-				</configuration>
 			</plugin>
 			<!-- Sources JAR: attached to every build so `mvn install` produces a
 			     complete artifact set and Maven Central gets *-sources.jar. -->

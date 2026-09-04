@@ -37,3 +37,9 @@ jobs:
       # on the tag keeps a broken build off Central.
       - name: Build and test
         run: mvn -B verify
+
+      # The README promises JUnit 5.8 or later while the code compiles against
+      # 6; one leg proves the floor.
+      - name: Test against JUnit 5.8
+        if: matrix.os == 'ubuntu-latest' && matrix.java == 17
+        run: mvn -B test -Djunit.version=5.8.2

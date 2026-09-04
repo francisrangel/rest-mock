@@ -41,8 +41,8 @@ testImplementation 'org.simulatest:restmock:0.2.0'
 Requires Java 17 or later.
 
 The JUnit dependency is optional: you only need it for `RestMockExtension`, and
-if you use that you already have JUnit. On the module path the artifact is
-`org.simulatest.restmock`.
+if you use that you already have JUnit; any JUnit from 5.8 up works. On the
+module path the artifact is `org.simulatest.restmock`.
 
 ---
 

@@ -5,11 +5,20 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.BindException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.http.HttpResponse;
+import java.util.Collections;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -140,6 +149,26 @@ public class ServerPortTestCase {
 		assertEquals(OTHER_PORT, RestMock.port(), "a failed start must not poison a later one");
 	}
 
+	/**
+	 * The server used to bind the wildcard address, so every stub was reachable
+	 * from the network while baseUrl() said localhost. Refused and timed out
+	 * both mean unreachable; which one depends on the firewall. Skipped on a
+	 * machine with no non-loopback interface, where there is no address to try.
+	 */
+	@Test
+	public void theServerIsNotReachableFromANonLoopbackAddress() throws Exception {
+		InetAddress external = aNonLoopbackAddress();
+		assumeTrue(external != null, "no non-loopback interface on this machine");
+
+		RestMock.startServer(0);
+
+		try (Socket socket = new Socket()) {
+			assertThrows(IOException.class,
+				() -> socket.connect(new InetSocketAddress(external, RestMock.port()), 1000),
+				"the mock accepted a connection on " + external + "; it should listen on loopback only");
+		}
+	}
+
 	@Test
 	public void urlAcceptsAPathWithOrWithoutItsLeadingSlash() {
 		RestMock.startServer(OTHER_PORT);
@@ -157,6 +186,16 @@ public class ServerPortTestCase {
 		HttpResponse<String> response = TestHttp.get(RestMock.url("/ping"));
 
 		assertEquals("pong", response.body());
+	}
+
+	private static InetAddress aNonLoopbackAddress() throws SocketException {
+		for (NetworkInterface networkInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+			if (!networkInterface.isUp() || networkInterface.isLoopback()) continue;
+
+			for (InetAddress address : Collections.list(networkInterface.getInetAddresses()))
+				if (address instanceof Inet4Address) return address;
+		}
+		return null;
 	}
 
 }

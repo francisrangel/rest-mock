@@ -2,6 +2,7 @@ package org.simulatest.restmock.internal.server;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,8 +50,11 @@ public class RestMockServer {
 			return;
 		}
 
+		// Loopback only. The wildcard address made every stub reachable from
+		// the network, raised a firewall prompt on the first bind on macOS and
+		// Windows, and disagreed with the localhost URL that baseUrl() reports.
 		try {
-			server = HttpServer.create(new InetSocketAddress(port), 0);
+			server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 0);
 		} catch (IOException e) {
 			throw new UncheckedIOException("Could not bind RestMock to port " + port, e);
 		}

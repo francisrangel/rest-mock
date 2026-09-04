@@ -562,6 +562,9 @@ RestMock.clean();           // reset routes and the request log
 RestMock.stopServer();
 ```
 
+The server listens on the loopback interface only, so a stub is never reachable
+from another machine and the firewall has nothing to ask about.
+
 These static methods are a facade over one default mock, which
 `RestMock.defaultMock()` hands back; everything here applies equally to an
 `HttpMock` you construct yourself. See [running test classes in

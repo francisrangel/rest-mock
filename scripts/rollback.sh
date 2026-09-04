@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Rolls back a release that hasn't been published to Central yet.
+# Rolls back a release that hasn't been published to Central yet: the
+# tag was pushed by mistake, CI died before the upload, or Central
+# rejected the bundle. A deployment that passes validation publishes on
+# its own, so there is no window to catch it after that.
 #
 # What it does:
 #   1. Deletes the local git tag
@@ -69,8 +72,8 @@ for 'org.simulatest' at version ${VERSION}:
 
     https://central.sonatype.com/publishing/deployments
 
-Droppable statuses: VALIDATED, FAILED.
-PENDING and VALIDATING must finish processing before they can be dropped.
+Droppable statuses: FAILED, and VALIDATED if you catch it before it
+publishes on its own. PENDING and VALIDATING must finish processing first.
 PUBLISHING and PUBLISHED are past the point of no return.
 
 EOF

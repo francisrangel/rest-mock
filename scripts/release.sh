@@ -10,10 +10,8 @@
 # After this finishes, run:
 #   git push origin master vX.Y.Z
 #
-# That tag push triggers .github/workflows/release.yml which signs the
-# artifacts and uploads them to a Central Portal staging deployment.
-# Final "Publish" click happens at https://central.sonatype.com/publishing
-# (autoPublish is intentionally off for the first releases).
+# That tag push triggers .github/workflows/release.yml, which signs the
+# artifacts and publishes them to Maven Central.
 
 set -euo pipefail
 
@@ -78,7 +76,6 @@ Local prep complete.
 Next:
     git push origin master ${TAG}
 
-That triggers .github/workflows/release.yml which signs and stages the
-release at https://central.sonatype.com/publishing - click 'Publish' there
-to release publicly.
+That triggers .github/workflows/release.yml, which signs and publishes
+the release. Progress: https://central.sonatype.com/publishing
 EOF

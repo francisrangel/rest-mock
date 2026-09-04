@@ -453,7 +453,8 @@ The full set is `all()`, `forPath()`, `forMethod()`, `forRoute()`,
 `countForPath()`, `countForRoute()`, `last()`, `lastForPath()` and `isEmpty()`.
 For anything more specific, `all()` hands back the raw list to filter yourself.
 Each `ReceivedRequest` carries the method, path, query string, headers, body and
-timestamp.
+timestamp. The body is decoded as UTF-8 whatever the request declared, so a
+binary upload cannot be read back byte for byte.
 
 Header names are case-insensitive, as HTTP itself is: `header()`,
 `headerValues()` and the `headers()` map all find `Content-Type` however the JDK

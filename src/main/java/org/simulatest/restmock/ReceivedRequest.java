@@ -14,7 +14,9 @@ import org.simulatest.restmock.internal.http.QueryString;
  *
  * {@code path} is the path component only (no query string); {@code query} is
  * the raw query string or {@code null} if absent. {@code body} is the request
- * body decoded as UTF-8; for empty bodies it is the empty string.
+ * body decoded as UTF-8 whatever charset the request declared, so a binary
+ * upload cannot be read back byte for byte; for empty bodies it is the empty
+ * string.
  *
  * Header names are matched case-insensitively, as HTTP itself is: the JDK
  * server rewrites a header sent as {@code Content-Type} to {@code Content-type},

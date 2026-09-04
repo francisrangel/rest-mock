@@ -11,6 +11,10 @@ updates:
     cooldown:
       default-days: 7
       semver-major-days: 30
+    ignore:
+      # slf4j-api stays on 1.7.x; the property comment in pom.xml says why.
+      - dependency-name: "org.slf4j:*"
+        update-types: ["version-update:semver-major"]
     groups:
       jackson:
         patterns:

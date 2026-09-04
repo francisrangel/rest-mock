@@ -35,8 +35,8 @@ public class IndependentMocksTestCase {
 	}
 
 	private void startBoth() {
-		payments.startServer(0);
-		shipping.startServer(0);
+		payments.startServer();
+		shipping.startServer();
 	}
 
 	@Test
@@ -101,7 +101,7 @@ public class IndependentMocksTestCase {
 	@Test
 	public void theStaticApiDrivesTheDefaultMock() throws Exception {
 		HttpMock defaultMock = RestMock.defaultMock();
-		defaultMock.startServer(0);
+		defaultMock.startServer();
 
 		try {
 			RestMock.whenGet("/via-static").thenReturnText("ok");

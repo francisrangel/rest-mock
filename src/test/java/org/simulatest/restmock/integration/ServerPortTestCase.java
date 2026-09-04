@@ -23,7 +23,6 @@ import java.util.Collections;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import org.simulatest.restmock.HttpMock;
 import org.simulatest.restmock.RestMock;
 
 /**
@@ -114,24 +113,12 @@ public class ServerPortTestCase {
 		assertTrue(failure.getMessage().contains("startServer"), failure.getMessage());
 	}
 
-	/** The README's first line: no port, and it is listening on 9080. */
+	/** The README's first line: no port, and it is listening on one the OS picked. */
 	@Test
-	public void startServerWithoutAPortBindsTheDefault() {
+	public void startServerWithoutAPortBindsAnOsAssignedOne() {
 		RestMock.startServer();
 
-		assertEquals(RestMock.DEFAULT_PORT, RestMock.port());
-	}
-
-	@Test
-	public void anOwnMockAlsoDefaultsToThatPort() {
-		HttpMock own = new HttpMock();
-		try {
-			own.startServer();
-
-			assertEquals(RestMock.DEFAULT_PORT, own.port());
-		} finally {
-			own.stopServer();
-		}
+		assertTrue(RestMock.port() > 0);
 	}
 
 	/** A port somebody else holds is reported, not swallowed, and the mock stays stopped. */
@@ -160,7 +147,7 @@ public class ServerPortTestCase {
 		InetAddress external = aNonLoopbackAddress();
 		assumeTrue(external != null, "no non-loopback interface on this machine");
 
-		RestMock.startServer(0);
+		RestMock.startServer();
 
 		try (Socket socket = new Socket()) {
 			assertThrows(IOException.class,
@@ -180,7 +167,7 @@ public class ServerPortTestCase {
 
 	@Test
 	public void urlBuildsARequestThatActuallyReaches() throws Exception {
-		RestMock.startServer(0);
+		RestMock.startServer();
 		RestMock.whenGet("/ping").thenReturnText("pong");
 
 		HttpResponse<String> response = TestHttp.get(RestMock.url("/ping"));

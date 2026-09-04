@@ -36,7 +36,7 @@ public class RestMockServer {
 	 * agrees. Silently ignoring a different port left the caller's requests
 	 * going nowhere with nothing to explain it - the failure mode that made
 	 * {@code new RestMockExtension(3000)} appear to do nothing when another
-	 * class had already bound the default port.
+	 * class had already bound the same port.
 	 *
 	 * Port 0 means "any free port", so it never conflicts.
 	 */

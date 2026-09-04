@@ -12,7 +12,7 @@ import org.simulatest.restmock.RestMockExtension;
 
 /**
  * Does not extend IntegrationTestBase: the point of this class is that the
- * extension binds a port other than {@link RestMock#DEFAULT_PORT}.
+ * extension binds the port it was given rather than one the OS picks.
  */
 public class CustomPortTestCase {
 

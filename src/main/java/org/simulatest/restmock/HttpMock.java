@@ -17,7 +17,7 @@ import org.simulatest.restmock.internal.server.RestMockServer;
  * services on separate ports.
  *
  *   {@code HttpMock payments = new HttpMock();}
- *   {@code payments.startServer(0);}
+ *   {@code payments.startServer();}
  *   {@code payments.whenGet("/charges/1").thenReturnJSON("{}");}
  *   {@code String url = payments.url("/charges/1");}
  *
@@ -78,15 +78,14 @@ public final class HttpMock {
 		return requestLog;
 	}
 
-	/** Starts this mock on {@link RestMock#DEFAULT_PORT}. No-op if already running. */
+	/** Starts this mock on an OS-assigned port. No-op if already running. */
 	public void startServer() {
-		startServer(RestMock.DEFAULT_PORT);
+		startServer(0);
 	}
 
 	/**
-	 * Starts this mock on the given port. Pass 0 to let the OS pick a free one
-	 * and read it back from {@link #port()}, which is how several mocks coexist
-	 * in one JVM without agreeing on port numbers in advance.
+	 * Starts this mock on the given port; 0 means OS-assigned, as
+	 * {@link #startServer()}.
 	 *
 	 * No-op if already running on that port. Throws {@link IllegalStateException}
 	 * if it is running on a different one, and {@link java.io.UncheckedIOException}
@@ -114,7 +113,7 @@ public final class HttpMock {
 	}
 
 	/**
-	 * Where this mock is listening, for example {@code http://localhost:9080}.
+	 * Where this mock is listening, for example {@code http://localhost:54321}.
 	 *
 	 * Throws {@link IllegalStateException} when it is not running: there is no
 	 * honest URL to return, and a placeholder would fail later as a connection

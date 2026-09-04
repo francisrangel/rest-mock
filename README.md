@@ -558,7 +558,7 @@ whatever you hand it, verbatim.
 ## Server lifecycle
 
 ```java
-RestMock.startServer();     // default: localhost:9080
+RestMock.startServer();     // an OS-assigned port
 RestMock.clean();           // reset routes and the request log
 RestMock.stopServer();
 ```
@@ -571,12 +571,13 @@ These static methods are a facade over one default mock, which
 `HttpMock` you construct yourself. See [running test classes in
 parallel](#running-test-classes-in-parallel) for when you would.
 
-Pass `0` to let the OS pick a free port, which is how builds sharing a CI machine
-avoid fighting over 9080. You rarely need the number itself, because `baseUrl()`
-and `url()` build the address whichever port you landed on:
+The port is assigned by the OS, so builds sharing a CI machine never fight over
+one; pass a port only when something outside the test has to know it. You rarely
+need the number itself, because `baseUrl()` and `url()` build the address
+whichever port you landed on:
 
 ```java
-RestMock.startServer(0);
+RestMock.startServer();
 
 RestMock.baseUrl();          // http://localhost:54321
 RestMock.url("/users/42");   // http://localhost:54321/users/42

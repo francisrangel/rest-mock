@@ -17,8 +17,9 @@ import org.simulatest.restmock.internal.response.XML;
  *   // ... exercise system under test ...
  *   assertEquals(1, RestMock.requests().countForRoute(HttpMethod.GET, "/users/1"));
  *
- * The server runs in-process on {@link #DEFAULT_PORT} (9080) unless you pass
- * a different port to {@link RestMockExtension} or {@link #startServer(int)}.
+ * The server runs in-process on a port the OS assigns unless you pass one to
+ * {@link RestMockExtension} or {@link #startServer(int)}; {@link #baseUrl()}
+ * is the address either way.
  *
  * Path templates use brace placeholders (for example {@code /users/{id}}) and
  * captured values are exposed to the response body via {@code ${id}}.
@@ -49,9 +50,6 @@ import org.simulatest.restmock.internal.response.XML;
  * because Jackson configuration is global by nature.
  */
 public final class RestMock {
-
-	/** Port used when no port is specified. */
-	public static final int DEFAULT_PORT = 9080;
 
 	private static final HttpMock DEFAULT = new HttpMock();
 
@@ -127,15 +125,14 @@ public final class RestMock {
 		return XML.MAPPER;
 	}
 
-	/** Starts the server on {@link #DEFAULT_PORT}. No-op if already running. */
+	/** Starts the server on an OS-assigned port. No-op if already running. */
 	public static void startServer() {
-		startServer(DEFAULT_PORT);
+		DEFAULT.startServer();
 	}
 
 	/**
-	 * Starts the server on the given port. Pass 0 to let the OS pick a free one
-	 * and read it back from {@link #port()}, which is how you keep parallel CI
-	 * jobs on one machine from fighting over {@link #DEFAULT_PORT}.
+	 * Starts the server on the given port; 0 means OS-assigned, as
+	 * {@link #startServer()}.
 	 *
 	 * No-op if the server is already running on that port. Throws
 	 * {@link IllegalStateException} if it is running on a different one, and
@@ -152,7 +149,7 @@ public final class RestMock {
 	}
 
 	/**
-	 * Where the server is listening, for example {@code http://localhost:9080}.
+	 * Where the server is listening, for example {@code http://localhost:54321}.
 	 * Saves every caller from writing {@code "http://localhost:" + RestMock.port()},
 	 * which is the only line of plumbing a test using this library still needs.
 	 *

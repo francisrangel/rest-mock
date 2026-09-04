@@ -12,15 +12,24 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # maven.compiler.release in pom.xml guards the API surface, not the
+    # runtime, so every LTS from that floor up runs the suite on both
+    # platforms people test on.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        java: [17, 21, 25]
+    name: JDK ${{ matrix.java }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Set up JDK 17
+      - name: Set up JDK
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: ${{ matrix.java }}
           cache: maven
 
       # verify, not test: the release runs `mvn -B verify`, and a javadoc or

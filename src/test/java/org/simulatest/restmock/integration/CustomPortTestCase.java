@@ -19,7 +19,7 @@ public class CustomPortTestCase {
 	private static final int PORT = 9081;
 
 	@RegisterExtension
-	static RestMockExtension server = new RestMockExtension(PORT);
+	static RestMockExtension restMock = new RestMockExtension(PORT);
 
 	@Test
 	public void theServerAnswersOnTheConfiguredPort() throws Exception {

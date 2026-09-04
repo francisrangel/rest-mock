@@ -27,37 +27,35 @@ import org.simulatest.restmock.RestMockExtension;
 @Execution(ExecutionMode.CONCURRENT)
 public class ParallelMockATestCase {
 
-	static final HttpMock mock = new HttpMock();
-
 	@RegisterExtension
-	static RestMockExtension server = new RestMockExtension(mock, 0).keepRoutes();
+	static RestMockExtension restMock = new RestMockExtension(new HttpMock()).keepRoutes();
 
 	@Test
 	public void servesItsOwnRouteWhileTheOtherClassRuns() throws Exception {
-		mock.whenGet("/a-one").thenReturnText("a-one");
+		restMock.whenGet("/a-one").thenReturnText("a-one");
 
 		assertEquals("a-one", get("/a-one").body());
-		assertEquals(1, mock.requests().countForPath("/a-one"));
+		assertEquals(1, restMock.requests().countForPath("/a-one"));
 	}
 
 	@Test
 	public void servesASecondRouteOnTheSameMock() throws Exception {
-		mock.whenGet("/a-two").thenReturnText("a-two");
+		restMock.whenGet("/a-two").thenReturnText("a-two");
 
 		assertEquals("a-two", get("/a-two").body());
-		assertEquals(1, mock.requests().countForPath("/a-two"));
+		assertEquals(1, restMock.requests().countForPath("/a-two"));
 	}
 
 	@Test
 	public void neverSeesTheOtherClassesRoutes() throws Exception {
-		assertTrue(mock.requests().forPath("/b-one").isEmpty(),
+		assertTrue(restMock.requests().forPath("/b-one").isEmpty(),
 			"a request meant for ParallelMockBTestCase landed in this log");
 		assertEquals(404, get("/b-one").statusCode(),
 			"this mock answered a route only ParallelMockBTestCase stubbed");
 	}
 
 	private HttpResponse<String> get(String path) throws Exception {
-		return TestHttp.get(mock.url(path));
+		return TestHttp.get(restMock.url(path));
 	}
 
 }

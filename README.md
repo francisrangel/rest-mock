@@ -56,18 +56,18 @@ class UserServiceTest {
     record Person(String name) {}
 
     @RegisterExtension
-    static RestMockExtension server = new RestMockExtension();
+    static RestMockExtension restMock = new RestMockExtension();
 
     @Test
     void fetchesAUser() throws Exception {
-        RestMock.whenGet("/users/42").thenReturnJSON("{\"name\":\"Bob\"}");
-        RestMock.whenGet("/users/43").thenReturnJSON(new Person("John"));
+        restMock.whenGet("/users/42").thenReturnJSON("{\"name\":\"Bob\"}");
+        restMock.whenGet("/users/43").thenReturnJSON(new Person("John"));
 
-        var users = new UserService(RestMock.baseUrl());
+        var users = new UserService(restMock.baseUrl());
 
         assertEquals("Bob", users.byId(42).name());
         assertEquals("John", users.byId(43).name());
-        assertEquals(1, RestMock.requests().countForPath("/users/42"));
+        assertEquals(1, restMock.requests().countForPath("/users/42"));
     }
 }
 ```
@@ -78,8 +78,16 @@ GET /users/43 → {"name":"John"}
 ```
 
 The extension starts the server before the class and clears routes between
-tests, so nothing leaks from one test to the next. `RestMock.baseUrl()` is the
+tests, so nothing leaks from one test to the next. `restMock.baseUrl()` is the
 address to point your client at.
+
+Outside JUnit, in a throwaway main or a framework hook, the static `RestMock`
+methods do the same job with nothing to register:
+
+```java
+RestMock.whenGet("/users/42").thenReturnJSON("{\"name\":\"Bob\"}");
+RestMock.startServer();
+```
 
 ---
 
@@ -600,53 +608,54 @@ base class, no `@BeforeAll`, no forgotten `clean()`:
 class MyApiTest {
 
     @RegisterExtension
-    static RestMockExtension server = new RestMockExtension();
+    static RestMockExtension restMock = new RestMockExtension();
 
     @Test
     void fetchesUser() throws Exception {
-        RestMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Bob\"}");
+        restMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Bob\"}");
 
-        // point your client at RestMock.baseUrl()
+        // point your client at restMock.baseUrl()
     }
 }
 ```
 
 Register it on a `static` field: a non-static one is rebuilt for every test, and
-you would get a server per test instead of per class.
+you would get a server per test instead of per class. The field carries the
+same `when*`, `requests()` and `baseUrl()` as the mock behind it, so a test
+never has to reach for the static `RestMock` methods.
 
 The port is assigned by the OS, so two builds sharing a CI machine never fight
-over one; `RestMock.baseUrl()` is the address either way. `new
+over one; `restMock.baseUrl()` is the address either way. `new
 RestMockExtension(3000)` pins a port when something outside the test has to
 know it. `keepRoutes()` turns off the per-test reset when a class shares one
 fixture:
 
 ```java
 @RegisterExtension
-static RestMockExtension server = new RestMockExtension().keepRoutes();
+static RestMockExtension restMock = new RestMockExtension().keepRoutes();
 ```
 
 ---
 
 ## Running test classes in parallel
 
-The static `RestMock` methods drive one process-wide mock, so classes sharing it
-have to run one at a time. Give a class its own `HttpMock` and that constraint
-goes away:
+`new RestMockExtension()` drives one process-wide mock, the same one behind the
+static `RestMock` methods, so classes sharing it have to run one at a time. Hand
+the extension its own `HttpMock` and that constraint goes away; the test body
+does not change:
 
 ```java
 @Execution(ExecutionMode.CONCURRENT)
 class PaymentsTest {
 
-    static HttpMock mock = new HttpMock();
-
     @RegisterExtension
-    static RestMockExtension server = new RestMockExtension(mock);
+    static RestMockExtension restMock = new RestMockExtension(new HttpMock());
 
     @Test
     void chargesACard() throws Exception {
-        mock.whenPost("/charges").thenReturnJSON("{\"id\":1}");
+        restMock.whenPost("/charges").thenReturnJSON("{\"id\":1}");
 
-        // point the system under test at mock.baseUrl()
+        // point the system under test at restMock.baseUrl()
     }
 }
 ```

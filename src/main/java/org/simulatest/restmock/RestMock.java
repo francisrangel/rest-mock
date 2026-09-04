@@ -9,13 +9,14 @@ import org.simulatest.restmock.internal.response.XML;
 /**
  * Entry point for stubbing HTTP responses in tests.
  *
- * Typical use from a JUnit test:
- *
- *   {@code @RegisterExtension static RestMockExtension mock = new RestMockExtension();}
+ * The static methods drive one default mock and need nothing else, which
+ * suits a throwaway main or a framework hook:
  *
  *   RestMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Ada\"}");
- *   // ... exercise system under test ...
- *   assertEquals(1, RestMock.requests().countForRoute(HttpMethod.GET, "/users/1"));
+ *   RestMock.startServer();
+ *
+ * In a JUnit test, register {@link RestMockExtension} on a static field and
+ * stub on that field instead; it starts and cleans the mock for you.
  *
  * The server runs in-process on a port the OS assigns unless you pass one to
  * {@link RestMockExtension} or {@link #startServer(int)}; {@link #baseUrl()}

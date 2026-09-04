@@ -13,20 +13,23 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * unless you call {@link #keepRoutes()}.
  *
  * Register it on a static field so JUnit ties it to the class lifecycle (one
- * server per class). A non-static field would be reinstantiated per test:
+ * server per class), and stub on the field: it offers the same {@code when*},
+ * {@link #requests()} and {@link #baseUrl()} as the mock it drives. A
+ * non-static field would be reinstantiated per test.
  *
- *   {@code @RegisterExtension static RestMockExtension mock = new RestMockExtension();}
+ *   {@code @RegisterExtension static RestMockExtension restMock = new RestMockExtension();}
+ *   {@code restMock.whenGet("/users/1").thenReturnJSON("{\"name\":\"Ada\"}");}
  *
  * That form drives the process-wide default mock, the one behind the static
  * {@link RestMock} methods. Pass an {@link HttpMock} instead to give the class
- * its own mock, which is what lets two test classes run at once:
+ * its own mock, which is what lets two test classes run at once; the test
+ * body does not change:
  *
- *   {@code static HttpMock mock = new HttpMock();}
- *   {@code @RegisterExtension static RestMockExtension server = new RestMockExtension(mock);}
+ *   {@code @RegisterExtension static RestMockExtension restMock = new RestMockExtension(new HttpMock());}
  *
  * Without a port the server binds one the OS assigns, so two builds sharing a
- * machine never fight over it; {@link RestMock#baseUrl()} is the address either
- * way. Pass a port when something outside the test has to know it.
+ * machine never fight over it; {@link #baseUrl()} is the address either way.
+ * Pass a port when something outside the test has to know it.
  */
 public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
 
@@ -61,6 +64,56 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 	/** The mock this extension drives. */
 	public HttpMock mock() {
 		return mock;
+	}
+
+	/** Stubs a GET response for {@code uri}. */
+	public RestMockResponse whenGet(String uri) {
+		return mock.whenGet(uri);
+	}
+
+	/** Stubs a POST response for {@code uri}. */
+	public RestMockResponse whenPost(String uri) {
+		return mock.whenPost(uri);
+	}
+
+	/** Stubs a PUT response for {@code uri}. */
+	public RestMockResponse whenPut(String uri) {
+		return mock.whenPut(uri);
+	}
+
+	/** Stubs a DELETE response for {@code uri}. */
+	public RestMockResponse whenDelete(String uri) {
+		return mock.whenDelete(uri);
+	}
+
+	/** Stubs a PATCH response for {@code uri}. */
+	public RestMockResponse whenPatch(String uri) {
+		return mock.whenPatch(uri);
+	}
+
+	/** Stubs a HEAD response for {@code uri}. See {@link RestMock} for HEAD body semantics. */
+	public RestMockResponse whenHead(String uri) {
+		return mock.whenHead(uri);
+	}
+
+	/** Stubs an OPTIONS response for {@code uri}. See {@link RestMock} for the Allow header behavior. */
+	public RestMockResponse whenOptions(String uri) {
+		return mock.whenOptions(uri);
+	}
+
+	/** Every request the mock has received since the last reset. */
+	public RequestLog requests() {
+		return mock.requests();
+	}
+
+	/** Where the mock is listening; see {@link HttpMock#baseUrl()}. */
+	public String baseUrl() {
+		return mock.baseUrl();
+	}
+
+	/** {@link #baseUrl()} joined to {@code path}; see {@link HttpMock#url(String)}. */
+	public String url(String path) {
+		return mock.url(path);
 	}
 
 	/**

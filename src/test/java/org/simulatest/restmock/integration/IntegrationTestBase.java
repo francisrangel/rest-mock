@@ -22,7 +22,7 @@ public class IntegrationTestBase {
 	protected final String baseUrl = RestMock.baseUrl();
 
 	@RegisterExtension
-	static RestMockExtension server = new RestMockExtension();
+	static RestMockExtension restMock = new RestMockExtension();
 
 	protected static final HttpClient client = TestHttp.CLIENT;
 

@@ -1,5 +1,6 @@
 package org.simulatest.restmock;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -49,6 +50,24 @@ public class RestMockExtensionTest {
 		new RestMockExtension().beforeAll(null);
 
 		assertTrue(RestMock.port() > 0);
+	}
+
+	/** The field a test registers is the thing it stubs on, whichever mock it drives. */
+	@Test
+	public void theExtensionStubsAndAddressesTheMockItDrives() {
+		HttpMock own = new HttpMock();
+		RestMockExtension extension = new RestMockExtension(own);
+		extension.beforeAll(null);
+
+		try {
+			extension.whenGet("/own").thenReturnText("ok");
+
+			assertNotNull(own.routeManager().get(new Route(HttpMethod.GET, "/own")));
+			assertSame(own.requests(), extension.requests());
+			assertEquals(own.url("/own"), extension.url("/own"));
+		} finally {
+			extension.afterAll(null);
+		}
 	}
 
 	@Test

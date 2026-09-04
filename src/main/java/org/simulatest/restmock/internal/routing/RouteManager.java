@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -44,9 +45,20 @@ public class RouteManager {
 	 */
 	private volatile Map<Route, Stub> routes = new LinkedHashMap<>();
 
-	/** Registers {@code response} as the only response for {@code route}, replacing any sequence it had. */
+	/**
+	 * Registers {@code response} as the only response for {@code route},
+	 * replacing any sequence it had. A re-stubbed route moves to the end of
+	 * the table, where the registration-order tie-break in {@link #lookup}
+	 * expects it; a put on the existing key would have left it where it first
+	 * appeared.
+	 */
 	public synchronized void registerRoute(Route route, Response response) {
-		Stub previous = put(route, new Stub(List.of(response)));
+		Stub previous = routes.get(route);
+		Stub stub = new Stub(List.of(response));
+		swap(updated -> {
+			updated.remove(route);
+			updated.put(route, stub);
+		});
 
 		if (previous != null && !(previous.last() instanceof NotConfigured) && !(response instanceof NotConfigured)) {
 			log.warn("Replacing existing route {} {} (previous response: {}, new response: {})",
@@ -62,17 +74,16 @@ public class RouteManager {
 	public synchronized void appendRoute(Route route, Response response) {
 		List<Response> responses = new ArrayList<>(routes.get(route).responses());
 		responses.add(response);
-		put(route, new Stub(List.copyOf(responses)));
+		swap(updated -> updated.put(route, new Stub(List.copyOf(responses))));
 
 		log.debug("Queued response {} for route {} {}", responses.size(), route.getMethod(), route.getUri());
 	}
 
-	/** The copy-on-write swap; see the field comment on {@link #routes}. Returns what the route held before. */
-	private Stub put(Route route, Stub stub) {
+	/** The copy-on-write swap; see the field comment on {@link #routes}. */
+	private void swap(Consumer<Map<Route, Stub>> change) {
 		Map<Route, Stub> updated = new LinkedHashMap<>(routes);
-		Stub previous = updated.put(route, stub);
+		change.accept(updated);
 		routes = updated;
-		return previous;
 	}
 
 	/** The response most recently registered for {@code route}, or null. */

@@ -169,6 +169,32 @@ public class RouteManagerTest {
 	}
 
 	@Test
+	public void reRegisteringARouteMakesItTheLastRegistered() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/t/{x}/c"), new TextPlain("first"));
+		manager.registerRoute(new Route(HttpMethod.GET, "/t/b/{y}"), new TextPlain("second"));
+		manager.registerRoute(new Route(HttpMethod.GET, "/t/{x}/c"), new TextPlain("first again"));
+
+		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/t/b/c").orElseThrow();
+
+		assertEquals("first again", body(match));
+	}
+
+	/** Queuing another response is not a registration, so it must not change which route wins a tie. */
+	@Test
+	public void appendingAResponseKeepsTheRouteWhereItWasRegistered() {
+		RouteManager manager = new RouteManager();
+		Route first = new Route(HttpMethod.GET, "/t/{x}/c");
+		manager.registerRoute(first, new TextPlain("first"));
+		manager.registerRoute(new Route(HttpMethod.GET, "/t/b/{y}"), new TextPlain("second"));
+		manager.appendRoute(first, new TextPlain("first, later"));
+
+		RouteManager.Match match = manager.lookup(HttpMethod.GET, "/t/b/c").orElseThrow();
+
+		assertEquals("second", body(match));
+	}
+
+	@Test
 	public void reRegisteringTheSameRouteReplacesTheResponse() {
 		RouteManager manager = new RouteManager();
 		manager.registerRoute(new Route(HttpMethod.GET, "/users"), new TextPlain("first"));

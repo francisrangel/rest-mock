@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,11 +81,16 @@ public class RouteManager {
 		return stub == null ? null : stub.last();
 	}
 
-	/** The route answering {@code method} at {@code path}: an explicit stub, or for HEAD the GET route. */
+	/**
+	 * The route answering {@code method} at {@code path}: an explicit stub, or
+	 * for HEAD the GET route. A derived HEAD reads the GET route's current
+	 * response without advancing it: a probe before a retry sequence must not
+	 * eat the response the first GET was promised.
+	 */
 	public Optional<Match> lookup(HttpMethod method, String path) {
-		Optional<Match> match = find(method, path);
+		Optional<Match> match = find(method, path, Stub::next);
 
-		if (match.isEmpty() && method == HttpMethod.HEAD) return find(HttpMethod.GET, path);
+		if (match.isEmpty() && method == HttpMethod.HEAD) return find(HttpMethod.GET, path, Stub::peek);
 		return match;
 	}
 
@@ -92,9 +98,9 @@ public class RouteManager {
 	 * The most specific match wins, measured by how few placeholders a route
 	 * captures, so {@code /users/me} beats {@code /users/{id}}. Between routes
 	 * that capture the same number, the last registered wins. Only the winner
-	 * advances its sequence.
+	 * advances its sequence, through whichever accessor {@code serve} names.
 	 */
-	private Optional<Match> find(HttpMethod method, String path) {
+	private Optional<Match> find(HttpMethod method, String path, Function<Stub, Response> serve) {
 		Entry<Route, Stub> best = null;
 		Map<String, String> bestCaptures = null;
 
@@ -111,7 +117,7 @@ public class RouteManager {
 
 		return best == null
 			? Optional.empty()
-			: Optional.of(new Match(best.getKey(), best.getValue().next(), bestCaptures));
+			: Optional.of(new Match(best.getKey(), serve.apply(best.getValue()), bestCaptures));
 	}
 
 	/**
@@ -155,8 +161,18 @@ public class RouteManager {
 			this(responses, new AtomicInteger());
 		}
 
+		/** The response due now, and the sequence moves on. */
 		Response next() {
-			return responses.get(Math.min(served.getAndIncrement(), responses.size() - 1));
+			return at(served.getAndIncrement());
+		}
+
+		/** The response due now, and the sequence stays put. */
+		Response peek() {
+			return at(served.get());
+		}
+
+		private Response at(int position) {
+			return responses.get(Math.min(position, responses.size() - 1));
 		}
 
 		Response last() {

@@ -206,6 +206,18 @@ public class RouteManagerTest {
 		assertEquals("template first", body(manager.lookup(HttpMethod.GET, "/users/42").orElseThrow()));
 	}
 
+	/** A HEAD probe before a retry sequence must not eat the response the first GET was promised. */
+	@Test
+	public void aDerivedHeadDoesNotAdvanceTheGetSequence() {
+		RouteManager manager = new RouteManager();
+		Route route = new Route(HttpMethod.GET, "/flaky");
+		manager.registerRoute(route, new TextPlain("first"));
+		manager.appendRoute(route, new TextPlain("second"));
+
+		assertEquals("first", body(manager.lookup(HttpMethod.HEAD, "/flaky").orElseThrow()));
+		assertEquals("first", body(manager.lookup(HttpMethod.GET, "/flaky").orElseThrow()));
+	}
+
 	@Test
 	public void cleanRemovesAllRoutes() {
 		RouteManager manager = new RouteManager();

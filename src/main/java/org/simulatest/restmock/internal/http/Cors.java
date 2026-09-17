@@ -10,8 +10,6 @@ import com.sun.net.httpserver.Headers;
  */
 final class Cors {
 
-	private static final String MAX_AGE_SECONDS = "360";
-
 	private Cors() { }
 
 	/**
@@ -47,11 +45,11 @@ final class Cors {
 	 * for the request. Allowed methods come from the routes actually registered
 	 * for the path, and allowed headers mirror whatever the browser asked for -
 	 * a fixed list cannot know that this particular test posts JSON with a
-	 * bearer token.
+	 * bearer token. No max-age: stubs change between tests, and a cached
+	 * preflight would keep answering for the previous ones.
 	 */
 	static void applyPreflight(Headers requestHeaders, Headers responseHeaders, String allowedMethods) {
 		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS, allowedMethods);
-		responseHeaders.set(HttpHeader.ACCESS_CONTROL_MAX_AGE, MAX_AGE_SECONDS);
 
 		String requested = requestHeaders.getFirst(HttpHeader.ACCESS_CONTROL_REQUEST_HEADERS);
 		if (requested != null) responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS, requested);

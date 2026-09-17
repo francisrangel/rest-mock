@@ -38,10 +38,7 @@ public class CorsTestCase extends IntegrationTestBase {
 		assertEquals("content-type, authorization", header(response, HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS));
 	}
 
-	/**
-	 * A wildcard origin cannot be combined with credentials: browsers reject the
-	 * pair, which is what made the previous always-on "*" unusable.
-	 */
+	/** A wildcard origin cannot be combined with credentials: browsers reject the pair. */
 	@Test
 	public void originIsEchoedSoCredentialsAreLegal() throws Exception {
 		RestMock.whenGet("/api/data").thenReturnJSON("{}");
@@ -80,13 +77,7 @@ public class CorsTestCase extends IntegrationTestBase {
 		assertEquals("mine", response.body());
 	}
 
-	/**
-	 * Stubbing OPTIONS used to switch the preflight off: the explicit match
-	 * skipped the preflight path, so the browser got a 200 with a body but no
-	 * Access-Control-Allow-Methods, no Allow-Headers, and no Max-Age. CORS
-	 * worked until the route was stubbed and then stopped, which is backwards -
-	 * the stub is the more deliberate act, so it must answer at least as well.
-	 */
+	/** An explicit stub supplies the body and still answers the preflight: stubbing a route must not take CORS away from it. */
 	@Test
 	public void anExplicitOptionsStubStillAnswersThePreflight() throws Exception {
 		RestMock.whenGet("/api/data").thenReturnJSON("{}");
@@ -98,7 +89,6 @@ public class CorsTestCase extends IntegrationTestBase {
 		assertEquals(ORIGIN, header(response, HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN));
 		assertEquals(Set.of("GET", "HEAD", "OPTIONS"), methods(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
 		assertEquals("content-type, authorization", header(response, HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS));
-		assertEquals("360", header(response, HttpHeader.ACCESS_CONTROL_MAX_AGE));
 	}
 
 	/** The derived and the stubbed answer advertise the same methods; only the body differs. */
@@ -130,7 +120,6 @@ public class CorsTestCase extends IntegrationTestBase {
 		assertEquals("mine", response.body());
 		assertEquals(ORIGIN, header(response, HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN));
 		assertTrue(response.headers().firstValue(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS).isEmpty());
-		assertTrue(response.headers().firstValue(HttpHeader.ACCESS_CONTROL_MAX_AGE).isEmpty());
 	}
 
 	/** No Origin means no browser, so a stubbed preflight-shaped call still gets a clean response. */

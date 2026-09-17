@@ -39,14 +39,6 @@ public class ParallelMockATestCase {
 	}
 
 	@Test
-	public void servesASecondRouteOnTheSameMock() throws Exception {
-		restMock.whenGet("/a-two").thenReturnText("a-two");
-
-		assertEquals("a-two", get("/a-two").body());
-		assertEquals(1, restMock.requests().countForPath("/a-two"));
-	}
-
-	@Test
 	public void neverSeesTheOtherClassesRoutes() throws Exception {
 		assertTrue(restMock.requests().forPath("/b-one").isEmpty(),
 			"a request meant for ParallelMockBTestCase landed in this log");

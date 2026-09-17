@@ -7,110 +7,42 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+/** The walk over the tree is what is under test; Jackson's parsing is not. */
 public class BodyFlattenerTest {
 
 	@Test
-	public void flatStringKey() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"name\":\"Bob\"}");
-		assertEquals(Map.of("name", "Bob"), result);
+	public void objectFieldsAreNamedByKey() {
+		assertEquals(Map.of("a", "1", "b", "2"), BodyFlattener.flattenJson("{\"a\":\"1\",\"b\":\"2\"}"));
 	}
 
 	@Test
-	public void multipleKeys() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"a\":\"1\",\"b\":\"2\"}");
-		assertEquals("1", result.get("a"));
-		assertEquals("2", result.get("b"));
+	public void nestedObjectsUseDottedPaths() {
+		assertEquals(Map.of("a.b.c", "deep"), BodyFlattener.flattenJson("{\"a\":{\"b\":{\"c\":\"deep\"}}}"));
 	}
 
 	@Test
-	public void nestedObject() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"user\":{\"name\":\"Bob\"}}");
-		assertEquals(Map.of("user.name", "Bob"), result);
+	public void arrayElementsAreIndexedFromZero() {
+		Map<String, String> result = BodyFlattener.flattenJson("{\"items\":[{\"x\":\"a\"},\"b\"]}");
+
+		assertEquals(Map.of("items.0.x", "a", "items.1", "b"), result);
 	}
 
 	@Test
-	public void deeplyNestedObject() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"a\":{\"b\":{\"c\":\"deep\"}}}");
-		assertEquals(Map.of("a.b.c", "deep"), result);
+	public void aRootArrayIsIndexedFromZero() {
+		assertEquals(Map.of("0", "a", "1", "b"), BodyFlattener.flattenJson("[\"a\",\"b\"]"));
 	}
 
 	@Test
-	public void arrayWithIndices() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"items\":[{\"x\":\"a\"},{\"x\":\"b\"}]}");
-		assertEquals("a", result.get("items.0.x"));
-		assertEquals("b", result.get("items.1.x"));
+	public void scalarsAreRenderedAsText() {
+		Map<String, String> result = BodyFlattener.flattenJson("{\"age\":25,\"pi\":3.14,\"active\":true,\"value\":null}");
+
+		assertEquals(Map.of("age", "25", "pi", "3.14", "active", "true", "value", "null"), result);
 	}
 
 	@Test
-	public void flatArray() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"tags\":[\"one\",\"two\"]}");
-		assertEquals("one", result.get("tags.0"));
-		assertEquals("two", result.get("tags.1"));
-	}
-
-	@Test
-	public void numericValue() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"age\":25}");
-		assertEquals("25", result.get("age"));
-	}
-
-	@Test
-	public void negativeNumber() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"temp\":-10}");
-		assertEquals("-10", result.get("temp"));
-	}
-
-	@Test
-	public void floatingPoint() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"pi\":3.14}");
-		assertEquals("3.14", result.get("pi"));
-	}
-
-	@Test
-	public void booleanTrue() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"active\":true}");
-		assertEquals("true", result.get("active"));
-	}
-
-	@Test
-	public void booleanFalse() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"active\":false}");
-		assertEquals("false", result.get("active"));
-	}
-
-	@Test
-	public void nullValue() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"value\":null}");
-		assertEquals("null", result.get("value"));
-	}
-
-	@Test
-	public void escapedCharactersInString() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"msg\":\"line1\\nline2\"}");
-		assertEquals("line1\nline2", result.get("msg"));
-	}
-
-	@Test
-	public void unicodeEscape() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"char\":\"\\u0041\"}");
-		assertEquals("A", result.get("char"));
-	}
-
-	@Test
-	public void emptyObject() {
-		Map<String, String> result = BodyFlattener.flattenJson("{}");
-		assertTrue(result.isEmpty());
-	}
-
-	@Test
-	public void emptyArray() {
-		Map<String, String> result = BodyFlattener.flattenJson("{\"items\":[]}");
-		assertTrue(result.isEmpty());
-	}
-
-	@Test
-	public void malformedJsonReturnsEmptyMap() {
-		assertTrue(BodyFlattener.flattenJson("{not json").isEmpty());
+	public void emptyContainersContributeNothing() {
+		assertTrue(BodyFlattener.flattenJson("{}").isEmpty());
+		assertTrue(BodyFlattener.flattenJson("{\"items\":[]}").isEmpty());
 	}
 
 	/** A body that is a bare value has no field to name, so it contributes nothing rather than failing. */
@@ -118,20 +50,12 @@ public class BodyFlattenerTest {
 	public void aScalarOrEmptyRootYieldsNothing() {
 		assertTrue(BodyFlattener.flattenJson("42").isEmpty());
 		assertTrue(BodyFlattener.flattenJson("\"hello\"").isEmpty());
-		assertTrue(BodyFlattener.flattenJson("[]").isEmpty());
 		assertTrue(BodyFlattener.flattenJson("").isEmpty());
 	}
 
 	@Test
-	public void aRootArrayIsIndexedFromZero() {
-		Map<String, String> result = BodyFlattener.flattenJson("[\"a\",\"b\"]");
-		assertEquals(Map.of("0", "a", "1", "b"), result);
-	}
-
-	@Test
-	public void whitespaceAroundTokens() {
-		Map<String, String> result = BodyFlattener.flattenJson("  { \"name\" : \"Bob\" }  ");
-		assertEquals("Bob", result.get("name"));
+	public void malformedJsonYieldsNothing() {
+		assertTrue(BodyFlattener.flattenJson("{not json").isEmpty());
 	}
 
 }

@@ -73,6 +73,18 @@ public class NoStubDiagnosticsTestCase extends IntegrationTestBase {
 		assertTrue(response.body().contains("No stub for OPTIONS /nowhere"), response.body());
 	}
 
+	/** A route with no thenReturn* is a stub half written, and the 501 says which one. */
+	@Test
+	public void aRouteWithoutAResponseAnswers501NamingIt() throws Exception {
+		RestMock.whenGet("/forgot");
+
+		HttpResponse<String> response = sendRequest("/forgot", HttpMethod.GET);
+
+		assertEquals(501, response.statusCode());
+		assertTrue(response.body().contains("/forgot"), response.body());
+		assertTrue(response.body().contains("no response was configured"), response.body());
+	}
+
 	@Test
 	public void aStubUriWithAQueryStringFailsAtTheStubNotAtTheRequest() {
 		IllegalArgumentException rejected = assertThrows(IllegalArgumentException.class,

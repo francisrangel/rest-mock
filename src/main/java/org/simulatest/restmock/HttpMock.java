@@ -143,8 +143,4 @@ public final class HttpMock {
 		return new ResponseOptions(new Route(method, uri), routeManager);
 	}
 
-	RouteManager routeManager() {
-		return routeManager;
-	}
-
 }

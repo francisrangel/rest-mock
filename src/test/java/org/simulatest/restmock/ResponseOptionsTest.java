@@ -36,7 +36,11 @@ public class ResponseOptionsTest {
 	}
 
 	private Response registered() {
-		return routeManager.get(route);
+		return registered(route);
+	}
+
+	private Response registered(Route route) {
+		return routeManager.lookup(route.getMethod(), route.getUri()).map(RouteManager.Match::response).orElseThrow();
 	}
 
 	private Template template() {
@@ -56,7 +60,7 @@ public class ResponseOptionsTest {
 		Route post = new Route(HttpMethod.POST, "/test");
 		new ResponseOptions(post, routeManager).thenReturnText("Test succeed");
 
-		assertEquals("Test succeed", assertInstanceOf(Template.class, routeManager.get(post)).getContent());
+		assertEquals("Test succeed", assertInstanceOf(Template.class, registered(post)).getContent());
 		assertEquals(NotConfigured.class, registered().getClass(), "the GET route must be untouched");
 	}
 
@@ -172,7 +176,7 @@ public class ResponseOptionsTest {
 		Route dangling = new Route(HttpMethod.GET, "/dangling");
 		new ResponseOptions(dangling, routeManager);
 
-		Response response = routeManager.get(dangling);
+		Response response = registered(dangling);
 
 		assertEquals(NotConfigured.class, response.getClass());
 		assertEquals(501, response.getResponseStatus());
@@ -183,7 +187,7 @@ public class ResponseOptionsTest {
 		Route replaced = new Route(HttpMethod.GET, "/replaced");
 		new ResponseOptions(replaced, routeManager).thenReturnText("real response");
 
-		Response response = routeManager.get(replaced);
+		Response response = registered(replaced);
 
 		assertEquals(ContentType.TEXT_PLAIN, response.getContentType());
 		assertEquals("real response", assertInstanceOf(Template.class, response).getContent());

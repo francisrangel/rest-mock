@@ -86,12 +86,6 @@ public class RouteManager {
 		routes = updated;
 	}
 
-	/** The response most recently registered for {@code route}, or null. */
-	public Response get(Route route) {
-		Stub stub = routes.get(route);
-		return stub == null ? null : stub.last();
-	}
-
 	/**
 	 * The route answering {@code method} at {@code path}: an explicit stub, or
 	 * for HEAD the GET route. A derived HEAD reads the GET route's current

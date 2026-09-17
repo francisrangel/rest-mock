@@ -2,64 +2,60 @@ package org.simulatest.restmock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Instant;
-import java.util.Map;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import org.simulatest.restmock.internal.response.TextPlain;
-import org.simulatest.restmock.internal.routing.Route;
-import org.simulatest.restmock.internal.routing.RouteManager;
-
+/** Drives the callbacks by hand, without a JUnit context, against a mock the test owns. */
 public class RestMockExtensionTest {
 
-	private final RouteManager routes = RestMock.defaultMock().routeManager();
+	private static final HttpClient CLIENT = HttpClient.newHttpClient();
 
-	// This class mutates the process-wide RestMock state directly, so the reset has
-	// to run even when an assertion fails - otherwise the route leaks into every
-	// later test class in the same JVM. Stopping also cleans, and is a no-op when
-	// nothing was started.
+	private final HttpMock own = new HttpMock();
+
 	@AfterEach
-	public void resetGlobalState() {
+	public void stopEverything() {
+		own.stopServer();
 		RestMock.stopServer();
-	}
-
-	private void record(String path) {
-		RestMock.requests().add(
-			new ReceivedRequest(HttpMethod.GET, path, null, Map.of(), "", Instant.now()));
 	}
 
 	/** Two modules testing on one CI agent must not fight over a port, so no port means an OS-assigned one. */
 	@Test
-	public void theDefaultExtensionBindsAnOsAssignedPort() {
+	public void theDefaultExtensionDrivesTheDefaultMockOnAnOsAssignedPort() {
 		new RestMockExtension().beforeAll(null);
 
 		assertTrue(RestMock.port() > 0);
 	}
 
+	@Test
+	public void aGivenPortIsTheOneBound() throws Exception {
+		int port = freePort();
+
+		new RestMockExtension(port).beforeAll(null);
+
+		assertEquals(port, RestMock.port());
+	}
+
 	/** The field a test registers is the thing it stubs on, whichever mock it drives. */
 	@Test
-	public void theExtensionStubsAndAddressesTheMockItDrives() {
-		HttpMock own = new HttpMock();
+	public void theExtensionStubsAndAddressesTheMockItDrives() throws Exception {
 		RestMockExtension extension = new RestMockExtension(own);
 		extension.beforeAll(null);
 
-		try {
-			extension.whenGet("/own").thenReturnText("ok");
+		extension.whenGet("/own").thenReturnText("ok");
 
-			assertNotNull(own.routeManager().get(new Route(HttpMethod.GET, "/own")));
-			assertSame(own.requests(), extension.requests());
-			assertEquals(own.url("/own"), extension.url("/own"));
-		} finally {
-			extension.afterAll(null);
-		}
+		assertEquals("ok", get(own.url("/own")).body());
+		assertSame(own.requests(), extension.requests());
+		assertEquals(own.url("/own"), extension.url("/own"));
 	}
 
 	@Test
@@ -67,31 +63,51 @@ public class RestMockExtensionTest {
 		assertThrows(NullPointerException.class, () -> new RestMockExtension((HttpMock) null));
 	}
 
-	/** The extension never reads the context, so the callbacks are driven without one. */
 	@Test
-	public void afterEachCleansRoutesAndRequestsByDefault() {
-		RestMockExtension extension = new RestMockExtension();
-		Route route = new Route(HttpMethod.GET, "/test");
-		routes.registerRoute(route, new TextPlain("ok"));
-		record("/test");
+	public void afterEachCleansRoutesAndRequestsByDefault() throws Exception {
+		RestMockExtension extension = new RestMockExtension(own);
+		extension.beforeAll(null);
+		extension.whenGet("/test").thenReturnText("ok");
+		get(own.url("/test"));
 
 		extension.afterEach(null);
 
-		assertNull(routes.get(route));
-		assertTrue(RestMock.requests().isEmpty());
+		assertTrue(own.requests().isEmpty());
+		assertEquals(404, get(own.url("/test")).statusCode());
 	}
 
 	@Test
-	public void afterEachPreservesRoutesAndRequestsWhenKeepRoutes() {
-		RestMockExtension extension = new RestMockExtension().keepRoutes();
-		Route route = new Route(HttpMethod.GET, "/test");
-		routes.registerRoute(route, new TextPlain("ok"));
-		record("/test");
+	public void afterEachPreservesRoutesAndRequestsWhenKeepRoutes() throws Exception {
+		RestMockExtension extension = new RestMockExtension(own).keepRoutes();
+		extension.beforeAll(null);
+		extension.whenGet("/test").thenReturnText("ok");
+		get(own.url("/test"));
 
 		extension.afterEach(null);
 
-		assertNotNull(routes.get(route));
-		assertFalse(RestMock.requests().isEmpty());
+		assertFalse(own.requests().isEmpty());
+		assertEquals(200, get(own.url("/test")).statusCode());
+	}
+
+	@Test
+	public void afterAllStopsTheServer() {
+		RestMockExtension extension = new RestMockExtension(own);
+		extension.beforeAll(null);
+
+		extension.afterAll(null);
+
+		assertEquals(-1, own.port());
+	}
+
+	private static HttpResponse<String> get(String url) throws Exception {
+		return CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString());
+	}
+
+	/** A port nothing holds right now, so the next bind gets it. */
+	private static int freePort() throws Exception {
+		try (ServerSocket socket = new ServerSocket(0)) {
+			return socket.getLocalPort();
+		}
 	}
 
 }

@@ -159,23 +159,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- CycloneDX SBOM: emits a bom.xml + bom.json next to every jar so
-			     downstream supply-chain scanners can enumerate dependencies
-			     without re-resolving from Central. -->
-			<plugin>
-				<groupId>org.cyclonedx</groupId>
-				<artifactId>cyclonedx-maven-plugin</artifactId>
-				<version>2.9.3</version>
-				<executions>
-					<execution>
-						<id>build-sbom</id>
-						<phase>package</phase>
-						<goals>
-							<goal>makeBom</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 

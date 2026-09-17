@@ -4,11 +4,13 @@ name: Release to Maven Central
 # committer's GPG key, uploads to the Central Portal, and publishes a
 # Sigstore-signed build provenance attestation.
 #
-# Central publishes the deployment once it validates; a failed one stays
-# staged (see scripts/rollback.sh).
+# Central publishes the deployment once it validates. To back out before
+# that: delete the tag (git push --delete origin vX.Y.Z) and drop the
+# deployment at https://central.sonatype.com/publishing/deployments.
+# A published version is immutable; ship a new one instead.
 #
-# Required secrets (set once via scripts/setup-release-secrets.sh):
-#   MAVEN_GPG_PRIVATE_KEY     - ASCII-armored secret key
+# Required repository secrets (gh secret set NAME):
+#   MAVEN_GPG_PRIVATE_KEY     - ASCII-armored secret key (gpg --armor --export-secret-keys KEY_ID)
 #   MAVEN_GPG_PASSPHRASE      - passphrase for the key above
 #   MAVEN_CENTRAL_USERNAME    - Central Portal user-token username
 #   MAVEN_CENTRAL_PASSWORD    - Central Portal user-token password

@@ -9,6 +9,7 @@ import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.Html;
 import org.simulatest.restmock.internal.response.JSON;
 import org.simulatest.restmock.internal.response.NotConfigured;
+import org.simulatest.restmock.internal.response.Responder;
 import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.response.TextPlain;
 import org.simulatest.restmock.internal.response.XML;
@@ -32,6 +33,7 @@ public class ResponseOptions implements RestMockResponse {
 	private final Route route;
 	private final RouteManager routeManager;
 	private Response current;
+	private boolean registered;
 
 	/** Registers a placeholder for {@code route} that the first {@code thenReturn*} replaces. */
 	ResponseOptions(Route route, RouteManager routeManager) {
@@ -41,7 +43,7 @@ public class ResponseOptions implements RestMockResponse {
 		routeManager.registerRoute(route, current);
 	}
 
-	/** A builder that registers nothing: {@link Answer} reads what it built through {@link #current()}. */
+	/** A builder that registers nothing: {@code thenAnswer} reads what it built through {@link #current()}. */
 	ResponseOptions(Route route) {
 		this.route = route;
 		this.routeManager = null;
@@ -123,9 +125,20 @@ public class ResponseOptions implements RestMockResponse {
 		return thenReturnText(message).withStatus(errorCode);
 	}
 
+	/**
+	 * The callback is handed a fresh builder that registers nothing, so it
+	 * builds its answer with the same {@code thenReturn*} calls as any stub.
+	 * Whatever it built last is served; if it built nothing, the usual 501 is.
+	 */
 	@Override
 	public void thenAnswer(BiConsumer<ReceivedRequest, RestMockResponse> answer) {
-		register(new Answer(route, Objects.requireNonNull(answer, "answer")));
+		Objects.requireNonNull(answer, "answer");
+
+		place(request -> {
+			ResponseOptions builder = new ResponseOptions(route);
+			answer.accept(request, builder);
+			return builder.current();
+		});
 	}
 
 	/** Sets a response header. Replaces any previous value for the same header name. */
@@ -165,15 +178,19 @@ public class ResponseOptions implements RestMockResponse {
 		return current;
 	}
 
-	/** The first response replaces the placeholder the constructor registered; later ones queue behind it. */
 	private ResponseOptions register(Response body) {
-		if (routeManager != null) {
-			if (current instanceof NotConfigured) routeManager.registerRoute(route, body);
-			else routeManager.appendRoute(route, body);
-		}
-
+		place(body);
 		current = body;
 		return this;
+	}
+
+	/** The first responder replaces the placeholder the constructor registered; later ones queue behind it. */
+	private void place(Responder responder) {
+		if (routeManager == null) return;
+
+		if (registered) routeManager.appendRoute(route, responder);
+		else routeManager.registerRoute(route, responder);
+		registered = true;
 	}
 
 }

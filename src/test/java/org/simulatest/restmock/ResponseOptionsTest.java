@@ -40,7 +40,7 @@ public class ResponseOptionsTest {
 	}
 
 	private Response registered(Route route) {
-		return routeManager.lookup(route.getMethod(), route.getUri()).map(RouteManager.Match::response).orElseThrow();
+		return (Response) routeManager.lookup(route.getMethod(), route.getUri()).map(RouteManager.Match::responder).orElseThrow();
 	}
 
 	private Template template() {

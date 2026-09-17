@@ -14,7 +14,7 @@ import org.simulatest.restmock.ReceivedRequest;
  * {@link Template} renders a text body with {@code ${...}} substitution;
  * {@link Binary} hands its bytes over untouched.
  */
-public abstract class Response {
+public abstract class Response implements Responder {
 
 	private final Map<String, String> header = new ConcurrentHashMap<>();
 
@@ -35,8 +35,9 @@ public abstract class Response {
 	/** The bytes to write for this response, given what the request carried. */
 	public abstract byte[] render(Map<String, String> parameters);
 
-	/** The response to serve for {@code request}: this one, unless a subclass decides per request. */
-	public Response resolve(ReceivedRequest request) {
+	/** A response is its own answer, whatever the request carried. */
+	@Override
+	public final Response respond(ReceivedRequest request) {
 		return this;
 	}
 

@@ -18,7 +18,7 @@ import org.simulatest.restmock.internal.response.TextPlain;
 public class RouteManagerTest {
 
 	private static String body(RouteManager.Match match) {
-		return assertInstanceOf(Template.class, match.response()).getContent();
+		return assertInstanceOf(Template.class, match.responder()).getContent();
 	}
 
 	@Test

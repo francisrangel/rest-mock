@@ -1,8 +1,5 @@
 package org.simulatest.restmock.internal.routing;
 
-import static java.lang.System.Logger.Level.DEBUG;
-import static java.lang.System.Logger.Level.WARNING;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -16,15 +13,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.lang.System.Logger.Level.DEBUG;
+
 import org.simulatest.restmock.HttpMethod;
-import org.simulatest.restmock.internal.response.NotConfigured;
-import org.simulatest.restmock.internal.response.Response;
+import org.simulatest.restmock.internal.response.Responder;
 
 /**
  * The stubbed routes, and what a request path is answered with.
  *
- * A route holds one or more responses. They are served in the order they were
- * added, and the last one repeats, so a test can say "the upstream failed
+ * A route holds one or more responders. They are served in the order they
+ * were added, and the last one repeats, so a test can say "the upstream failed
  * once" and then move on.
  *
  * HEAD is answered beyond what was registered: {@link #lookup} serves it from
@@ -46,37 +44,29 @@ public class RouteManager {
 	private volatile Map<Route, Stub> routes = new LinkedHashMap<>();
 
 	/**
-	 * Registers {@code response} as the only response for {@code route},
+	 * Registers {@code responder} as the only responder for {@code route},
 	 * replacing any sequence it had. A re-stubbed route moves to the end of
 	 * the table, where the registration-order tie-break in {@link #lookup}
 	 * expects it; a put on the existing key would have left it where it first
 	 * appeared.
 	 */
-	public synchronized void registerRoute(Route route, Response response) {
-		Stub previous = routes.get(route);
-		Stub stub = new Stub(List.of(response));
+	public synchronized void registerRoute(Route route, Responder responder) {
+		Stub stub = new Stub(List.of(responder));
 		swap(updated -> {
 			updated.remove(route);
 			updated.put(route, stub);
 		});
 
-		if (previous != null && !(previous.last() instanceof NotConfigured) && !(response instanceof NotConfigured)) {
-			log.log(WARNING, () -> "Replacing existing route " + route.getMethod() + " " + route.getUri()
-				+ " (previous response: " + previous.last().getClass().getSimpleName()
-				+ ", new response: " + response.getClass().getSimpleName() + ")");
-		} else {
-			log.log(DEBUG, () -> "Registered route " + route.getMethod() + " " + route.getUri()
-				+ " -> " + response.getClass().getSimpleName());
-		}
+		log.log(DEBUG, () -> "Registered route " + route.getMethod() + " " + route.getUri());
 	}
 
-	/** Queues {@code response} after the ones {@code route} already has. */
-	public synchronized void appendRoute(Route route, Response response) {
-		List<Response> responses = new ArrayList<>(routes.get(route).responses());
-		responses.add(response);
-		swap(updated -> updated.put(route, new Stub(List.copyOf(responses))));
+	/** Queues {@code responder} after the ones {@code route} already has. */
+	public synchronized void appendRoute(Route route, Responder responder) {
+		List<Responder> responders = new ArrayList<>(routes.get(route).responders());
+		responders.add(responder);
+		swap(updated -> updated.put(route, new Stub(List.copyOf(responders))));
 
-		log.log(DEBUG, () -> "Queued response " + responses.size() + " for route " + route.getMethod() + " " + route.getUri());
+		log.log(DEBUG, () -> "Queued response " + responders.size() + " for route " + route.getMethod() + " " + route.getUri());
 	}
 
 	/** The copy-on-write swap; see the field comment on {@link #routes}. */
@@ -89,7 +79,7 @@ public class RouteManager {
 	/**
 	 * The route answering {@code method} at {@code path}: an explicit stub, or
 	 * for HEAD the GET route. A derived HEAD reads the GET route's current
-	 * response without advancing it: a probe before a retry sequence must not
+	 * responder without advancing it: a probe before a retry sequence must not
 	 * eat the response the first GET was promised.
 	 */
 	public Optional<Match> lookup(HttpMethod method, String path) {
@@ -105,7 +95,7 @@ public class RouteManager {
 	 * that capture the same number, the last registered wins. Only the winner
 	 * advances its sequence, through whichever accessor {@code serve} names.
 	 */
-	private Optional<Match> find(HttpMethod method, String path, Function<Stub, Response> serve) {
+	private Optional<Match> find(HttpMethod method, String path, Function<Stub, Responder> serve) {
 		Entry<Route, Stub> best = null;
 		Map<String, String> bestCaptures = null;
 
@@ -153,35 +143,31 @@ public class RouteManager {
 		return List.copyOf(routes.keySet());
 	}
 
-	public record Match(Route route, Response response, Map<String, String> pathCaptures) {
+	public record Match(Route route, Responder responder, Map<String, String> pathCaptures) {
 		public Match {
 			pathCaptures = Collections.unmodifiableMap(pathCaptures);
 		}
 	}
 
-	/** The responses queued for one route and how many have been served. */
-	private record Stub(List<Response> responses, AtomicInteger served) {
+	/** The responders queued for one route and how many have been served. */
+	private record Stub(List<Responder> responders, AtomicInteger served) {
 
-		Stub(List<Response> responses) {
-			this(responses, new AtomicInteger());
+		Stub(List<Responder> responders) {
+			this(responders, new AtomicInteger());
 		}
 
-		/** The response due now, and the sequence moves on. */
-		Response next() {
+		/** The responder due now, and the sequence moves on. */
+		Responder next() {
 			return at(served.getAndIncrement());
 		}
 
-		/** The response due now, and the sequence stays put. */
-		Response peek() {
+		/** The responder due now, and the sequence stays put. */
+		Responder peek() {
 			return at(served.get());
 		}
 
-		private Response at(int position) {
-			return responses.get(Math.min(position, responses.size() - 1));
-		}
-
-		Response last() {
-			return responses.get(responses.size() - 1);
+		private Responder at(int position) {
+			return responders.get(Math.min(position, responders.size() - 1));
 		}
 
 	}

@@ -116,7 +116,7 @@ public class FrontController implements HttpHandler {
 
 	/** Writes the stubbed response for a request that matched. */
 	private void serve(HttpExchange exchange, ReceivedRequest request, Match match) throws IOException {
-		Response content = match.response().resolve(request);
+		Response content = match.responder().respond(request);
 
 		if (content.getDelayMillis() > 0) {
 			try {

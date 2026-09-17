@@ -1,5 +1,9 @@
 package org.simulatest.restmock.internal.http;
 
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.WARNING;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -14,9 +18,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -28,11 +29,10 @@ import org.simulatest.restmock.internal.response.Response;
 import org.simulatest.restmock.internal.routing.NoRouteReport;
 import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.internal.routing.RouteManager.Match;
-import org.simulatest.restmock.internal.utils.LogSafe;
 
 public class FrontController implements HttpHandler {
 
-	private static final Logger log = LoggerFactory.getLogger(FrontController.class);
+	private static final System.Logger log = System.getLogger(FrontController.class.getName());
 
 	private final RouteManager routeManager;
 	private final Consumer<ReceivedRequest> recorder;
@@ -60,14 +60,14 @@ public class FrontController implements HttpHandler {
 	 * failure in the body is the fastest route from symptom to diagnosis.
 	 */
 	private void respondWithFailure(HttpExchange exchange, RuntimeException failure) {
-		log.error("Failed to handle {} {}", exchange.getRequestMethod(), exchange.getRequestURI(), failure);
+		log.log(ERROR, () -> "Failed to handle " + exchange.getRequestMethod() + " " + exchange.getRequestURI(), failure);
 
 		try {
 			sendText(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, describe(failure));
 		} catch (IOException | RuntimeException tooLate) {
 			// Headers are already on the wire, so the status cannot be changed
 			// any more. The log above is the only record left.
-			log.debug("Could not send the 500 for {}", exchange.getRequestURI(), tooLate);
+			log.log(DEBUG, () -> "Could not send the 500 for " + exchange.getRequestURI(), tooLate);
 		}
 	}
 
@@ -85,7 +85,7 @@ public class FrontController implements HttpHandler {
 		try {
 			httpMethod = HttpMethod.byString(method);
 		} catch (IllegalArgumentException unsupported) {
-			log.warn("Unsupported HTTP method {} for {} - returning 501", method, uri.getPath());
+			log.log(WARNING, () -> "Unsupported HTTP method " + method + " for " + uri.getPath() + " - returning 501");
 			sendText(exchange, HttpURLConnection.HTTP_NOT_IMPLEMENTED,
 				"No support for " + method + ". rest-mock answers " + joinMethodNames(Arrays.asList(HttpMethod.values())) + ".");
 			return;
@@ -99,11 +99,6 @@ public class FrontController implements HttpHandler {
 			new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8),
 			Instant.now()
 		);
-
-		if (log.isTraceEnabled()) {
-			log.trace("Received {} {} headers={} body={}",
-				httpMethod, uri.getPath(), LogSafe.maskHeaders(request.headers()), LogSafe.truncate(request.body()));
-		}
 
 		recorder.accept(request);
 
@@ -126,7 +121,7 @@ public class FrontController implements HttpHandler {
 			try {
 				Thread.sleep(content.getDelayMillis());
 			} catch (InterruptedException e) {
-				log.warn("Delay interrupted for {} {}", request.method(), request.path());
+				log.log(WARNING, () -> "Delay interrupted for " + request.method() + " " + request.path());
 				Thread.currentThread().interrupt();
 			}
 		}
@@ -147,15 +142,7 @@ public class FrontController implements HttpHandler {
 
 		send(exchange, content.getResponseStatus(), body);
 
-		boolean head = request.method() == HttpMethod.HEAD;
-		log.debug("{} {} -> {} ({} bytes{})", request.method(), request.path(), content.getResponseStatus(), body.length,
-			head ? ", no body" : "");
-		if (log.isTraceEnabled() && !head) {
-			String rendered = content.isTextual()
-				? LogSafe.truncate(new String(body, StandardCharsets.UTF_8))
-				: "<" + body.length + " bytes binary>";
-			log.trace("Response body for {} {}: {}", request.method(), request.path(), rendered);
-		}
+		log.log(DEBUG, () -> request.method() + " " + request.path() + " -> " + content.getResponseStatus() + " (" + body.length + " bytes)");
 	}
 
 	/**
@@ -183,8 +170,8 @@ public class FrontController implements HttpHandler {
 	private void respondWithNoRoute(HttpExchange exchange, HttpMethod method, String path) throws IOException {
 		String report = NoRouteReport.describe(method, path, routeManager.registeredRoutes());
 
-		log.warn("No route matches {} {} - returning 404", method, path);
-		log.debug("{}", report);
+		log.log(WARNING, () -> "No route matches " + method + " " + path + " - returning 404");
+		log.log(DEBUG, report);
 
 		sendText(exchange, HttpURLConnection.HTTP_NOT_FOUND, report);
 	}
@@ -205,7 +192,7 @@ public class FrontController implements HttpHandler {
 		if (Cors.isPreflight(exchange.getRequestHeaders()))
 			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
 
-		log.debug("OPTIONS {} -> Allow: {}", path, allow);
+		log.log(DEBUG, () -> "OPTIONS " + path + " -> Allow: " + allow);
 	}
 
 	private static String joinMethodNames(Collection<HttpMethod> methods) {

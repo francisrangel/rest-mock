@@ -1,5 +1,8 @@
 package org.simulatest.restmock.internal.server;
 
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.INFO;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetAddress;
@@ -9,16 +12,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 /** The lifecycle of one JDK HTTP server: bind, hand every request to a handler, stop. */
 public class RestMockServer {
 
-	private static final Logger log = LoggerFactory.getLogger(RestMockServer.class);
+	private static final System.Logger log = System.getLogger(RestMockServer.class.getName());
 
 	/** Reported by {@link #port()} when the server is not running. */
 	public static final int NOT_RUNNING = -1;
@@ -65,7 +65,7 @@ public class RestMockServer {
 		server.setExecutor(workers);
 		server.start();
 
-		log.info("RestMock server started on port {}", port());
+		log.log(INFO, () -> "RestMock server started on port " + port());
 	}
 
 	public boolean isRunning() {
@@ -79,7 +79,7 @@ public class RestMockServer {
 
 	public void stop() {
 		if (server == null) {
-			log.debug("stop() called but server is not running");
+			log.log(DEBUG, "stop() called but server is not running");
 			return;
 		}
 
@@ -90,7 +90,7 @@ public class RestMockServer {
 		server = null;
 		workers = null;
 
-		log.info("RestMock server stopped on port {}", port);
+		log.log(INFO, () -> "RestMock server stopped on port " + port);
 	}
 
 	/**

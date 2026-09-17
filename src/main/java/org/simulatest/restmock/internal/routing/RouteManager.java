@@ -1,5 +1,8 @@
 package org.simulatest.restmock.internal.routing;
 
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.WARNING;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -12,9 +15,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.internal.response.NotConfigured;
@@ -34,7 +34,7 @@ import org.simulatest.restmock.internal.response.Response;
  */
 public class RouteManager {
 
-	private static final Logger log = LoggerFactory.getLogger(RouteManager.class);
+	private static final System.Logger log = System.getLogger(RouteManager.class.getName());
 
 	/**
 	 * Replaced wholesale on every registration rather than mutated in place: the
@@ -61,12 +61,12 @@ public class RouteManager {
 		});
 
 		if (previous != null && !(previous.last() instanceof NotConfigured) && !(response instanceof NotConfigured)) {
-			log.warn("Replacing existing route {} {} (previous response: {}, new response: {})",
-				route.getMethod(), route.getUri(),
-				previous.last().getClass().getSimpleName(), response.getClass().getSimpleName());
+			log.log(WARNING, () -> "Replacing existing route " + route.getMethod() + " " + route.getUri()
+				+ " (previous response: " + previous.last().getClass().getSimpleName()
+				+ ", new response: " + response.getClass().getSimpleName() + ")");
 		} else {
-			log.debug("Registered route {} {} -> {}",
-				route.getMethod(), route.getUri(), response.getClass().getSimpleName());
+			log.log(DEBUG, () -> "Registered route " + route.getMethod() + " " + route.getUri()
+				+ " -> " + response.getClass().getSimpleName());
 		}
 	}
 
@@ -76,7 +76,7 @@ public class RouteManager {
 		responses.add(response);
 		swap(updated -> updated.put(route, new Stub(List.copyOf(responses))));
 
-		log.debug("Queued response {} for route {} {}", responses.size(), route.getMethod(), route.getUri());
+		log.log(DEBUG, () -> "Queued response " + responses.size() + " for route " + route.getMethod() + " " + route.getUri());
 	}
 
 	/** The copy-on-write swap; see the field comment on {@link #routes}. */

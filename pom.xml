@@ -47,28 +47,9 @@
 		     compile against an API that is missing on 17. -->
 		<maven.compiler.release>17</maven.compiler.release>
 		<junit.version>6.1.3</junit.version>
-		<!-- slf4j-api is the only third-party jar pushed onto downstream
-		     classpaths (compile scope). Pin to the last 1.7.x so Maven's
-		     nearest-wins doesn't yank older Spring Boot 2.x users off
-		     their 1.7-compatible logback. SLF4J's Logger/LoggerFactory
-		     surface is wire-compatible across 1.7 and 2.x. -->
-		<slf4j.version>1.7.36</slf4j.version>
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>${slf4j.version}</version>
-			<scope>test</scope>
-		</dependency>
-
 		<!-- Required, not optional: thenReturnJSON/XML(Object) and the request
 		     body flattening are core features, so a NoClassDefFoundError at
 		     runtime would be the worse trade. Only long-stable Jackson 2 APIs

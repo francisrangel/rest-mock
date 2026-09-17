@@ -109,11 +109,6 @@ public abstract class Template extends Response {
 		return content;
 	}
 
-	@Override
-	public String toString() {
-		return content;
-	}
-
 	static String serialize(ObjectMapper mapper, Object object) {
 		try {
 			return mapper.writeValueAsString(object);

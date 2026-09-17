@@ -1,6 +1,5 @@
 package org.simulatest.restmock.internal.server;
 
-import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.INFO;
 
 import java.io.IOException;
@@ -76,10 +75,7 @@ public class RestMockServer {
 	}
 
 	public void stop() {
-		if (server == null) {
-			log.log(DEBUG, "stop() called but server is not running");
-			return;
-		}
+		if (server == null) return;
 
 		int port = port();
 

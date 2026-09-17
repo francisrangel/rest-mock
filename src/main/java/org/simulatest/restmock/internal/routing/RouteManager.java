@@ -13,8 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.lang.System.Logger.Level.DEBUG;
-
 import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.internal.response.Responder;
 
@@ -31,8 +29,6 @@ import org.simulatest.restmock.internal.response.Responder;
  * what {@link #methodsFor} says the path serves.
  */
 public class RouteManager {
-
-	private static final System.Logger log = System.getLogger(RouteManager.class.getName());
 
 	/**
 	 * Replaced wholesale on every registration rather than mutated in place: the
@@ -56,8 +52,6 @@ public class RouteManager {
 			updated.remove(route);
 			updated.put(route, stub);
 		});
-
-		log.log(DEBUG, () -> "Registered route " + route.getMethod() + " " + route.getUri());
 	}
 
 	/** Queues {@code responder} after the ones {@code route} already has. */
@@ -65,8 +59,6 @@ public class RouteManager {
 		List<Responder> responders = new ArrayList<>(routes.get(route).responders());
 		responders.add(responder);
 		swap(updated -> updated.put(route, new Stub(List.copyOf(responders))));
-
-		log.log(DEBUG, () -> "Queued response " + responders.size() + " for route " + route.getMethod() + " " + route.getUri());
 	}
 
 	/** The copy-on-write swap; see the field comment on {@link #routes}. */

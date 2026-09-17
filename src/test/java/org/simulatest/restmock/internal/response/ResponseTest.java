@@ -114,13 +114,6 @@ public class ResponseTest {
 	}
 
 	@Test
-	public void toStringDescribesTheBody() {
-		assertEquals("hello ${name}", new TextPlain("hello ${name}").toString());
-		assertEquals("<3 bytes image/png>",
-			new Binary(new byte[] {1, 2, 3}, new ContentType("image/png")).toString());
-	}
-
-	@Test
 	public void jsonLeavesOrdinaryValuesAlone() {
 		Response response = new JSON("{\"id\":${id}}");
 

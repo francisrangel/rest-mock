@@ -33,9 +33,4 @@ public final class Binary extends Response {
 		return contentType;
 	}
 
-	@Override
-	public String toString() {
-		return "<" + bytes.length + " bytes " + contentType.type() + ">";
-	}
-
 }

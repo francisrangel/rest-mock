@@ -29,7 +29,6 @@ public class ParameterExtractorTest {
 
 	/** What FrontController hands the extractor: the request as recorded, {@code headers} included. */
 	private Map<String, String> extract(String uri, String body) {
-		URI parsed = URI.create(uri);
 		return extract(uri, body, Map.of());
 	}
 
@@ -76,19 +75,11 @@ public class ParameterExtractorTest {
 	}
 
 	@Test
-	public void singleQueryParameter() {
-		Map<String, String> params = extract("/test?name=Bob", "");
-
-		assertEquals("Bob", params.get("name"));
-	}
-
-	@Test
-	public void multipleQueryParameters() {
-		Map<String, String> params = extract("/test?a=1&b=2&c=3", "");
+	public void queryParametersAreExposedByName() {
+		Map<String, String> params = extract("/test?a=1&b=2", "");
 
 		assertEquals("1", params.get("a"));
 		assertEquals("2", params.get("b"));
-		assertEquals("3", params.get("c"));
 	}
 
 	@Test

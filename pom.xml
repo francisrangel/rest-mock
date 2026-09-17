@@ -39,7 +39,6 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<!-- Reproducible builds: same source bytes in, same jar bytes out.
 		     Bump this to the release date on every release. -->
 		<project.build.outputTimestamp>2026-09-02T00:00:00Z</project.build.outputTimestamp>

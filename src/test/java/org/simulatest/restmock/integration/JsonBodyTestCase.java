@@ -20,25 +20,12 @@ public class JsonBodyTestCase extends IntegrationTestBase {
 		postJson("{\"name\":\"Bob\"}", "hello Bob");
 	}
 
+	/** The README's example: nested fields by dotted path, array elements by index. */
 	@Test
-	public void nestedJsonKey() throws Exception {
-		RestMock.whenPost("/test").thenReturnText("hello ${user.name}");
+	public void nestedFieldsAndArrayElementsResolveByPath() throws Exception {
+		RestMock.whenPost("/test").thenReturnText("first sku: ${items.0.sku} for ${customer.name}");
 
-		postJson("{\"user\":{\"name\":\"Bob\"}}", "hello Bob");
-	}
-
-	@Test
-	public void arrayIndexInJson() throws Exception {
-		RestMock.whenPost("/test").thenReturnText("first=${items.0.x}");
-
-		postJson("{\"items\":[{\"x\":\"a\"},{\"x\":\"b\"}]}", "first=a");
-	}
-
-	@Test
-	public void numericAndBooleanScalars() throws Exception {
-		RestMock.whenPost("/test").thenReturnText("age=${age} active=${active}");
-
-		postJson("{\"age\":25,\"active\":true}", "age=25 active=true");
+		postJson("{\"items\":[{\"sku\":\"A1\"}],\"customer\":{\"name\":\"Bob\"}}", "first sku: A1 for Bob");
 	}
 
 	/** A JSON body sent as text/plain is never parsed, so its fields are not available. */

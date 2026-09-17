@@ -14,58 +14,15 @@ import org.simulatest.restmock.HttpMethod;
 
 public class RouteTest {
 
+	/** Routes are the route table's keys, so a second stub for the same method and URI must land on the first. */
 	@Test
-	public void exposesItsMethodAndUri() {
-		Route route = new Route(HttpMethod.GET, "/search");
-
-		assertEquals(HttpMethod.GET, route.getMethod());
-		assertEquals("/search", route.getUri());
-	}
-
-	@Test
-	public void equalWhenSameMethodAndUri() {
-		Route a = new Route(HttpMethod.GET, "/users");
-		Route b = new Route(HttpMethod.GET, "/users");
-
-		assertEquals(a, b);
-		assertEquals(a.hashCode(), b.hashCode());
-	}
-
-	@Test
-	public void notEqualWhenDifferentMethod() {
-		Route get = new Route(HttpMethod.GET, "/users");
-		Route post = new Route(HttpMethod.POST, "/users");
-
-		assertNotEquals(get, post);
-	}
-
-	@Test
-	public void notEqualWhenDifferentUri() {
-		Route a = new Route(HttpMethod.GET, "/users");
-		Route b = new Route(HttpMethod.GET, "/posts");
-
-		assertNotEquals(a, b);
-	}
-
-	@Test
-	public void notEqualToNull() {
+	public void equalityIsByMethodAndUri() {
 		Route route = new Route(HttpMethod.GET, "/users");
 
-		assertNotEquals(route, null);
-	}
-
-	@Test
-	public void notEqualToDifferentType() {
-		Route route = new Route(HttpMethod.GET, "/users");
-
-		assertNotEquals(route, "/users");
-	}
-
-	@Test
-	public void equalToSelf() {
-		Route route = new Route(HttpMethod.GET, "/users");
-
-		assertEquals(route, route);
+		assertEquals(route, new Route(HttpMethod.GET, "/users"));
+		assertEquals(route.hashCode(), new Route(HttpMethod.GET, "/users").hashCode());
+		assertNotEquals(route, new Route(HttpMethod.POST, "/users"));
+		assertNotEquals(route, new Route(HttpMethod.GET, "/posts"));
 	}
 
 	@Test

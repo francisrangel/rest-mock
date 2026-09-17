@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -83,7 +84,7 @@ public class FrontController implements HttpHandler {
 
 		HttpMethod httpMethod;
 		try {
-			httpMethod = HttpMethod.byString(method);
+			httpMethod = HttpMethod.valueOf(method.toUpperCase(Locale.ROOT));
 		} catch (IllegalArgumentException unsupported) {
 			log.log(WARNING, () -> "Unsupported HTTP method " + method + " for " + uri.getPath() + " - returning 501");
 			sendText(exchange, HttpURLConnection.HTTP_NOT_IMPLEMENTED,

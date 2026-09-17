@@ -13,13 +13,16 @@ permissions:
 jobs:
   test:
     # maven.compiler.release in pom.xml guards the API surface, not the
-    # runtime, so every LTS from that floor up runs the suite on both
-    # platforms people test on.
+    # runtime, so every LTS from that floor up runs the suite. One Windows leg
+    # catches line-ending and socket differences; more would only repeat it.
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         java: [17, 21, 25]
+        include:
+          - os: windows-latest
+            java: 17
     name: JDK ${{ matrix.java }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:

@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -134,12 +133,7 @@ public class FrontController implements HttpHandler {
 
 		writeResponseHeaders(content, exchange);
 
-		// A body with nothing to substitute never reads the parameters, so a
-		// static stub does not pay to parse the request body on every call.
-		Map<String, String> parameters = content.usesParameters()
-			? ParameterExtractor.extract(request, match.pathCaptures())
-			: Map.of();
-		byte[] body = content.render(parameters);
+		byte[] body = content.render(ParameterExtractor.extract(request, match.pathCaptures()));
 
 		send(exchange, content.getResponseStatus(), body);
 

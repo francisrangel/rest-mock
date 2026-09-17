@@ -27,21 +27,14 @@ public abstract class Template extends Response {
 	private static final int NAMES_IN_ERROR = 20;
 
 	private final String content;
-	private final boolean templated;
 
 	Template(String body) {
 		this.content = body;
-		this.templated = PARAMETER_PATTERN.matcher(body).results().anyMatch(found -> found.group(1) != null);
 	}
 
 	@Override
 	public boolean isTextual() {
 		return true;
-	}
-
-	@Override
-	public boolean usesParameters() {
-		return templated;
 	}
 
 	/**

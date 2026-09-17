@@ -41,15 +41,6 @@ public abstract class Response implements Responder {
 		return this;
 	}
 
-	/**
-	 * False when {@link #render} never reads its parameters, so the caller can
-	 * skip collecting them: parsing a request body is the expensive part of
-	 * serving a static stub.
-	 */
-	public boolean usesParameters() {
-		return true;
-	}
-
 	public int getResponseStatus() {
 		return responseStatus;
 	}

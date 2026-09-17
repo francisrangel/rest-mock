@@ -16,10 +16,9 @@ public final class Placeholders {
 	 *
 	 * The bare namespace holds what the stub author wrote - path captures, body
 	 * fields, query parameters. Headers are mostly ambient: Host, User-Agent and
-	 * Accept are attached by the HTTP client, not by the test. Letting them share
-	 * the namespace meant a typo or a missing body field could silently resolve
-	 * to one of them, which is the one case the "No value for ${...}" failure
-	 * could not catch.
+	 * Accept are attached by the HTTP client, not by the test. Sharing the
+	 * namespace would let a typo or a missing body field silently resolve to one
+	 * of them, the one case the "No value for ${...}" failure cannot catch.
 	 */
 	public static final String HEADER_PREFIX = "header.";
 

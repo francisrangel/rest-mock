@@ -55,8 +55,8 @@ public class FrontController implements HttpHandler {
 	}
 
 	/**
-	 * Without this the exchange was simply closed and the caller saw "unexpected
-	 * end of file from server" - no status, no message, nothing pointing at the
+	 * Without this the exchange is simply closed and the caller sees "unexpected
+	 * end of file from server": no status, no message, nothing pointing at the
 	 * cause. The mock only ever serves the test that started it, so putting the
 	 * failure in the body is the fastest route from symptom to diagnosis.
 	 */
@@ -164,9 +164,9 @@ public class FrontController implements HttpHandler {
 	}
 
 	/**
-	 * A 404 that names what is stubbed. The empty body this used to send made
-	 * "why isn't my mock matching?" a debugging session; the routes are right
-	 * there in the test, so the server may as well print them.
+	 * A 404 that names what is stubbed: the routes are right there in the test,
+	 * so the server may as well print them, and "why isn't my mock matching?"
+	 * answers itself.
 	 */
 	private void respondWithNoRoute(HttpExchange exchange, HttpMethod method, String path) throws IOException {
 		String report = NoRouteReport.describe(method, path, routeManager.registeredRoutes());
@@ -181,10 +181,8 @@ public class FrontController implements HttpHandler {
 	 * Everything an OPTIONS answer owes the caller: the Allow header, plus the
 	 * CORS preflight headers when a browser asked for them.
 	 *
-	 * Shared by the derived answer and an explicit {@code whenOptions()} stub.
-	 * The stub used to skip this, so stubbing a route switched its preflight
-	 * off - the browser got a body but no Access-Control-Allow-Methods, and CORS
-	 * that worked before the stub stopped working after it.
+	 * Shared by the derived answer and an explicit {@code whenOptions()} stub, so
+	 * stubbing a route never switches its preflight off.
 	 */
 	private void applyOptionsHeaders(HttpExchange exchange, String path, Set<HttpMethod> methods) {
 		String allow = joinMethodNames(methods);

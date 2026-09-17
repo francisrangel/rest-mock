@@ -14,44 +14,16 @@ import java.util.function.BiConsumer;
  *
  * The {@code Object} overloads of {@code thenReturnJSON} and {@code thenReturnXML}
  * serialize through Jackson; raw {@code String} overloads pass the body through
- * verbatim. The {@code FromResource} variants load from the classpath, the same
- * place {@code Thread.currentThread().getContextClassLoader().getResource(path)} looks.
- * A missing or unreadable file throws {@link java.io.UncheckedIOException}: it is
- * a mistake in the test, not something to catch.
- * Text resources are decoded as UTF-8 and have leading and trailing whitespace
- * stripped; binary resources are passed through byte-for-byte.
+ * verbatim. The {@code FromResource} variants load from the test classpath, and
+ * a missing file throws {@link java.io.UncheckedIOException}.
  *
- * Response bodies may reference query parameters, form/JSON/XML body fields, and
- * path captures using {@code ${name}} placeholders. For example, a route
- * registered as {@code /users/{id}} can return {@code {"id":"${id}"}}.
- * Nested body fields use dotted paths ({@code ${user.name}}) and array elements
- * use indexes ({@code ${items.0.sku}}); for XML the root element is not part of
- * the path.
- *
- * Request headers are addressed under a {@code header.} prefix
- * ({@code ${header.X-Tenant}}), never as a bare {@code ${X-Tenant}}. The bare
- * namespace holds what the stub author wrote; Host, User-Agent and Accept are
- * attached by the HTTP client, and letting them share the namespace meant a typo
- * could silently resolve to one of them instead of failing. Header names are
- * matched case-insensitively, so {@code ${header.X-Tenant}} resolves the header
- * however the server happened to canonicalize its name. Every other name is
- * matched exactly, as {@link ReceivedRequest#queryParam(String)} does.
- *
- * A stub URI must be a path. A query string, a missing leading slash, and an
- * unclosed brace in a template are all rejected by the {@code when*} call with
- * an {@link IllegalArgumentException}; each used to compile into a route that
- * silently matched nothing.
- *
- * If a name appears in more than one source the most specific wins, in this order:
- * path captures, then body fields, then query parameters. Headers sit in their
- * own namespace and cannot collide with any of them. A placeholder with no
- * matching name fails the response with a 500 naming what was available, rather
- * than shipping {@code ${nmae}} to the client.
- *
- * Substituted values are escaped for the response format - JSON string escaping,
- * XML and HTML entities, nothing for plain text - so a request value carrying a
- * quote or an angle bracket cannot produce a malformed document. The
- * {@code thenReturnFile} methods skip substitution entirely.
+ * A text body may reference what the request carried as {@code ${name}}: path
+ * captures, query parameters, form, JSON or XML body fields, and request
+ * headers as {@code ${header.Name}}. Values are escaped for the body's format,
+ * a name with no value fails the response with a 500, and {@code thenReturnFile}
+ * skips substitution. The
+ * <a href="https://github.com/francisrangel/rest-mock#dynamic-data-from-requests">README</a>
+ * spells out the rules.
  */
 public interface RestMockResponse {
 

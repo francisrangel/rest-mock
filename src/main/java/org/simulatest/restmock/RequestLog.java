@@ -31,10 +31,9 @@ import java.util.function.Predicate;
 public class RequestLog {
 
 	/**
-	 * Guarded by this. A copy-on-write list looks tempting for a
-	 * write-once-read-rarely log, but it is exactly backwards here: every
-	 * recorded request copied the whole backing array, so a test firing a few
-	 * thousand requests paid O(n^2) to build a list nobody read until the end.
+	 * Guarded by this. Not copy-on-write: that copies the whole array on every
+	 * add, which is O(n^2) for a test firing thousands of requests at a log that
+	 * is read once, at the end.
 	 */
 	private final List<ReceivedRequest> requests = new ArrayList<>();
 

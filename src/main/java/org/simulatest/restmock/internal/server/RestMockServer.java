@@ -33,10 +33,8 @@ public class RestMockServer {
 
 	/**
 	 * Starting an already-running server is a no-op, but only when the port
-	 * agrees. Silently ignoring a different port left the caller's requests
-	 * going nowhere with nothing to explain it - the failure mode that made
-	 * {@code new RestMockExtension(3000)} appear to do nothing when another
-	 * class had already bound the same port.
+	 * agrees. Silently ignoring a different port would leave the caller's
+	 * requests going to a port nothing listens on, with nothing to explain it.
 	 *
 	 * Port 0 means "any free port", so it never conflicts.
 	 */
@@ -50,9 +48,9 @@ public class RestMockServer {
 			return;
 		}
 
-		// Loopback only. The wildcard address made every stub reachable from
-		// the network, raised a firewall prompt on the first bind on macOS and
-		// Windows, and disagreed with the localhost URL that baseUrl() reports.
+		// Loopback only: a stub is never reachable from another machine, the OS
+		// firewall has nothing to ask about, and the address agrees with the
+		// localhost URL that baseUrl() reports.
 		try {
 			server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 0);
 		} catch (IOException e) {

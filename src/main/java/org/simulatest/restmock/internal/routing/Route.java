@@ -88,9 +88,8 @@ public class Route {
 
 	/**
 	 * Rejects a stub URI that can never match, at the {@code when*} call that
-	 * wrote it. Every one of these used to compile into a pattern the request
-	 * path could not possibly equal, so the mistake surfaced later as a bare 404
-	 * on a route the test could see right there in the source.
+	 * wrote it, rather than compiling it into a pattern no request path can equal
+	 * and surfacing the mistake later as a 404.
 	 */
 	private static void validate(String uri) {
 		if (!uri.startsWith("/"))

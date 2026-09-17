@@ -18,37 +18,16 @@ import org.simulatest.restmock.internal.response.XML;
  * In a JUnit test, register {@link RestMockExtension} on a static field and
  * stub on that field instead; it starts and cleans the mock for you.
  *
- * The server runs in-process on a port the OS assigns unless you pass one to
- * {@link RestMockExtension} or {@link #startServer(int)}; {@link #baseUrl()}
- * is the address either way.
+ * Every method here delegates to the {@link HttpMock} that {@link #defaultMock()}
+ * returns. That instance is process-wide, so test classes sharing it must run
+ * one at a time; construct an {@link HttpMock} of your own when a JVM needs
+ * more than one mock. Instances share nothing but the Jackson mappers behind
+ * {@link #json()} and {@link #xml()}.
  *
- * Path templates use brace placeholders (for example {@code /users/{id}}) and
- * captured values are exposed to the response body via {@code ${id}}.
- *
- * A stub URI is a path and nothing else. A query string, a fragment, a missing
- * leading slash, or a malformed placeholder is rejected by the {@code when*}
- * call with an {@link IllegalArgumentException}, rather than compiling into a
- * route no request can reach. A request that matches no route gets a 404 whose
- * body names what is stubbed and how close the call came.
- *
- * {@link #baseUrl()} and {@link #url(String)} build the address of the running
- * server, so a test never has to concatenate a port into a string.
- *
- * HEAD requests reply with the configured body's byte length as Content-Length
- * but no body. OPTIONS requests get an Allow header listing every method
- * registered for that path.
- *
- * Every method here delegates to one default {@link HttpMock}, returned by
- * {@link #defaultMock()}. That instance is process-wide, so tests sharing it
- * must not run in parallel within the same JVM (e.g. Surefire's
- * {@code parallel=classes}). {@link RestMockExtension} clears it between tests;
- * if you drive the server manually, call {@link #clean()} between tests.
- *
- * When you do need more than one mock at a time - parallel classes, or two
- * collaborating services stubbed at once - construct {@link HttpMock} directly
- * and hand it to {@link RestMockExtension}. Instances share nothing but the
- * Jackson mappers behind {@link #json()} and {@link #xml()}, which stay global
- * because Jackson configuration is global by nature.
+ * What a stub can do, from path templates and {@code ${name}} placeholders to
+ * sequenced responses, derived HEAD and OPTIONS answers, CORS and the 404 that
+ * names what is stubbed, is covered by the
+ * <a href="https://github.com/francisrangel/rest-mock#readme">README</a>.
  */
 public final class RestMock {
 

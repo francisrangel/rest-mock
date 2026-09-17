@@ -8,10 +8,7 @@ public final class Binary extends Response {
 	private final byte[] bytes;
 	private final ContentType contentType;
 
-	/**
-	 * Copies the caller's array. Holding onto it meant a test that reuses a
-	 * buffer after stubbing silently changed what the route serves.
-	 */
+	/** Copies the caller's array, so a test that reuses its buffer after stubbing does not change what the route serves. */
 	public Binary(byte[] bytes, ContentType contentType) {
 		this.bytes = bytes.clone();
 		this.contentType = contentType;

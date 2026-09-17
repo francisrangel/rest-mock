@@ -27,8 +27,7 @@ final class Cors {
 	/**
 	 * Echoes the caller's origin rather than sending {@code *}. A wildcard origin
 	 * and {@code Access-Control-Allow-Credentials: true} are mutually exclusive
-	 * under the CORS spec, and browsers reject the pair outright, so sending both
-	 * (as this used to) failed every credentialed request.
+	 * under the CORS spec, and browsers reject the pair outright.
 	 *
 	 * Applied to error responses too: a 404 with no CORS headers reaches the
 	 * browser as an opaque cross-origin failure, which hides the actual status

@@ -38,7 +38,7 @@ public class RequestLogTest {
 	@Test
 	public void emptyByDefault() {
 		assertTrue(log.isEmpty());
-		assertEquals(0, log.count());
+		assertEquals(0, log.all().size());
 		assertTrue(log.all().isEmpty());
 		assertTrue(log.last().isEmpty());
 	}
@@ -48,7 +48,7 @@ public class RequestLogTest {
 		log.add(request(HttpMethod.GET, "/users"));
 
 		assertFalse(log.isEmpty());
-		assertEquals(1, log.count());
+		assertEquals(1, log.all().size());
 		assertEquals("/users", log.all().get(0).path());
 	}
 
@@ -58,7 +58,7 @@ public class RequestLogTest {
 		log.add(request(HttpMethod.GET, "/second"));
 		log.add(request(HttpMethod.GET, "/third"));
 
-		assertEquals(3, log.count());
+		assertEquals(3, log.all().size());
 		assertEquals("/first", log.all().get(0).path());
 		assertEquals("/third", log.all().get(2).path());
 	}
@@ -144,7 +144,7 @@ public class RequestLogTest {
 		log.clear();
 
 		assertTrue(log.isEmpty());
-		assertEquals(0, log.count());
+		assertEquals(0, log.all().size());
 		assertTrue(log.last().isEmpty());
 	}
 
@@ -199,7 +199,7 @@ public class RequestLogTest {
 			pool.shutdownNow();
 		}
 
-		assertEquals(threads * perThread, log.count());
+		assertEquals(threads * perThread, log.all().size());
 	}
 
 	@Test

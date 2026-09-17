@@ -65,7 +65,7 @@ public class ConcurrencyTestCase extends IntegrationTestBase {
 			pool.shutdownNow();
 		}
 
-		assertEquals(50, RestMock.requests().count());
+		assertEquals(50, RestMock.requests().all().size());
 	}
 
 	/** Registering routes while requests are in flight must not corrupt the route table. */

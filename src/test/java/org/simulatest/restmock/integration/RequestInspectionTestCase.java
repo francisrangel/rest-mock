@@ -18,7 +18,7 @@ public class RequestInspectionTestCase extends IntegrationTestBase {
 
 		sendRequest("/api/users", HttpMethod.POST, ContentType.APPLICATION_JSON.type(), "{\"name\":\"Bob\"}");
 
-		assertEquals(1, RestMock.requests().count());
+		assertEquals(1, RestMock.requests().all().size());
 		assertEquals(1, RestMock.requests().countForRoute(HttpMethod.POST, "/api/users"));
 	}
 

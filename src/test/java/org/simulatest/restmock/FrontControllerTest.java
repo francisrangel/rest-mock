@@ -83,7 +83,7 @@ public class FrontControllerTest {
 
 		controller.processRequest(exchange);
 
-		assertEquals(1, requestLog.count());
+		assertEquals(1, requestLog.all().size());
 		ReceivedRequest captured = requestLog.last().orElseThrow();
 		assertEquals(HttpMethod.POST, captured.method());
 		assertEquals("/test", captured.path());

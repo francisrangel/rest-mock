@@ -36,14 +36,6 @@ public class RestMockExtensionTest {
 			new ReceivedRequest(HttpMethod.GET, path, null, Map.of(), "", Instant.now()));
 	}
 
-	@Test
-	public void anExtensionExposesTheMockItDrives() {
-		HttpMock own = new HttpMock();
-
-		assertSame(own, new RestMockExtension(own).mock());
-		assertSame(RestMock.defaultMock(), new RestMockExtension().mock());
-	}
-
 	/** Two modules testing on one CI agent must not fight over a port, so no port means an OS-assigned one. */
 	@Test
 	public void theDefaultExtensionBindsAnOsAssignedPort() {

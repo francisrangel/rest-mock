@@ -65,11 +65,6 @@ public class RequestLog {
 		return all().stream().filter(condition).toList();
 	}
 
-	/** Total recorded requests. */
-	public synchronized int count() {
-		return requests.size();
-	}
-
 	/** How many recorded requests had this exact path. */
 	public int countForPath(String path) {
 		return forPath(path).size();

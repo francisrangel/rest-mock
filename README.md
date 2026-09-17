@@ -455,6 +455,7 @@ ReceivedRequest last = RestMock.requests().lastForPath("/api/users").orElseThrow
 last.body();
 last.header("Content-Type");   // Optional<String>, case-insensitive
 last.queryParam("dry_run");    // Optional<String>, URL-decoded
+last.queryParamValues("tag");  // every value sent under that name, in order
 ```
 
 The full set is `all()`, `forPath()`, `forMethod()`, `forRoute()`,

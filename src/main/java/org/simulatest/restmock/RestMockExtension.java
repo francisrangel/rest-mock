@@ -61,11 +61,6 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 		this.port = port;
 	}
 
-	/** The mock this extension drives. */
-	public HttpMock mock() {
-		return mock;
-	}
-
 	/** Stubs a GET response for {@code uri}. */
 	public RestMockResponse whenGet(String uri) {
 		return mock.whenGet(uri);

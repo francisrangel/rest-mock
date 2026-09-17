@@ -28,7 +28,7 @@ public class ServerCleanTestCase extends IntegrationTestBase {
 	public void theRequestLogShouldBeClearedOnClean() throws Exception {
 		RestMock.whenGet("/test").thenReturnText("ok");
 		sendRequest("/test", HttpMethod.GET);
-		assertEquals(1, RestMock.requests().count());
+		assertEquals(1, RestMock.requests().all().size());
 
 		RestMock.clean();
 

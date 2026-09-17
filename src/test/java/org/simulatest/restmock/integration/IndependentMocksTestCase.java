@@ -72,8 +72,8 @@ public class IndependentMocksTestCase {
 		get(payments.url("/charges/1"));
 		get(shipping.url("/labels/1"));
 
-		assertEquals(2, payments.requests().count());
-		assertEquals(1, shipping.requests().count());
+		assertEquals(2, payments.requests().all().size());
+		assertEquals(1, shipping.requests().all().size());
 		assertTrue(payments.requests().forPath("/labels/1").isEmpty(),
 			"the payments log picked up a request sent to shipping");
 	}
@@ -108,8 +108,8 @@ public class IndependentMocksTestCase {
 
 			assertEquals("ok", get(defaultMock.url("/via-static")).body());
 			assertEquals(RestMock.port(), defaultMock.port());
-			assertEquals(1, defaultMock.requests().count());
-			assertEquals(1, RestMock.requests().count());
+			assertEquals(1, defaultMock.requests().all().size());
+			assertEquals(1, RestMock.requests().all().size());
 		} finally {
 			RestMock.stopServer();
 		}

@@ -1,9 +1,5 @@
 package org.simulatest.restmock.internal.http;
 
-import static java.lang.System.Logger.Level.DEBUG;
-import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.WARNING;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -32,8 +28,6 @@ import org.simulatest.restmock.internal.routing.RouteManager.Match;
 
 public class FrontController implements HttpHandler {
 
-	private static final System.Logger log = System.getLogger(FrontController.class.getName());
-
 	private final RouteManager routeManager;
 	private final Consumer<ReceivedRequest> recorder;
 
@@ -59,15 +53,11 @@ public class FrontController implements HttpHandler {
 	 * cause. The mock only ever serves the test that started it, so putting the
 	 * failure in the body is the fastest route from symptom to diagnosis.
 	 */
-	private void respondWithFailure(HttpExchange exchange, RuntimeException failure) {
-		log.log(ERROR, () -> "Failed to handle " + exchange.getRequestMethod() + " " + exchange.getRequestURI(), failure);
-
+	private static void respondWithFailure(HttpExchange exchange, RuntimeException failure) {
 		try {
 			sendText(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, describe(failure));
 		} catch (IOException | RuntimeException tooLate) {
-			// Headers are already on the wire, so the status cannot be changed
-			// any more. The log above is the only record left.
-			log.log(DEBUG, () -> "Could not send the 500 for " + exchange.getRequestURI(), tooLate);
+			// Headers are already on the wire, so the status cannot be changed any more.
 		}
 	}
 
@@ -85,7 +75,6 @@ public class FrontController implements HttpHandler {
 		try {
 			httpMethod = HttpMethod.valueOf(method.toUpperCase(Locale.ROOT));
 		} catch (IllegalArgumentException unsupported) {
-			log.log(WARNING, () -> "Unsupported HTTP method " + method + " for " + uri.getPath() + " - returning 501");
 			sendText(exchange, HttpURLConnection.HTTP_NOT_IMPLEMENTED,
 				"No support for " + method + ". rest-mock answers " + joinMethodNames(Arrays.asList(HttpMethod.values())) + ".");
 			return;
@@ -121,7 +110,6 @@ public class FrontController implements HttpHandler {
 			try {
 				Thread.sleep(content.getDelayMillis());
 			} catch (InterruptedException e) {
-				log.log(WARNING, () -> "Delay interrupted for " + request.method() + " " + request.path());
 				Thread.currentThread().interrupt();
 			}
 		}
@@ -129,15 +117,13 @@ public class FrontController implements HttpHandler {
 		// Before writeResponseHeaders, so a header the stub set via withHeader
 		// still overrides what is derived here.
 		if (request.method() == HttpMethod.OPTIONS)
-			applyOptionsHeaders(exchange, request.path(), routeManager.methodsFor(request.path()));
+			applyOptionsHeaders(exchange, routeManager.methodsFor(request.path()));
 
 		writeResponseHeaders(content, exchange);
 
 		byte[] body = content.render(ParameterExtractor.extract(request, match.pathCaptures()));
 
 		send(exchange, content.getResponseStatus(), body);
-
-		log.log(DEBUG, () -> request.method() + " " + request.path() + " -> " + content.getResponseStatus() + " (" + body.length + " bytes)");
 	}
 
 	/**
@@ -153,7 +139,7 @@ public class FrontController implements HttpHandler {
 			return;
 		}
 
-		applyOptionsHeaders(exchange, path, methods);
+		applyOptionsHeaders(exchange, methods);
 		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
 	}
 
@@ -163,12 +149,7 @@ public class FrontController implements HttpHandler {
 	 * answers itself.
 	 */
 	private void respondWithNoRoute(HttpExchange exchange, HttpMethod method, String path) throws IOException {
-		String report = NoRouteReport.describe(method, path, routeManager.registeredRoutes());
-
-		log.log(WARNING, () -> "No route matches " + method + " " + path + " - returning 404");
-		log.log(DEBUG, report);
-
-		sendText(exchange, HttpURLConnection.HTTP_NOT_FOUND, report);
+		sendText(exchange, HttpURLConnection.HTTP_NOT_FOUND, NoRouteReport.describe(method, path, routeManager.registeredRoutes()));
 	}
 
 	/**
@@ -178,14 +159,12 @@ public class FrontController implements HttpHandler {
 	 * Shared by the derived answer and an explicit {@code whenOptions()} stub, so
 	 * stubbing a route never switches its preflight off.
 	 */
-	private void applyOptionsHeaders(HttpExchange exchange, String path, Set<HttpMethod> methods) {
+	private static void applyOptionsHeaders(HttpExchange exchange, Set<HttpMethod> methods) {
 		String allow = joinMethodNames(methods);
 		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
 
 		if (Cors.isPreflight(exchange.getRequestHeaders()))
 			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
-
-		log.log(DEBUG, () -> "OPTIONS " + path + " -> Allow: " + allow);
 	}
 
 	private static String joinMethodNames(Collection<HttpMethod> methods) {

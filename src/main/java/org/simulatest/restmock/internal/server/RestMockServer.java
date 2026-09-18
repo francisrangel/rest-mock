@@ -1,7 +1,5 @@
 package org.simulatest.restmock.internal.server;
 
-import static java.lang.System.Logger.Level.INFO;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetAddress;
@@ -16,8 +14,6 @@ import com.sun.net.httpserver.HttpServer;
 
 /** The lifecycle of one JDK HTTP server: bind, hand every request to a handler, stop. */
 public class RestMockServer {
-
-	private static final System.Logger log = System.getLogger(RestMockServer.class.getName());
 
 	/** Reported by {@link #port()} when the server is not running. */
 	public static final int NOT_RUNNING = -1;
@@ -61,8 +57,6 @@ public class RestMockServer {
 		server.createContext("/", handler);
 		server.setExecutor(workers);
 		server.start();
-
-		log.log(INFO, () -> "RestMock server started on port " + port());
 	}
 
 	public boolean isRunning() {
@@ -77,14 +71,10 @@ public class RestMockServer {
 	public void stop() {
 		if (server == null) return;
 
-		int port = port();
-
 		server.stop(0);
 		workers.shutdownNow();
 		server = null;
 		workers = null;
-
-		log.log(INFO, () -> "RestMock server stopped on port " + port);
 	}
 
 	/**

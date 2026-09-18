@@ -1,5 +1,5 @@
 /**
- * INTERNAL — not part of the public API.
+ * INTERNAL: not part of the public API.
  *
  * Classes under {@code org.simulatest.restmock.internal.*} are implementation details.
  * They may change signature, move, or disappear in any release without

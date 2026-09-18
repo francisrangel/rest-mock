@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -73,7 +72,7 @@ public class FrontController implements HttpHandler {
 
 		HttpMethod httpMethod;
 		try {
-			httpMethod = HttpMethod.valueOf(method.toUpperCase(Locale.ROOT));
+			httpMethod = HttpMethod.valueOf(method);
 		} catch (IllegalArgumentException unsupported) {
 			sendText(exchange, HttpURLConnection.HTTP_NOT_IMPLEMENTED,
 				"No support for " + method + ". rest-mock answers " + joinMethodNames(Arrays.asList(HttpMethod.values())) + ".");
@@ -200,7 +199,7 @@ public class FrontController implements HttpHandler {
 	 * that here means no caller can forget it.
 	 */
 	private static void send(HttpExchange exchange, int status, byte[] body) throws IOException {
-		if (HttpMethod.HEAD.name().equalsIgnoreCase(exchange.getRequestMethod())) {
+		if (HttpMethod.HEAD.name().equals(exchange.getRequestMethod())) {
 			if (allowsContentLength(status)) {
 				exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
 			}

@@ -28,7 +28,8 @@ public abstract class Template extends Response {
 
 	private final String content;
 
-	Template(String body) {
+	Template(String body, ContentType contentType) {
+		super(contentType);
 		this.content = body;
 	}
 

@@ -16,6 +16,7 @@ import org.simulatest.restmock.ReceivedRequest;
  */
 public abstract class Response implements Responder {
 
+	private final ContentType contentType;
 	private final Map<String, String> header = new ConcurrentHashMap<>();
 
 	// Written by the test thread via ResponseOptions, read by the server's
@@ -24,7 +25,13 @@ public abstract class Response implements Responder {
 	private volatile int responseStatus = HttpURLConnection.HTTP_OK;
 	private volatile long delayMillis;
 
-	public abstract ContentType getContentType();
+	protected Response(ContentType contentType) {
+		this.contentType = contentType;
+	}
+
+	public ContentType getContentType() {
+		return contentType;
+	}
 
 	/** True when the body is text, so the response declares an explicit UTF-8 charset. */
 	public abstract boolean isTextual();

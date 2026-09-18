@@ -136,8 +136,7 @@ public class FrontControllerTest {
 	/** An exception with no message still has to say something in the body. */
 	@Test
 	public void aFailureWithoutAMessageIsDescribedByItsType() throws IOException {
-		Response silent = new Response() {
-			@Override public ContentType getContentType() { return ContentType.TEXT_PLAIN; }
+		Response silent = new Response(ContentType.TEXT_PLAIN) {
 			@Override public boolean isTextual() { return true; }
 			@Override public byte[] render(Map<String, String> parameters) { throw new IllegalStateException(); }
 		};

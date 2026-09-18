@@ -5,13 +5,8 @@ import java.net.HttpURLConnection;
 public final class NotConfigured extends Template {
 
 	public NotConfigured(String uri) {
-		super("Route registered for " + uri + " but no response was configured. Call thenReturn*() to set one.");
+		super("Route registered for " + uri + " but no response was configured. Call thenReturn*() to set one.", ContentType.TEXT_PLAIN);
 		setResponseStatus(HttpURLConnection.HTTP_NOT_IMPLEMENTED);
-	}
-
-	@Override
-	public ContentType getContentType() {
-		return ContentType.TEXT_PLAIN;
 	}
 
 }

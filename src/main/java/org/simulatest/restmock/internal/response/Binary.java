@@ -6,12 +6,11 @@ import java.util.Map;
 public final class Binary extends Response {
 
 	private final byte[] bytes;
-	private final ContentType contentType;
 
 	/** Copies the caller's array, so a test that reuses its buffer after stubbing does not change what the route serves. */
 	public Binary(byte[] bytes, ContentType contentType) {
+		super(contentType);
 		this.bytes = bytes.clone();
-		this.contentType = contentType;
 	}
 
 	/**
@@ -26,11 +25,6 @@ public final class Binary extends Response {
 	@Override
 	public boolean isTextual() {
 		return false;
-	}
-
-	@Override
-	public ContentType getContentType() {
-		return contentType;
 	}
 
 }

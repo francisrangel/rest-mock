@@ -7,21 +7,16 @@ public final class JSON extends Template {
 	public static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
 
 	public JSON(String body) {
-		super(body);
+		super(body, ContentType.APPLICATION_JSON);
 	}
 
 	public JSON(Object object) {
-		super(serialize(MAPPER, object));
+		this(serialize(MAPPER, object));
 	}
 
 	@Override
 	String escape(String value) {
 		return Escape.json(value);
-	}
-
-	@Override
-	public ContentType getContentType() {
-		return ContentType.APPLICATION_JSON;
 	}
 
 }

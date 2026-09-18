@@ -104,7 +104,7 @@ public class RouteManager {
 
 		return best == null
 			? Optional.empty()
-			: Optional.of(new Match(best.getKey(), serve.apply(best.getValue()), bestCaptures));
+			: Optional.of(new Match(serve.apply(best.getValue()), bestCaptures));
 	}
 
 	/**
@@ -135,7 +135,7 @@ public class RouteManager {
 		return List.copyOf(routes.keySet());
 	}
 
-	public record Match(Route route, Responder responder, Map<String, String> pathCaptures) {
+	public record Match(Responder responder, Map<String, String> pathCaptures) {
 		public Match {
 			pathCaptures = Collections.unmodifiableMap(pathCaptures);
 		}

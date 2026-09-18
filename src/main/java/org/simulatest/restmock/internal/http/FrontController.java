@@ -65,7 +65,7 @@ public class FrontController implements HttpHandler {
 		return failure.getMessage() == null ? failure.toString() : failure.getMessage();
 	}
 
-	public void processRequest(HttpExchange exchange) throws IOException {
+	private void processRequest(HttpExchange exchange) throws IOException {
 		Cors.apply(exchange.getRequestHeaders(), exchange.getResponseHeaders());
 
 		String method = exchange.getRequestMethod();

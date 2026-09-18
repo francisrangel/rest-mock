@@ -133,10 +133,7 @@ public final class HttpMock {
 	 * A leading slash is added if missing.
 	 */
 	public String url(String path) {
-		String base = baseUrl();
-
-		if (path == null || path.isEmpty()) return base;
-		return path.startsWith("/") ? base + path : base + "/" + path;
+		return baseUrl() + (path.startsWith("/") ? path : "/" + path);
 	}
 
 	private RestMockResponse registerRoute(HttpMethod method, String uri) {

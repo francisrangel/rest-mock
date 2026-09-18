@@ -44,7 +44,7 @@ public class FrontControllerTest {
 		stub(HttpMethod.GET, "/test", "ok");
 		FakeExchange exchange = new FakeExchange("GET", "/test");
 
-		controller.processRequest(exchange);
+		controller.handle(exchange);
 
 		assertEquals(200, exchange.status);
 		assertEquals("ok".length(), exchange.declaredLength);
@@ -56,7 +56,7 @@ public class FrontControllerTest {
 		stub(HttpMethod.GET, "/known", "ok");
 		FakeExchange exchange = new FakeExchange("GET", "/test");
 
-		controller.processRequest(exchange);
+		controller.handle(exchange);
 
 		assertEquals(404, exchange.status);
 		assertTrue(exchange.declaredLength > 0, "the 404 must carry a body");
@@ -68,7 +68,7 @@ public class FrontControllerTest {
 		stub(HttpMethod.GET, "/known", "ok");
 		FakeExchange exchange = new FakeExchange("GET", "/test");
 
-		controller.processRequest(exchange);
+		controller.handle(exchange);
 
 		String body = exchange.body();
 		assertTrue(body.contains("No stub for GET /test"), body);
@@ -81,7 +81,7 @@ public class FrontControllerTest {
 		exchange.requestHeaders.add("Content-Type", "application/json");
 		exchange.requestBody = "{\"name\":\"Bob\"}";
 
-		controller.processRequest(exchange);
+		controller.handle(exchange);
 
 		assertEquals(1, requestLog.all().size());
 		ReceivedRequest captured = requestLog.last().orElseThrow();
@@ -96,7 +96,7 @@ public class FrontControllerTest {
 	public void anUnsupportedHttpMethodIsRejectedWithNotImplemented() throws IOException {
 		FakeExchange exchange = new FakeExchange("TRACE", "/test");
 
-		controller.processRequest(exchange);
+		controller.handle(exchange);
 
 		assertEquals(501, exchange.status);
 		assertTrue(exchange.body().startsWith("No support for TRACE."), exchange.body());
@@ -158,7 +158,7 @@ public class FrontControllerTest {
 			routeManager.registerRoute(new Route(HttpMethod.GET, "/empty"), withStatus(status));
 			FakeExchange exchange = new FakeExchange("HEAD", "/empty");
 
-			controller.processRequest(exchange);
+			controller.handle(exchange);
 
 			assertEquals(status, exchange.status);
 			assertFalse(exchange.responseHeaders.containsKey("Content-length"), "no Content-Length for " + status);
@@ -175,7 +175,7 @@ public class FrontControllerTest {
 
 		Thread.currentThread().interrupt();
 		try {
-			controller.processRequest(exchange);
+			controller.handle(exchange);
 		} finally {
 			assertTrue(Thread.interrupted(), "the interrupt flag must be restored after the sleep is cut short");
 		}
@@ -190,7 +190,7 @@ public class FrontControllerTest {
 		FakeExchange exchange = new FakeExchange("TRACE", "/test");
 		exchange.requestHeaders.add("Origin", "http://localhost:3000");
 
-		controller.processRequest(exchange);
+		controller.handle(exchange);
 
 		assertEquals(501, exchange.status);
 		assertEquals("http://localhost:3000", exchange.responseHeaders.getFirst("Access-Control-Allow-Origin"));

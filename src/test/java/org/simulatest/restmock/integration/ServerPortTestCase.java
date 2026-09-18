@@ -170,8 +170,6 @@ public class ServerPortTestCase {
 		RestMock.startServer(port);
 
 		assertEquals(RestMock.url("/ping"), RestMock.url("ping"));
-		assertEquals(RestMock.baseUrl(), RestMock.url(""));
-		assertEquals(RestMock.baseUrl(), RestMock.url(null));
 	}
 
 	@Test

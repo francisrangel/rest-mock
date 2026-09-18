@@ -15,9 +15,6 @@ import com.sun.net.httpserver.HttpServer;
 /** The lifecycle of one JDK HTTP server: bind, hand every request to a handler, stop. */
 public class RestMockServer {
 
-	/** Reported by {@link #port()} when the server is not running. */
-	public static final int NOT_RUNNING = -1;
-
 	private final HttpHandler handler;
 	private HttpServer server;
 	private ExecutorService workers;
@@ -63,9 +60,9 @@ public class RestMockServer {
 		return server != null;
 	}
 
-	/** The bound port, or {@link #NOT_RUNNING}. Resolves the real port when started on 0. */
+	/** The bound port, or -1 when not running. Resolves the real port when started on 0. */
 	public int port() {
-		return isRunning() ? server.getAddress().getPort() : NOT_RUNNING;
+		return isRunning() ? server.getAddress().getPort() : -1;
 	}
 
 	public void stop() {

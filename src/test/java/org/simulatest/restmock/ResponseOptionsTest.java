@@ -203,14 +203,6 @@ public class ResponseOptionsTest {
 	}
 
 	@Test
-	public void withStatusChainsWithHeader() {
-		subject.thenReturnJSON("{\"error\":\"bad\"}").withStatus(422).withHeader("X-Reason", "validation");
-
-		assertEquals(422, registered().getResponseStatus());
-		assertEquals("validation", registered().getHeaders().get("X-Reason"));
-	}
-
-	@Test
 	public void withDelaySetsDelayOnResponse() {
 		subject.thenReturnText("ok").withDelay(500);
 

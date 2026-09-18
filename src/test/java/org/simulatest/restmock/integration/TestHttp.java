@@ -7,7 +7,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 /** One HTTP client for every integration test, including the ones that manage their own server. */
-final class TestHttp {
+public final class TestHttp {
 
 	static final HttpClient CLIENT = HttpClient.newBuilder()
 		.connectTimeout(Duration.ofSeconds(5))
@@ -20,7 +20,7 @@ final class TestHttp {
 	}
 
 	/** A GET of a full URL, for tests whose point is which address the server answers on. */
-	static HttpResponse<String> get(String url) throws Exception {
+	public static HttpResponse<String> get(String url) throws Exception {
 		return send(HttpRequest.newBuilder().uri(URI.create(url)).GET());
 	}
 

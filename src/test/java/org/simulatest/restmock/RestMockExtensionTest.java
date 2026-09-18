@@ -7,18 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.ServerSocket;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import org.simulatest.restmock.integration.TestHttp;
+
 /** Drives the callbacks by hand, without a JUnit context, against a mock the test owns. */
 public class RestMockExtensionTest {
-
-	private static final HttpClient CLIENT = HttpClient.newHttpClient();
 
 	private final HttpMock own = new HttpMock();
 
@@ -53,7 +49,7 @@ public class RestMockExtensionTest {
 
 		extension.whenGet("/own").thenReturnText("ok");
 
-		assertEquals("ok", get(own.url("/own")).body());
+		assertEquals("ok", TestHttp.get(own.url("/own")).body());
 		assertSame(own.requests(), extension.requests());
 		assertEquals(own.url("/own"), extension.url("/own"));
 	}
@@ -68,12 +64,12 @@ public class RestMockExtensionTest {
 		RestMockExtension extension = new RestMockExtension(own);
 		extension.beforeAll(null);
 		extension.whenGet("/test").thenReturnText("ok");
-		get(own.url("/test"));
+		TestHttp.get(own.url("/test"));
 
 		extension.afterEach(null);
 
 		assertTrue(own.requests().isEmpty());
-		assertEquals(404, get(own.url("/test")).statusCode());
+		assertEquals(404, TestHttp.get(own.url("/test")).statusCode());
 	}
 
 	@Test
@@ -81,12 +77,12 @@ public class RestMockExtensionTest {
 		RestMockExtension extension = new RestMockExtension(own).keepRoutes();
 		extension.beforeAll(null);
 		extension.whenGet("/test").thenReturnText("ok");
-		get(own.url("/test"));
+		TestHttp.get(own.url("/test"));
 
 		extension.afterEach(null);
 
 		assertFalse(own.requests().isEmpty());
-		assertEquals(200, get(own.url("/test")).statusCode());
+		assertEquals(200, TestHttp.get(own.url("/test")).statusCode());
 	}
 
 	@Test
@@ -97,10 +93,6 @@ public class RestMockExtensionTest {
 		extension.afterAll(null);
 
 		assertEquals(-1, own.port());
-	}
-
-	private static HttpResponse<String> get(String url) throws Exception {
-		return CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString());
 	}
 
 	/** A port nothing holds right now, so the next bind gets it. */

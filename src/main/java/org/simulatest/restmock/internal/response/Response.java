@@ -26,10 +26,7 @@ public abstract class Response implements Responder {
 
 	public abstract ContentType getContentType();
 
-	/**
-	 * True when the body is text: it is safe to preview in logs, and the
-	 * response declares an explicit UTF-8 charset.
-	 */
+	/** True when the body is text, so the response declares an explicit UTF-8 charset. */
 	public abstract boolean isTextual();
 
 	/** The bytes to write for this response, given what the request carried. */

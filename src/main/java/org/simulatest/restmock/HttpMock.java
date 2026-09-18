@@ -60,12 +60,12 @@ public final class HttpMock {
 		return registerRoute(HttpMethod.PATCH, uri);
 	}
 
-	/** Stubs a HEAD response for {@code uri}. See {@link RestMock} for HEAD body semantics. */
+	/** Stubs HEAD explicitly for {@code uri}. Without one, HEAD is answered from the GET stub. */
 	public RestMockResponse whenHead(String uri) {
 		return registerRoute(HttpMethod.HEAD, uri);
 	}
 
-	/** Stubs an OPTIONS response for {@code uri}. See {@link RestMock} for the Allow header behavior. */
+	/** Stubs OPTIONS explicitly for {@code uri}. Without one, OPTIONS is answered from the methods stubbed there. */
 	public RestMockResponse whenOptions(String uri) {
 		return registerRoute(HttpMethod.OPTIONS, uri);
 	}

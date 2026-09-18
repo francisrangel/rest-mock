@@ -70,12 +70,12 @@ public final class RestMock {
 		return DEFAULT.whenPatch(uri);
 	}
 
-	/** Stubs a HEAD response for {@code uri}. See class doc for HEAD body semantics. */
+	/** Stubs HEAD explicitly for {@code uri}. Without one, HEAD is answered from the GET stub. */
 	public static RestMockResponse whenHead(String uri) {
 		return DEFAULT.whenHead(uri);
 	}
 
-	/** Stubs an OPTIONS response for {@code uri}. See class doc for the Allow header behavior. */
+	/** Stubs OPTIONS explicitly for {@code uri}. Without one, OPTIONS is answered from the methods stubbed there. */
 	public static RestMockResponse whenOptions(String uri) {
 		return DEFAULT.whenOptions(uri);
 	}

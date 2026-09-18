@@ -110,29 +110,11 @@ public class RouteTest {
 		assertRejected("/users#top", "must not contain a fragment");
 	}
 
+	/** Unclosed, unopened, empty, spanning a segment, nested: one rule catches them all. */
 	@Test
-	public void anUnclosedPlaceholderIsRejected() {
-		assertRejected("/users/{id", "unclosed '{'");
-	}
-
-	@Test
-	public void anUnmatchedClosingBraceIsRejected() {
-		assertRejected("/users/id}", "'}' with no matching '{'");
-	}
-
-	@Test
-	public void anEmptyPlaceholderIsRejected() {
-		assertRejected("/users/{}", "empty placeholder");
-	}
-
-	@Test
-	public void aPlaceholderSpanningASegmentIsRejected() {
-		assertRejected("/users/{a/b}", "malformed placeholder");
-	}
-
-	@Test
-	public void aNestedBraceIsRejected() {
-		assertRejected("/users/{a{b}}", "malformed placeholder '{a{b}'");
+	public void aMalformedPlaceholderIsRejected() {
+		for (String uri : new String[] {"/users/{id", "/users/id}", "/users/{}", "/users/{a/b}", "/users/{a{b}}"})
+			assertRejected(uri, "malformed placeholder");
 	}
 
 	@Test

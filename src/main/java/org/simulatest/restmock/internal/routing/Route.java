@@ -109,33 +109,14 @@ public class Route {
 	/**
 	 * A malformed placeholder is worse than a syntax error: a path template
 	 * missing its closing brace compiles to a literal path with a brace in it,
-	 * and quietly matches nothing.
+	 * and quietly matches nothing. Strip every well-formed placeholder and any
+	 * brace left over is one.
 	 */
 	private static void validatePlaceholders(String uri) {
-		int position = 0;
-		while (position < uri.length()) {
-			char character = uri.charAt(position);
+		String leftover = PLACEHOLDER.matcher(uri).replaceAll("");
 
-			if (character == '}')
-				throw invalid(uri, "has a '}' with no matching '{'");
-
-			if (character != '{') {
-				position++;
-				continue;
-			}
-
-			int close = uri.indexOf('}', position + 1);
-			if (close < 0)
-				throw invalid(uri, "has an unclosed '{'; path placeholders look like /users/{id}");
-
-			String name = uri.substring(position + 1, close);
-			if (name.isEmpty())
-				throw invalid(uri, "has an empty placeholder '{}'; name it, as in /users/{id}");
-			if (name.indexOf('/') >= 0 || name.indexOf('{') >= 0)
-				throw invalid(uri, "has the malformed placeholder '{" + name + "}'");
-
-			position = close + 1;
-		}
+		if (leftover.contains("{") || leftover.contains("}"))
+			throw invalid(uri, "has a malformed placeholder; path placeholders look like /users/{id}");
 	}
 
 	/** Two captures under one name would silently keep whichever matched last. */

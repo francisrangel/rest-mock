@@ -290,7 +290,7 @@ RestMock.whenGet("users/1");
 // Stub URI "users/1" must start with '/'.
 
 RestMock.whenGet("/users/{id");
-// Stub URI "/users/{id" has an unclosed '{'; path placeholders look like /users/{id}.
+// Stub URI "/users/{id" has a malformed placeholder; path placeholders look like /users/{id}.
 ```
 
 That last one was the worst of the three: a template missing its closing brace

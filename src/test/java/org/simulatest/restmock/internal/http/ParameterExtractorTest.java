@@ -150,6 +150,25 @@ public class ParameterExtractorTest {
 	}
 
 	@Test
+	public void aTrailingPercentSignIsPartOfTheValueWhileRealEscapesStillDecode() {
+		withContentType(ContentType.APPLICATION_FORM_URLENCODED.type());
+
+		Map<String, String> params = extract("/test", "offer=2+for+%C2%A3100+or+50%");
+
+		assertEquals("2 for £100 or 50%", params.get("offer"));
+	}
+
+	@Test
+	public void aPercentSignNotFollowedByTwoHexDigitsIsPartOfTheValue() {
+		withContentType(ContentType.APPLICATION_FORM_URLENCODED.type());
+
+		Map<String, String> params = extract("/test", "note=100%zz&rate=5%A");
+
+		assertEquals("100%zz", params.get("note"));
+		assertEquals("5%A", params.get("rate"));
+	}
+
+	@Test
 	public void jsonBody() {
 		withContentType(ContentType.APPLICATION_JSON.type());
 

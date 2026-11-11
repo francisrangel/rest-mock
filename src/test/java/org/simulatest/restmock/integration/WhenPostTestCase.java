@@ -29,6 +29,13 @@ public class WhenPostTestCase extends IntegrationTestBase {
 		postForm("name=Bob&number=1&total=10", "Hello Bob! You are the number #1 of #10.");
 	}
 
+	@Test
+	public void postWithAPercentSignThatIsNotAnEscape() throws Exception {
+		RestMock.whenPost("/test").thenReturnText("${discount} off");
+
+		postForm("discount=100%", "100% off");
+	}
+
 	private void postForm(String form, String expectedBody) throws Exception {
 		assertResponseBody("/test", HttpMethod.POST,
 			ContentType.APPLICATION_FORM_URLENCODED.type() + "; charset=UTF-8", form, expectedBody);

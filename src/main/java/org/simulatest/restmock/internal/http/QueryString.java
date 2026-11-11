@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 /**
  * Reads {@code a=1&b=2} pairs, whether they arrived as a URL's query string or
@@ -19,6 +20,9 @@ import java.util.function.BiConsumer;
  * Repeated names expose their first value, matching how repeated headers behave.
  */
 public final class QueryString {
+
+	/** A percent sign with no two hex digits after it. */
+	private static final Pattern STRAY_PERCENT = Pattern.compile("%(?![0-9A-Fa-f]{2})");
 
 	private QueryString() { }
 
@@ -55,7 +59,16 @@ public final class QueryString {
 	}
 
 	static String decode(String value) {
-		return URLDecoder.decode(value, StandardCharsets.UTF_8);
+		return URLDecoder.decode(escapeStrayPercents(value), StandardCharsets.UTF_8);
+	}
+
+	/**
+	 * A percent sign that starts no escape, as in {@code discount=100%}, is
+	 * part of the value and not a reason to fail the request. URLDecoder
+	 * throws on one, so each is escaped as {@code %25} before decoding.
+	 */
+	private static String escapeStrayPercents(String value) {
+		return STRAY_PERCENT.matcher(value).replaceAll("%25");
 	}
 
 }

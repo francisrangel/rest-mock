@@ -25,7 +25,43 @@ public class CorsTestCase extends IntegrationTestBase {
 
 		assertEquals(204, response.statusCode());
 		assertEquals(ORIGIN, header(response, HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN));
-		assertEquals(Set.of("GET", "HEAD", "OPTIONS"), methods(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
+		assertEquals("GET", header(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
+	}
+
+	/**
+	 * A browser that is refused a preflight reports an opaque failure and never
+	 * sends the request, so the 404 naming the stubbed verb would never arrive.
+	 */
+	@Test
+	public void preflightAllowsAMethodThePathIsNotStubbedFor() throws Exception {
+		RestMock.whenGet("/api/data").thenReturnJSON("{\"ok\":true}");
+
+		HttpResponse<String> response = preflight("/api/data", "PUT", null);
+
+		assertEquals(204, response.statusCode());
+		assertEquals("PUT", header(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
+		assertEquals(Set.of("GET", "HEAD", "OPTIONS"), methods(response, HttpHeader.ALLOW));
+	}
+
+	/** Without Access-Control-Expose-Headers the page reads a stub's own headers as null. */
+	@Test
+	public void headersAStubSetAreExposedToThePage() throws Exception {
+		RestMock.whenGet("/api/list").thenReturnJSON("[]")
+			.withHeader("X-Total-Count", "42")
+			.withHeader("Location", "/api/list/1");
+
+		HttpResponse<String> response = getWithOrigin("/api/list");
+
+		assertEquals(Set.of("X-Total-Count", "Location"), methods(response, HttpHeader.ACCESS_CONTROL_EXPOSE_HEADERS));
+	}
+
+	@Test
+	public void aStubWithNoHeadersOfItsOwnExposesNone() throws Exception {
+		RestMock.whenGet("/api/data").thenReturnJSON("{}");
+
+		HttpResponse<String> response = getWithOrigin("/api/data");
+
+		assertTrue(response.headers().firstValue(HttpHeader.ACCESS_CONTROL_EXPOSE_HEADERS).isEmpty());
 	}
 
 	@Test
@@ -58,12 +94,21 @@ public class CorsTestCase extends IntegrationTestBase {
 		assertEquals(ORIGIN, header(response, HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN));
 	}
 
+	/** A 404 preflight is a failed one, however it is decorated; granting it is what lets the readable 404 through. */
 	@Test
-	public void preflightForAnUnstubbedPathIsANotFoundTheBrowserCanRead() throws Exception {
-		HttpResponse<String> response = preflight("/never-stubbed", "GET", null);
+	public void preflightForAnUnstubbedPathIsGrantedSoTheRequestCanFetchItsNotFound() throws Exception {
+		HttpResponse<String> response = preflight("/never-stubbed", "POST", "content-type");
 
-		assertEquals(404, response.statusCode());
+		assertEquals(204, response.statusCode());
 		assertEquals(ORIGIN, header(response, HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN));
+		assertEquals("POST", header(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
+		assertEquals("content-type", header(response, HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS));
+	}
+
+	/** Only a preflight is granted: a plain OPTIONS to nowhere is still the 404 that says so. */
+	@Test
+	public void aPlainOptionsForAnUnstubbedPathIsStillNotFound() throws Exception {
+		assertEquals(404, optionsWithOrigin("/never-stubbed").statusCode());
 	}
 
 	@Test
@@ -87,7 +132,7 @@ public class CorsTestCase extends IntegrationTestBase {
 
 		assertEquals("mine", response.body());
 		assertEquals(ORIGIN, header(response, HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN));
-		assertEquals(Set.of("GET", "HEAD", "OPTIONS"), methods(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
+		assertEquals("GET", header(response, HttpHeader.ACCESS_CONTROL_ALLOW_METHODS));
 		assertEquals("content-type, authorization", header(response, HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS));
 	}
 

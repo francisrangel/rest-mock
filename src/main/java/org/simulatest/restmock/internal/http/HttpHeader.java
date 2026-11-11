@@ -12,6 +12,7 @@ public final class HttpHeader {
 	public static final String ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods";
 	public static final String ACCESS_CONTROL_ALLOW_HEADERS = "Access-Control-Allow-Headers";
 	public static final String ACCESS_CONTROL_ALLOW_CREDENTIALS = "Access-Control-Allow-Credentials";
+	public static final String ACCESS_CONTROL_EXPOSE_HEADERS = "Access-Control-Expose-Headers";
 	public static final String ACCESS_CONTROL_REQUEST_METHOD = "Access-Control-Request-Method";
 	public static final String ACCESS_CONTROL_REQUEST_HEADERS = "Access-Control-Request-Headers";
 

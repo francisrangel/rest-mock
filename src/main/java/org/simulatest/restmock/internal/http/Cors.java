@@ -1,5 +1,7 @@
 package org.simulatest.restmock.internal.http;
 
+import java.util.Collection;
+
 import com.sun.net.httpserver.Headers;
 
 /**
@@ -41,15 +43,29 @@ final class Cors {
 	}
 
 	/**
-	 * Answers the preflight, on top of the headers {@link #apply} already sent
-	 * for the request. Allowed methods come from the routes actually registered
-	 * for the path, and allowed headers mirror whatever the browser asked for -
-	 * a fixed list cannot know that this particular test posts JSON with a
-	 * bearer token. No max-age: stubs change between tests, and a cached
-	 * preflight would keep answering for the previous ones.
+	 * Lets the page read the headers a stub set. Without this a browser hides
+	 * every response header but a safelisted few, so {@code Location} or
+	 * {@code X-Total-Count} reads as null in the page while a JVM client sees
+	 * it. Named one by one: the wildcard does not count on a credentialed
+	 * request.
 	 */
-	static void applyPreflight(Headers requestHeaders, Headers responseHeaders, String allowedMethods) {
-		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS, allowedMethods);
+	static void expose(Headers requestHeaders, Headers responseHeaders, Collection<String> names) {
+		if (requestHeaders.getFirst(HttpHeader.ORIGIN) == null || names.isEmpty()) return;
+
+		responseHeaders.set(HttpHeader.ACCESS_CONTROL_EXPOSE_HEADERS, String.join(", ", names));
+	}
+
+	/**
+	 * Answers the preflight, on top of the headers {@link #apply} already sent
+	 * for the request. The method and the headers the browser asked for are
+	 * mirrored back, whatever is stubbed: a refused preflight reaches the page
+	 * as an opaque failure, while the request it lets through gets the 404 that
+	 * says what is stubbed. No max-age: stubs change between tests, and a
+	 * cached preflight would keep answering for the previous ones.
+	 */
+	static void applyPreflight(Headers requestHeaders, Headers responseHeaders) {
+		responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS,
+			requestHeaders.getFirst(HttpHeader.ACCESS_CONTROL_REQUEST_METHOD));
 
 		String requested = requestHeaders.getFirst(HttpHeader.ACCESS_CONTROL_REQUEST_HEADERS);
 		if (requested != null) responseHeaders.set(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS, requested);

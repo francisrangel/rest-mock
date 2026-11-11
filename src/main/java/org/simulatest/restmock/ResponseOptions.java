@@ -141,7 +141,10 @@ public class ResponseOptions implements RestMockResponse {
 		});
 	}
 
-	/** Sets a response header. Replaces any previous value for the same header name. */
+	/**
+	 * Sets a response header, replacing any previous value for the same name.
+	 * The value may reference what the request carried as {@code ${name}}.
+	 */
 	public ResponseOptions withHeader(String name, String value) {
 		current.addHeader(name, value);
 		return this;

@@ -2,6 +2,7 @@ package org.simulatest.restmock.internal.response;
 
 import java.net.HttpURLConnection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -61,8 +62,19 @@ public abstract class Response implements Responder {
 		this.delayMillis = delayMillis;
 	}
 
+	/** The headers as stubbed, placeholders and all. */
 	public Map<String, String> getHeaders() {
 		return Collections.unmodifiableMap(header);
+	}
+
+	/**
+	 * The headers to send, each value filled from what the request carried,
+	 * the way a body is, and sent as it came.
+	 */
+	public Map<String, String> renderHeaders(Map<String, String> parameters) {
+		Map<String, String> rendered = new LinkedHashMap<>();
+		header.forEach((name, value) -> rendered.put(name, Substitution.fill(value, parameters)));
+		return rendered;
 	}
 
 	public void addHeader(String name, String value) {

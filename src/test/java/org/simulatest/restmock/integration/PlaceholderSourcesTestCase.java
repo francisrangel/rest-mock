@@ -32,6 +32,36 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 	}
 
 	@Test
+	public void aResponseHeaderResolvesPlaceholders() throws Exception {
+		RestMock.whenPost("/orders/{id}").thenReturnText("created").withHeader("Location", "/orders/${id}");
+
+		HttpResponse<String> response = sendRequest("/orders/7", HttpMethod.POST);
+
+		assertEquals("/orders/7", response.headers().firstValue("Location").orElse(null));
+	}
+
+	/** A 500 that says the body could not be rendered must not arrive looking like the answer it replaced. */
+	@Test
+	public void aBodyThatFailsToRenderSendsNoneOfTheStubsHeaders() throws Exception {
+		RestMock.whenPost("/orders/{id}").thenReturnText("${nope}").withHeader("Location", "/orders/${id}");
+
+		HttpResponse<String> response = sendRequest("/orders/7", HttpMethod.POST);
+
+		assertEquals(500, response.statusCode());
+		assertTrue(response.headers().firstValue("Location").isEmpty());
+	}
+
+	@Test
+	public void anUnknownPlaceholderInAResponseHeaderFailsLoudly() throws Exception {
+		RestMock.whenGet("/users/{id}").thenReturnText("ok").withHeader("Location", "/users/${nmae}");
+
+		HttpResponse<String> response = sendRequest("/users/7", HttpMethod.GET);
+
+		assertEquals(500, response.statusCode());
+		assertTrue(response.body().contains("${nmae}"), response.body());
+	}
+
+	@Test
 	public void xmlBodyFieldsResolvePlaceholders() throws Exception {
 		RestMock.whenPost("/orders").thenReturnText("hello ${name}, you are ${age}");
 

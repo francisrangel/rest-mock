@@ -36,13 +36,7 @@ public final class NoRouteReport {
 	public static String describe(HttpMethod method, String path, List<Route> routes) {
 		StringBuilder report = new StringBuilder("No stub for ").append(method).append(' ').append(path);
 
-		if (routes.isEmpty()) {
-			return report
-				.append("\n\nNothing is stubbed. Call RestMock.when")
-				.append(camelCase(method)).append("(\"").append(path)
-				.append("\").thenReturn... before the request.")
-				.toString();
-		}
+		if (routes.isEmpty()) return report.append("\n\n").append(nothingStubbed(method, path)).toString();
 
 		hint(method, path, routes).ifPresent(hint -> report.append("\n\n").append(hint));
 
@@ -50,6 +44,16 @@ public final class NoRouteReport {
 		for (String line : list(routes)) report.append("\n  ").append(line);
 
 		return report.toString();
+	}
+
+	/**
+	 * The call the test forgot, and the other way to end up here: a stub written
+	 * once in a {@code @BeforeAll} is real, and gone after the first test.
+	 */
+	private static String nothingStubbed(HttpMethod method, String path) {
+		return "Nothing is stubbed. Call RestMock.when" + camelCase(method) + "(\"" + path + "\").thenReturn... before the request."
+			+ "\n\nIf you did, it was cleared since, by clean() or by RestMockExtension after each test."
+			+ " Stub in @BeforeEach, or use keepRoutes() to keep routes for the whole class.";
 	}
 
 	/**

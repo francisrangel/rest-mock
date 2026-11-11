@@ -95,6 +95,15 @@ public class NoRouteReportTest {
 		assertTrue(report.contains("and 5 more"), report);
 	}
 
+	/** A stub written once in a @BeforeAll is gone after the first test, and "call whenGet" alone does not say so. */
+	@Test
+	public void anEmptyRouteTableAlsoNamesTheResetThatMayHaveEmptiedIt() {
+		String report = describe(HttpMethod.GET, "/users/1");
+
+		assertTrue(report.contains("RestMockExtension after each test"), report);
+		assertTrue(report.contains("keepRoutes()"), report);
+	}
+
 	private static String describe(HttpMethod method, String path, Route... routes) {
 		return NoRouteReport.describe(method, path, List.of(routes));
 	}

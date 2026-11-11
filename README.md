@@ -266,12 +266,15 @@ the hint names the line you can go and fix:
 GET /user/42  ->  Closest stub: GET /users/{id}
 ```
 
-And when nothing is stubbed at all, the report is the call you forgot:
+And when nothing is stubbed at all, the report is the call you forgot, or the
+reset that took it away:
 
 ```
 No stub for GET /users/1
 
 Nothing is stubbed. Call RestMock.whenGet("/users/1").thenReturn... before the request.
+
+If you did, it was cleared since, by clean() or by RestMockExtension after each test. Stub in @BeforeEach, or use keepRoutes() to keep routes for the whole class.
 ```
 
 ---

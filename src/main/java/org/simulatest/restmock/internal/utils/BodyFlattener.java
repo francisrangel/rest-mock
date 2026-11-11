@@ -31,7 +31,10 @@ public final class BodyFlattener {
 	/**
 	 * Flattens an XML body. The root element is not part of the path, so
 	 * {@code <order><customer><name>Bob</name></customer></order>} yields
-	 * {@code customer.name}. Returns an empty map if the body is not valid XML.
+	 * {@code customer.name}. Attributes are fields of their element, and an
+	 * element that has both keeps its text under its own name:
+	 * {@code <price currency="USD">10</price>} yields {@code price} and
+	 * {@code price.currency}. Returns an empty map if the body is not valid XML.
 	 */
 	public static Map<String, String> flattenXml(String xml) {
 		return flatten(XML, xml);
@@ -52,14 +55,22 @@ public final class BodyFlattener {
 			// fields(), not properties(): that one arrived in Jackson 2.15, and a
 			// project pinning an older 2.x would crash on every JSON request.
 			node.fields().forEachRemaining(field ->
-				walk(prefix.isEmpty() ? field.getKey() : prefix + "." + field.getKey(), field.getValue(), out));
+				walk(join(prefix, field.getKey()), field.getValue(), out));
 		} else if (node.isArray()) {
 			for (int i = 0; i < node.size(); i++) {
-				walk(prefix.isEmpty() ? Integer.toString(i) : prefix + "." + i, node.get(i), out);
+				walk(join(prefix, Integer.toString(i)), node.get(i), out);
 			}
 		} else if (!prefix.isEmpty()) {
 			out.put(prefix, node.asText());
 		}
+	}
+
+	/**
+	 * A field with no name is how Jackson hands over the text of an XML element
+	 * that also has attributes, so it is filed under the element itself.
+	 */
+	private static String join(String prefix, String key) {
+		return prefix.isEmpty() || key.isEmpty() ? prefix + key : prefix + "." + key;
 	}
 
 }

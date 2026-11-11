@@ -3,6 +3,7 @@ package org.simulatest.restmock.internal.response;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,9 +16,10 @@ public abstract class Template extends Response {
 
 	private final String content;
 
+	/** A null body is a mistake in the stub, so it fails at the line that wrote it and not on the first request. */
 	Template(String body, ContentType contentType) {
 		super(contentType);
-		this.content = body;
+		this.content = Objects.requireNonNull(body, "A response body must not be null; for an empty one, pass \"\".");
 	}
 
 	@Override

@@ -48,6 +48,13 @@ public class ResponseOptionsTest {
 	}
 
 	@Test
+	public void aNullBodyFailsAtTheStubAndSaysWhatToPassInstead() {
+		NullPointerException failure = assertThrows(NullPointerException.class, () -> subject.thenReturnText(null));
+
+		assertEquals("A response body must not be null; for an empty one, pass \"\".", failure.getMessage());
+	}
+
+	@Test
 	public void thenReturnTextRegistersAPlainTextResponse() {
 		subject.thenReturnText("Hello World!");
 

@@ -200,6 +200,14 @@ anyway:
 The names you wrote are listed and the headers are only counted, so the one you
 were looking for is not buried under ten of them.
 
+Body fields are read from JSON, XML and form bodies; the request's
+`Content-Type` decides which. If a body was sent but gave no names, the failure
+says why. The usual cause is a client that posted JSON without a `Content-Type`:
+
+```
+500  No value for ${sku}. Available names: (none); plus 6 request headers as ${header.NAME}. The request body was not read: it has no Content-Type.
+```
+
 Substituted values are escaped for the format they land in, so a request cannot
 break the document:
 

@@ -8,6 +8,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.sun.net.httpserver.Headers;
 
@@ -33,10 +34,51 @@ public class ParameterExtractorTest {
 	}
 
 	private Map<String, String> extract(String uri, String body, Map<String, String> pathCaptures) {
+		return ParameterExtractor.extract(request(uri, body), pathCaptures);
+	}
+
+	private ReceivedRequest request(String uri, String body) {
 		URI parsed = URI.create(uri);
-		return ParameterExtractor.extract(
-			new ReceivedRequest(HttpMethod.POST, parsed.getPath(), parsed.getRawQuery(), headers, body, Instant.now()),
-			pathCaptures);
+		return new ReceivedRequest(HttpMethod.POST, parsed.getPath(), parsed.getRawQuery(), headers, body, Instant.now());
+	}
+
+	private Optional<String> whyBodyGaveNoNames(String body) {
+		return ParameterExtractor.whyBodyGaveNoNames(request("/test", body));
+	}
+
+	/** A client that posts JSON without saying so is the usual way to lose a body's fields. */
+	@Test
+	public void aBodyWithNoContentTypeIsReportedAsNotRead() {
+		assertEquals(Optional.of("The request body was not read: it has no Content-Type."),
+			whyBodyGaveNoNames("{\"sku\":\"A1\"}"));
+	}
+
+	@Test
+	public void aBodyOfATypeThatIsNotReadIsReportedWithThatType() {
+		withContentType("text/plain");
+
+		assertEquals(Optional.of("The request body was not read: its Content-Type is text/plain, not JSON, XML or a form."),
+			whyBodyGaveNoNames("{\"sku\":\"A1\"}"));
+	}
+
+	@Test
+	public void aBodyThatDoesNotParseIsReportedAsGivingNoNames() {
+		withContentType("application/json");
+
+		assertEquals(Optional.of("The request body gave no names: it is not valid application/json, or has no fields."),
+			whyBodyGaveNoNames("{\"sku\":\"A1\",}"));
+	}
+
+	@Test
+	public void aBodyThatWasReadNeedsNoExplanation() {
+		withContentType("application/json");
+
+		assertEquals(Optional.empty(), whyBodyGaveNoNames("{\"sku\":\"A1\"}"));
+	}
+
+	@Test
+	public void aRequestWithoutABodyNeedsNoExplanation() {
+		assertEquals(Optional.empty(), whyBodyGaveNoNames(""));
 	}
 
 	/** The top of the precedence chain lives here too, not only in the controller. */

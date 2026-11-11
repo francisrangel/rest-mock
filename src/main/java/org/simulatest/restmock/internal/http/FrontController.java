@@ -22,6 +22,7 @@ import org.simulatest.restmock.HttpMethod;
 import org.simulatest.restmock.ReceivedRequest;
 import org.simulatest.restmock.internal.response.ContentType;
 import org.simulatest.restmock.internal.response.Response;
+import org.simulatest.restmock.internal.response.UnresolvedPlaceholderException;
 import org.simulatest.restmock.internal.routing.NoRouteReport;
 import org.simulatest.restmock.internal.routing.RouteManager;
 import org.simulatest.restmock.internal.routing.RouteManager.Match;
@@ -121,11 +122,24 @@ public class FrontController implements HttpHandler {
 
 		Map<String, String> parameters = ParameterExtractor.extract(request, EncodedSlash.restore(match.pathCaptures()));
 
-		// The body first: a placeholder that fails in it must not leave the stub's headers on the 500.
+		try {
+			respond(exchange, content, parameters);
+		} catch (UnresolvedPlaceholderException unresolved) {
+			throw explained(unresolved, request);
+		}
+	}
+
+	/** The body first: a placeholder that fails in it must not leave the stub's headers on the 500. */
+	private void respond(HttpExchange exchange, Response content, Map<String, String> parameters) throws IOException {
 		byte[] body = content.render(parameters);
 
 		writeResponseHeaders(content, parameters, exchange);
 		send(exchange, content.getResponseStatus(), body);
+	}
+
+	/** The renderer knows which names it was given; only here is it known that a body was sent and not read. */
+	private static UnresolvedPlaceholderException explained(UnresolvedPlaceholderException unresolved, ReceivedRequest request) {
+		return ParameterExtractor.whyBodyGaveNoNames(request).map(unresolved::because).orElse(unresolved);
 	}
 
 	/**

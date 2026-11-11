@@ -160,6 +160,18 @@ public class PlaceholderSourcesTestCase extends IntegrationTestBase {
 		assertFalse(message.contains("User-agent"), "headers should be counted, not listed: " + message);
 	}
 
+	/** The field was sent; what the caller needs to hear is that nobody read it, and why. */
+	@Test
+	public void aNameLostWithAnUnreadBodySaysWhyTheBodyWasNotRead() throws Exception {
+		RestMock.whenPost("/orders").thenReturnText("sku=${sku}");
+
+		HttpResponse<String> response = sendRequest("/orders", HttpMethod.POST, "text/plain", "{\"sku\":\"A1\"}");
+
+		assertEquals(500, response.statusCode());
+		assertTrue(response.body().startsWith("No value for ${sku}. Available names: (none);"), response.body());
+		assertTrue(response.body().contains(". The request body was not read"), response.body());
+	}
+
 	/**
 	 * The README's own example: a percent-encoded quote in the path is decoded
 	 * on the way in and escaped on the way out, so the JSON stays well-formed.

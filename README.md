@@ -77,9 +77,9 @@ GET /users/42 → {"name":"Bob"}
 GET /users/43 → {"name":"John"}
 ```
 
-The extension starts the server before the class and clears routes between
-tests, so nothing leaks from one test to the next. `restMock.baseUrl()` is the
-address to point your client at.
+The extension starts the server before the class and undoes a test's stubs when
+the test ends, so nothing leaks from one test to the next. `restMock.baseUrl()`
+is the address to point your client at.
 
 Outside JUnit, in a throwaway main or a framework hook, the static `RestMock`
 methods do the same job with nothing to register:
@@ -572,7 +572,7 @@ whatever you hand it, verbatim.
 
 ```java
 RestMock.startServer();     // an OS-assigned port
-RestMock.clean();           // reset routes and the request log
+RestMock.clean();           // remove every stub and empty the request log
 RestMock.stopServer();
 ```
 
@@ -605,9 +605,8 @@ leaving you pointed at the old one.
 
 ## JUnit extension
 
-`RestMockExtension` starts the server before the class, clears routes after each
-test so they cannot leak into the next, and stops it when the class is done. No
-base class, no `@BeforeAll`, no forgotten `clean()`:
+`RestMockExtension` starts the server before the class and stops it when the
+class is done. No base class, no forgotten `clean()`:
 
 ```java
 class MyApiTest {
@@ -632,8 +631,49 @@ never has to reach for the static `RestMock` methods.
 The port is assigned by the OS, so two builds sharing a CI machine never fight
 over one; `restMock.baseUrl()` is the address either way. `new
 RestMockExtension(3000)` pins a port when something outside the test has to
-know it. `keepRoutes()` turns off the per-test reset when a class shares one
-fixture:
+know it.
+
+### How long a stub lasts
+
+A stub lasts as long as the scope it was made in: a test, or a class. When a
+test ends, the extension puts the routes back as that test found them and
+empties the request log:
+
+```java
+class OrdersTest {
+
+    @RegisterExtension
+    static RestMockExtension restMock = new RestMockExtension();
+
+    @BeforeAll
+    static void stubForEveryTest() {
+        restMock.whenGet("/health").thenReturnText("UP");
+    }
+
+    @Test
+    void anOutage() {
+        restMock.whenGet("/health").thenReturnText("DOWN").withStatus(503);
+        restMock.whenPost("/orders").thenReturnErrorCodeWithMessage(503, "try later");
+    }
+
+    @Test
+    void aNormalDay() {
+        // GET /health is UP again, and POST /orders is not stubbed
+    }
+}
+```
+
+- A stub from a `@BeforeAll` is there for every test in the class, and gone
+  when the class ends. A `@Nested` class is a class too: its stubs do not reach
+  a sibling.
+- A stub from a test or a `@BeforeEach` is gone when that test ends.
+- A class stub replaced inside a test comes back afterwards. So does one removed
+  by `clean()`.
+- Every test starts with an empty request log and each sequence of responses
+  at its first response.
+
+`keepRoutes()` turns the scoping off, for the rare class whose tests build on
+each other's stubs or read one request log across all of them:
 
 ```java
 @RegisterExtension
@@ -654,7 +694,7 @@ does not change:
 class PaymentsTest {
 
     @RegisterExtension
-    static RestMockExtension restMock = new RestMockExtension(new HttpMock());
+    static RestMockExtension restMock = new RestMockExtension(new HttpMock()).keepRoutes();
 
     @Test
     void chargesACard() throws Exception {
@@ -668,6 +708,10 @@ class PaymentsTest {
 Each `HttpMock` owns its routes, its request log, and its port, so two such
 classes share nothing and can run at the same time. Each binds its own
 OS-assigned port, so nothing has to allocate them.
+
+`CONCURRENT` runs the tests inside the class side by side as well, and they
+share that one mock. Undoing a test's stubs when it ends only makes sense for
+one test at a time, hence `keepRoutes()`: give each test its own paths.
 
 `@Execution` only does anything once JUnit's parallel support is switched on, in
 `src/test/resources/junit-platform.properties`:

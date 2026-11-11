@@ -6,12 +6,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
  * JUnit 5 extension that starts the mock server before the test class runs and
- * stops it afterwards. Routes and recorded requests are cleared between tests
- * unless you call {@link #keepRoutes()}.
+ * stops it afterwards.
+ *
+ * A stub lasts as long as the scope it was made in. One from a
+ * {@code @BeforeAll} is there for every test of that class, a {@code @Nested}
+ * class included, and gone when the class ends. One from a test or a
+ * {@code @BeforeEach} is gone when that test ends, and so are the requests it
+ * recorded. {@link #keepRoutes()} turns the scoping off.
  *
  * Register it on a static field so JUnit ties it to the class lifecycle (one
  * server per class), and stub on the field: it offers the same {@code when*},
@@ -32,11 +38,11 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * machine never fight over it; {@link #baseUrl()} is the address either way.
  * Pass a port when something outside the test has to know it.
  */
-public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
+public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
 
 	private final HttpMock mock;
 	private final int port;
-	private boolean autoClean = true;
+	private boolean scoping = true;
 
 	/** JUnit fires the class callbacks for each {@code @Nested} class too, so the server stops only when the outermost one ends. */
 	private final AtomicInteger openClasses = new AtomicInteger();
@@ -116,28 +122,46 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 	}
 
 	/**
-	 * Disables the per-test reset. Routes and recorded requests survive across
-	 * tests in the class. Useful when several tests share the same fixture.
+	 * Turns the scoping off: whatever is stubbed stays until the outermost
+	 * class ends, and one request log runs across all of its tests. Stubs
+	 * shared by a whole class do not need this; a {@code @BeforeAll} keeps them.
 	 */
 	public RestMockExtension keepRoutes() {
-		this.autoClean = false;
+		this.scoping = false;
 		return this;
 	}
 
+	/** Runs before the class's own {@code @BeforeAll}, so what that stubs belongs to the class. */
 	@Override
 	public void beforeAll(ExtensionContext context) {
 		openClasses.incrementAndGet();
+		beginScope();
 		mock.startServer(port);
 	}
 
 	@Override
 	public void afterAll(ExtensionContext context) {
+		endScope();
 		if (openClasses.decrementAndGet() == 0) mock.stopServer();
+	}
+
+	/** Runs before the test's own {@code @BeforeEach}, so what that stubs belongs to the test. */
+	@Override
+	public void beforeEach(ExtensionContext context) {
+		beginScope();
 	}
 
 	@Override
 	public void afterEach(ExtensionContext context) {
-		if (autoClean) mock.clean();
+		endScope();
+	}
+
+	private void beginScope() {
+		if (scoping) mock.beginScope();
+	}
+
+	private void endScope() {
+		if (scoping) mock.endScope();
 	}
 
 }

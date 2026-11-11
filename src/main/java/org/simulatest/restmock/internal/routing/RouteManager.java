@@ -126,6 +126,22 @@ public class RouteManager {
 		return methods;
 	}
 
+	/** The routes as they stand now, to come back to with {@link #restore}. */
+	public Snapshot snapshot() {
+		return new Snapshot(routes);
+	}
+
+	/**
+	 * Puts the routes back as {@code snapshot} found them, undoing any added,
+	 * replaced or removed since. Each sequence starts again from its first
+	 * responder.
+	 */
+	public synchronized void restore(Snapshot snapshot) {
+		Map<Route, Stub> restored = new LinkedHashMap<>();
+		snapshot.routes.forEach((route, stub) -> restored.put(route, new Stub(stub.responders())));
+		routes = restored;
+	}
+
 	public synchronized void clean() {
 		routes = new LinkedHashMap<>();
 	}
@@ -139,6 +155,17 @@ public class RouteManager {
 		public Match {
 			pathCaptures = Collections.unmodifiableMap(pathCaptures);
 		}
+	}
+
+	/** The routes at one moment. Holding the map is copy enough: {@link #routes} is replaced, never written in place. */
+	public static final class Snapshot {
+
+		private final Map<Route, Stub> routes;
+
+		private Snapshot(Map<Route, Stub> routes) {
+			this.routes = routes;
+		}
+
 	}
 
 	/** The responders queued for one route and how many have been served. */

@@ -60,9 +60,10 @@ public class RestMockExtensionTest {
 	}
 
 	@Test
-	public void afterEachCleansRoutesAndRequestsByDefault() throws Exception {
+	public void aStubMadeInATestIsGoneAfterItAlongWithItsRequests() throws Exception {
 		RestMockExtension extension = new RestMockExtension(own);
 		extension.beforeAll(null);
+		extension.beforeEach(null);
 		extension.whenGet("/test").thenReturnText("ok");
 		TestHttp.get(own.url("/test"));
 
@@ -72,10 +73,76 @@ public class RestMockExtensionTest {
 		assertEquals(404, TestHttp.get(own.url("/test")).statusCode());
 	}
 
+	/** What a @BeforeAll stubs is the class's fixture, so the reset between tests leaves it alone. */
 	@Test
-	public void afterEachPreservesRoutesAndRequestsWhenKeepRoutes() throws Exception {
+	public void aStubMadeBeforeTheTestsOutlivesThem() throws Exception {
+		RestMockExtension extension = new RestMockExtension(own);
+		extension.beforeAll(null);
+		extension.whenGet("/shared").thenReturnText("ok");
+		extension.beforeEach(null);
+
+		extension.afterEach(null);
+
+		assertEquals(200, TestHttp.get(own.url("/shared")).statusCode());
+	}
+
+	@Test
+	public void aClassStubRemovedByCleanIsBackForTheNextTest() throws Exception {
+		RestMockExtension extension = new RestMockExtension(own);
+		extension.beforeAll(null);
+		extension.whenGet("/shared").thenReturnText("ok");
+		extension.beforeEach(null);
+		own.clean();
+
+		extension.afterEach(null);
+
+		assertEquals(200, TestHttp.get(own.url("/shared")).statusCode());
+	}
+
+	/** A @Nested class is a scope of its own: what its @BeforeAll stubs must not reach a sibling. */
+	@Test
+	public void aNestedClassStubIsGoneWhenThatClassEnds() throws Exception {
+		RestMockExtension extension = new RestMockExtension(own);
+		extension.beforeAll(null);
+		extension.whenGet("/outer").thenReturnText("ok");
+		extension.beforeAll(null);
+		extension.whenGet("/nested").thenReturnText("ok");
+
+		extension.afterAll(null);
+
+		assertEquals(200, TestHttp.get(own.url("/outer")).statusCode());
+		assertEquals(404, TestHttp.get(own.url("/nested")).statusCode());
+	}
+
+	/** Classes sharing one mock run one after the other, and the second must start with nothing. */
+	@Test
+	public void aClassStubDoesNotReachTheNextClassOnTheSameMock() throws Exception {
+		RestMockExtension first = new RestMockExtension(own);
+		first.beforeAll(null);
+		first.whenGet("/shared").thenReturnText("ok");
+		first.afterAll(null);
+
+		new RestMockExtension(own).beforeAll(null);
+
+		assertEquals(404, TestHttp.get(own.url("/shared")).statusCode());
+	}
+
+	/** JUnit runs an "after" callback even when the "before" it pairs with was skipped by an earlier failure. */
+	@Test
+	public void anAfterCallbackWithoutItsBeforeChangesNothing() throws Exception {
+		own.startServer();
+		own.whenGet("/test").thenReturnText("ok");
+
+		new RestMockExtension(own).afterEach(null);
+
+		assertEquals(200, TestHttp.get(own.url("/test")).statusCode());
+	}
+
+	@Test
+	public void keepRoutesLeavesATestsStubsAndRequestsForTheNext() throws Exception {
 		RestMockExtension extension = new RestMockExtension(own).keepRoutes();
 		extension.beforeAll(null);
+		extension.beforeEach(null);
 		extension.whenGet("/test").thenReturnText("ok");
 		TestHttp.get(own.url("/test"));
 

@@ -48,9 +48,10 @@ final class ParameterExtractor {
 	private static void appendBody(Map<String, String> parameters, String body, String contentType) {
 		if (ContentType.APPLICATION_FORM_URLENCODED.matches(contentType)) {
 			parameters.putAll(QueryString.parse(body));
-		} else if (ContentType.APPLICATION_JSON.matches(contentType)) {
+		} else if (ContentType.APPLICATION_JSON.matches(contentType) || ContentType.hasSuffix(contentType, "+json")) {
 			parameters.putAll(BodyFlattener.flattenJson(body));
-		} else if (ContentType.TEXT_XML.matches(contentType) || ContentType.APPLICATION_XML.matches(contentType)) {
+		} else if (ContentType.TEXT_XML.matches(contentType) || ContentType.APPLICATION_XML.matches(contentType)
+				|| ContentType.hasSuffix(contentType, "+xml")) {
 			parameters.putAll(BodyFlattener.flattenXml(body));
 		}
 	}

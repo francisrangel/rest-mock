@@ -116,6 +116,16 @@ public class ParameterExtractorTest {
 		assertEquals("Bob", params.get("user.name"));
 	}
 
+	/** JSON:API, merge patch and vendor types are JSON by their suffix, parameters or not. */
+	@Test
+	public void aJsonSuffixedMediaTypeIsReadAsJson() {
+		for (String type : List.of("application/vnd.api+json", "application/merge-patch+json; charset=utf-8", "Application/HAL+JSON")) {
+			withContentType(type);
+
+			assertEquals("Bob", extract("/test", "{\"user\":{\"name\":\"Bob\"}}").get("user.name"), type);
+		}
+	}
+
 	@Test
 	public void unknownContentTypeIgnoresBody() {
 		withContentType(ContentType.TEXT_PLAIN.type());
@@ -279,6 +289,16 @@ public class ParameterExtractorTest {
 	@Test
 	public void applicationXmlIsTreatedAsXmlToo() {
 		withContentType("application/xml");
+
+		Map<String, String> params = extract("/test", "<developer><name>Bob</name></developer>");
+
+		assertEquals("Bob", params.get("name"));
+	}
+
+	/** SOAP 1.2 says application/soap+xml where SOAP 1.1 said text/xml. */
+	@Test
+	public void anXmlSuffixedMediaTypeIsReadAsXml() {
+		withContentType("application/soap+xml; charset=utf-8");
 
 		Map<String, String> params = extract("/test", "<developer><name>Bob</name></developer>");
 

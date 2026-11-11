@@ -140,7 +140,7 @@ public class FrontController implements HttpHandler {
 		}
 
 		applyOptionsHeaders(exchange, methods);
-		exchange.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
+		sendHeadersOnly(exchange, HttpURLConnection.HTTP_NO_CONTENT);
 	}
 
 	/**
@@ -201,24 +201,40 @@ public class FrontController implements HttpHandler {
 	 * that here means no caller can forget it.
 	 */
 	private static void send(HttpExchange exchange, int status, byte[] body) throws IOException {
-		if (HttpMethod.HEAD.name().equals(exchange.getRequestMethod())) {
-			if (allowsContentLength(status)) {
-				exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(body.length));
-			}
-			exchange.sendResponseHeaders(status, -1);
-			return;
-		}
+		if (isHead(exchange)) announceLength(exchange, status, body.length);
 
+		if (hasBodyToWrite(exchange, status, body)) sendWithBody(exchange, status, body);
+		else sendHeadersOnly(exchange, status);
+	}
+
+	private static boolean hasBodyToWrite(HttpExchange exchange, int status, byte[] body) {
+		return !isHead(exchange) && allowsBody(status) && body.length > 0;
+	}
+
+	private static boolean isHead(HttpExchange exchange) {
+		return HttpMethod.HEAD.name().equals(exchange.getRequestMethod());
+	}
+
+	/** 204 and 304 never carry a body. */
+	private static boolean allowsBody(int status) {
+		return status != HttpURLConnection.HTTP_NO_CONTENT && status != HttpURLConnection.HTTP_NOT_MODIFIED;
+	}
+
+	private static void announceLength(HttpExchange exchange, int status, int length) {
+		if (allowsBody(status)) exchange.getResponseHeaders().set(HttpHeader.CONTENT_LENGTH, Integer.toString(length));
+	}
+
+	/** -1 is the JDK server's "no body": 0 would mean chunked, and any length on a 204 or 304 is logged as a warning. */
+	private static void sendHeadersOnly(HttpExchange exchange, int status) throws IOException {
+		exchange.sendResponseHeaders(status, -1);
+	}
+
+	private static void sendWithBody(HttpExchange exchange, int status, byte[] body) throws IOException {
 		exchange.sendResponseHeaders(status, body.length);
 
 		try (OutputStream os = exchange.getResponseBody()) {
 			os.write(body);
 		}
-	}
-
-	/** 204 and 304 carry no body; the JDK server rejects the exchange if they declare a length. */
-	private static boolean allowsContentLength(int status) {
-		return status != HttpURLConnection.HTTP_NO_CONTENT && status != HttpURLConnection.HTTP_NOT_MODIFIED;
 	}
 
 }

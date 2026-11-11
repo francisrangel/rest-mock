@@ -45,8 +45,8 @@ final class Substitution {
 		});
 	}
 
-	private static IllegalStateException unresolved(String name, Map<String, String> parameters) {
-		return new IllegalStateException(
+	private static UnresolvedPlaceholderException unresolved(String name, Map<String, String> parameters) {
+		return new UnresolvedPlaceholderException(
 			"No value for ${" + name + "}. Available names: " + available(parameters));
 	}
 
@@ -56,8 +56,6 @@ final class Substitution {
 	 * buried the two or three names anybody is actually looking for.
 	 */
 	private static String available(Map<String, String> parameters) {
-		if (parameters.isEmpty()) return "(none)";
-
 		List<String> authored = new ArrayList<>();
 		int headers = 0;
 
@@ -66,19 +64,16 @@ final class Substitution {
 			else authored.add(name);
 		}
 
-		StringBuilder rendered = new StringBuilder(listed(authored));
+		return headers == 0 ? listed(authored) : listed(authored) + "; " + headersCounted(headers);
+	}
 
-		if (headers > 0)
-			rendered.append(authored.isEmpty() ? "" : "; ")
-				.append("plus ").append(headers)
-				.append(headers == 1 ? " request header as " : " request headers as ")
-				.append("${").append(Placeholders.HEADER_PREFIX).append("NAME}");
-
-		return rendered.toString();
+	private static String headersCounted(int headers) {
+		return "plus " + headers + (headers == 1 ? " request header" : " request headers")
+			+ " as ${" + Placeholders.HEADER_PREFIX + "NAME}";
 	}
 
 	private static String listed(List<String> names) {
-		if (names.isEmpty()) return "";
+		if (names.isEmpty()) return "(none)";
 		if (names.size() <= NAMES_IN_ERROR) return String.join(", ", names);
 
 		return String.join(", ", names.subList(0, NAMES_IN_ERROR))

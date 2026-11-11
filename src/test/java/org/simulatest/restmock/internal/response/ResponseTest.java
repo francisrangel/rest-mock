@@ -90,16 +90,27 @@ public class ResponseTest {
 		assertEquals("<a title=\"&quot;it&#39;s&quot;\">", render(response, Map.of("v", "\"it's\"")));
 	}
 
-	/** Only headers were available: no authored names to list, one header to count. */
+	/** Only headers were available: no authored names to list, which the message has to say outright. */
 	@Test
-	public void theFailureCountsHeadersWhenNothingElseWasAvailable() {
+	public void theFailureSaysNoneAndCountsHeadersWhenNothingElseWasAvailable() {
 		Response response = new TextPlain("${nope}");
 
 		IllegalStateException failure = assertThrows(IllegalStateException.class,
 			() -> render(response, Map.of("header.accept", "*/*")));
 
-		assertEquals("No value for ${nope}. Available names: plus 1 request header as ${header.NAME}",
+		assertEquals("No value for ${nope}. Available names: (none); plus 1 request header as ${header.NAME}",
 			failure.getMessage());
+	}
+
+	@Test
+	public void anUnresolvedPlaceholderCanBeGivenAReason() {
+		Response response = new TextPlain("${nope}");
+
+		UnresolvedPlaceholderException failure = assertThrows(UnresolvedPlaceholderException.class,
+			() -> render(response, Map.of()));
+
+		assertEquals("No value for ${nope}. Available names: (none). The body was not read.",
+			failure.because("The body was not read.").getMessage());
 	}
 
 	@Test

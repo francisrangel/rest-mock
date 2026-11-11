@@ -709,9 +709,10 @@ Each `HttpMock` owns its routes, its request log, and its port, so two such
 classes share nothing and can run at the same time. Each binds its own
 OS-assigned port, so nothing has to allocate them.
 
-`CONCURRENT` runs the tests inside the class side by side as well, and they
-share that one mock. Undoing a test's stubs when it ends only makes sense for
-one test at a time, hence `keepRoutes()`: give each test its own paths.
+`@Execution(CONCURRENT)` also runs the tests inside this class at the same time,
+all against the one mock. The extension's cleanup after each test would then
+wipe the stubs of tests still running, so turn it off with `keepRoutes()` and
+use a different path in each test.
 
 `@Execution` only does anything once JUnit's parallel support is switched on, in
 `src/test/resources/junit-platform.properties`:

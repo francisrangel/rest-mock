@@ -2,6 +2,7 @@ package org.simulatest.restmock.internal.server;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
@@ -40,9 +41,8 @@ public class RestMockServer {
 			return;
 		}
 
-		// Loopback only: a stub is never reachable from another machine, the OS
-		// firewall has nothing to ask about, and the address agrees with the
-		// localhost URL that baseUrl() reports.
+		// Loopback only: a stub is never reachable from another machine and the
+		// OS firewall has nothing to ask about.
 		try {
 			server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 0);
 		} catch (IOException e) {
@@ -63,6 +63,16 @@ public class RestMockServer {
 	/** The bound port, or -1 when not running. Resolves the real port when started on 0. */
 	public int port() {
 		return isRunning() ? server.getAddress().getPort() : -1;
+	}
+
+	/**
+	 * The bound address as a URL host, IPv6 in brackets. Not "localhost": a
+	 * client that resolves that name to the other loopback first is refused
+	 * there before it reaches this one.
+	 */
+	public String host() {
+		InetAddress address = server.getAddress().getAddress();
+		return address instanceof Inet6Address ? "[" + address.getHostAddress() + "]" : address.getHostAddress();
 	}
 
 	public void stop() {

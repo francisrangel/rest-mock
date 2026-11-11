@@ -107,11 +107,11 @@ public class ServerPortTestCase {
 	}
 
 	@Test
-	public void baseUrlPointsAtTheBoundPort() {
+	public void baseUrlIsTheAddressTheServerIsBoundTo() {
 		RestMock.startServer(port);
 
-		assertEquals("http://localhost:" + port, RestMock.baseUrl());
-		assertEquals("http://localhost:" + port + "/users/42", RestMock.url("/users/42"));
+		assertEquals("http://127.0.0.1:" + port, RestMock.baseUrl());
+		assertEquals("http://127.0.0.1:" + port + "/users/42", RestMock.url("/users/42"));
 	}
 
 	/** A base URL for a server that is not listening would fail later, far from the cause. */

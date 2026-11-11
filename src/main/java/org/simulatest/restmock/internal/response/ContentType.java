@@ -1,6 +1,7 @@
 package org.simulatest.restmock.internal.response;
 
 import java.net.URLConnection;
+import java.util.Locale;
 
 public record ContentType(String type) {
 
@@ -33,11 +34,20 @@ public record ContentType(String type) {
 	 * matches {@code application/json; charset=UTF-8}.
 	 */
 	public boolean matches(String rawHeaderValue) {
-		if (rawHeaderValue == null) return false;
+		return rawHeaderValue != null && mediaType(rawHeaderValue).equalsIgnoreCase(type);
+	}
 
-		int parameters = rawHeaderValue.indexOf(';');
-		String mediaType = parameters < 0 ? rawHeaderValue : rawHeaderValue.substring(0, parameters);
-		return mediaType.trim().equalsIgnoreCase(type);
+	/**
+	 * True when a raw {@code Content-Type} header names a media type with this
+	 * structured suffix, as {@code application/vnd.api+json} carries {@code +json}:
+	 * the suffix says how the body is written, whatever the type before it.
+	 */
+	public static boolean hasSuffix(String rawHeaderValue, String suffix) {
+		return rawHeaderValue != null && mediaType(rawHeaderValue).toLowerCase(Locale.ROOT).endsWith(suffix);
+	}
+
+	private static String mediaType(String rawHeaderValue) {
+		return rawHeaderValue.split(";", 2)[0].trim();
 	}
 
 }

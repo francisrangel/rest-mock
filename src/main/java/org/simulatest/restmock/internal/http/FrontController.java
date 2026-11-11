@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -118,10 +119,12 @@ public class FrontController implements HttpHandler {
 			}
 		}
 
-		writeResponseHeaders(content, exchange);
+		Map<String, String> parameters = ParameterExtractor.extract(request, EncodedSlash.restore(match.pathCaptures()));
 
-		byte[] body = content.render(ParameterExtractor.extract(request, EncodedSlash.restore(match.pathCaptures())));
+		// The body first: a placeholder that fails in it must not leave the stub's headers on the 500.
+		byte[] body = content.render(parameters);
 
+		writeResponseHeaders(content, parameters, exchange);
 		send(exchange, content.getResponseStatus(), body);
 	}
 
@@ -175,12 +178,13 @@ public class FrontController implements HttpHandler {
 	 * Writes the framework defaults first and the user's own headers last, so a
 	 * header set via {@code withHeader} always wins - including {@code Content-Type}.
 	 */
-	private void writeResponseHeaders(Response content, HttpExchange exchange) {
+	private void writeResponseHeaders(Response content, Map<String, String> parameters, HttpExchange exchange) {
 		Headers responseHeaders = exchange.getResponseHeaders();
+		Map<String, String> headers = content.renderHeaders(parameters);
 
 		responseHeaders.set(HttpHeader.CONTENT_TYPE, contentTypeHeaderFor(content));
-		Cors.expose(exchange.getRequestHeaders(), responseHeaders, content.getHeaders().keySet());
-		content.getHeaders().forEach(responseHeaders::set);
+		Cors.expose(exchange.getRequestHeaders(), responseHeaders, headers.keySet());
+		headers.forEach(responseHeaders::set);
 	}
 
 	/** Text bodies are encoded UTF-8 and say so; binary bodies carry no known encoding and get the bare type. */

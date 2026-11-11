@@ -183,6 +183,51 @@ public class ResponseTest {
 	}
 
 	@Test
+	public void aHeaderValueIsFilledFromTheRequestLikeABody() {
+		Response response = new TextPlain("ok");
+		response.addHeader("Location", "/orders/${id}");
+
+		assertEquals(Map.of("Location", "/orders/42"), response.renderHeaders(Map.of("id", "42")));
+	}
+
+	/** A header value has no format to break, so what a JSON body would escape goes out as it came. */
+	@Test
+	public void aHeaderValueIsNotEscapedForTheBodysFormat() {
+		Response response = new JSON("{}");
+		response.addHeader("X-Note", "${note}");
+
+		assertEquals(Map.of("X-Note", "say \"hi\""), response.renderHeaders(Map.of("note", "say \"hi\"")));
+	}
+
+	@Test
+	public void aBinaryResponseFillsItsHeadersToo() {
+		Response response = new Binary(new byte[] { 1 }, ContentType.APPLICATION_OCTET_STREAM);
+		response.addHeader("Content-Disposition", "attachment; filename=\"${name}.pdf\"");
+
+		assertEquals(Map.of("Content-Disposition", "attachment; filename=\"invoice.pdf\""),
+			response.renderHeaders(Map.of("name", "invoice")));
+	}
+
+	@Test
+	public void anUnknownNameInAHeaderFailsLikeOneInABody() {
+		Response response = new TextPlain("ok");
+		response.addHeader("Location", "/orders/${nmae}");
+
+		IllegalStateException failure =
+			assertThrows(IllegalStateException.class, () -> response.renderHeaders(Map.of("name", "42")));
+
+		assertTrue(failure.getMessage().contains("${nmae}"), failure.getMessage());
+	}
+
+	@Test
+	public void aDoubledDollarIsALiteralPlaceholderInAHeader() {
+		Response response = new TextPlain("ok");
+		response.addHeader("X-Template", "$${id}");
+
+		assertEquals(Map.of("X-Template", "${id}"), response.renderHeaders(Map.of()));
+	}
+
+	@Test
 	public void theHeaderViewReflectsHeadersAddedLater() {
 		Response response = new TextPlain("ok");
 		Map<String, String> header = response.getHeaders();

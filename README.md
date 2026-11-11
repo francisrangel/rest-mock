@@ -212,7 +212,8 @@ GET /users/a"b → {"id":"a\"b"}
 ```
 
 JSON gets string escaping, XML and HTML get entities, plain text is left alone.
-`thenReturnFile` skips substitution entirely.
+`thenReturnFile` serves its bytes untouched. Header values set with
+`withHeader()` are substituted too, without escaping.
 
 A body that has to contain a literal `${...}` doubles the dollar: `$${user}`
 is served as `${user}`, untouched.
@@ -337,8 +338,8 @@ bytes carry no filename to infer from:
 RestMock.whenGet("/invoice").thenReturnFile(generatePdf(invoice), "application/pdf");
 ```
 
-These methods skip `${...}` substitution, which needs a string view of the
-content. For text with placeholders, use the `*FromResource` methods above.
+These methods skip `${...}` substitution in the body, which needs a string view
+of the content. For text with placeholders, use the `*FromResource` methods above.
 
 ---
 
@@ -357,6 +358,23 @@ RestMock.whenPost("/users")
 
 A header you set here wins over the one rest-mock would have sent, `Content-Type`
 included.
+
+A header value takes `${name}` placeholders like a body does, so a 201 can
+point at what it created:
+
+```java
+RestMock.whenPost("/orders/{id}")
+        .thenReturnJSON("{\"id\":\"${id}\"}")
+        .withStatus(201)
+        .withHeader("Location", "/orders/${id}");
+```
+
+```
+POST /orders/7 → 201, Location: /orders/7
+```
+
+The same rules apply: an unknown name is a 500 and `$${id}` is a literal
+`${id}`. The value is sent as it came, without escaping.
 
 When you just want a status and a message and don't care about the content type,
 there's a shorthand:

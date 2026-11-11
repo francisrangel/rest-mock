@@ -21,7 +21,8 @@ import java.util.function.BiConsumer;
  * captures, query parameters, form, JSON or XML body fields, and request
  * headers as {@code ${header.Name}}. Values are escaped for the body's format,
  * a name with no value fails the response with a 500, and {@code thenReturnFile}
- * skips substitution. The
+ * serves its bytes untouched. A header value set with {@code withHeader} is
+ * substituted the same way, without escaping. The
  * <a href="https://github.com/francisrangel/rest-mock#dynamic-data-from-requests">README</a>
  * spells out the rules.
  */

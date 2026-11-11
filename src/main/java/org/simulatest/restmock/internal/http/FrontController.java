@@ -126,14 +126,15 @@ public class FrontController implements HttpHandler {
 	}
 
 	/**
-	 * Answers OPTIONS from the route table. A path with no routes stays a 404 -
-	 * but a CORS-decorated one, so a browser reports the 404 instead of an
-	 * opaque cross-origin failure.
+	 * Answers OPTIONS from the route table. A path with no routes is a 404,
+	 * unless a browser is asking permission: a preflight is always granted, so
+	 * the request behind it goes out and comes back with the 404 the page can
+	 * read.
 	 */
 	private void answerOptions(HttpExchange exchange, String path) throws IOException {
 		Set<HttpMethod> methods = routeManager.methodsFor(path);
 
-		if (methods.isEmpty()) {
+		if (methods.isEmpty() && !Cors.isPreflight(exchange.getRequestHeaders())) {
 			respondWithNoRoute(exchange, HttpMethod.OPTIONS, path);
 			return;
 		}
@@ -160,11 +161,10 @@ public class FrontController implements HttpHandler {
 	 * stubbing a route never switches its preflight off.
 	 */
 	private static void applyOptionsHeaders(HttpExchange exchange, Set<HttpMethod> methods) {
-		String allow = joinMethodNames(methods);
-		exchange.getResponseHeaders().set(HttpHeader.ALLOW, allow);
+		if (!methods.isEmpty()) exchange.getResponseHeaders().set(HttpHeader.ALLOW, joinMethodNames(methods));
 
 		if (Cors.isPreflight(exchange.getRequestHeaders()))
-			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders(), allow);
+			Cors.applyPreflight(exchange.getRequestHeaders(), exchange.getResponseHeaders());
 	}
 
 	private static String joinMethodNames(Collection<HttpMethod> methods) {
@@ -179,6 +179,7 @@ public class FrontController implements HttpHandler {
 		Headers responseHeaders = exchange.getResponseHeaders();
 
 		responseHeaders.set(HttpHeader.CONTENT_TYPE, contentTypeHeaderFor(content));
+		Cors.expose(exchange.getRequestHeaders(), responseHeaders, content.getHeaders().keySet());
 		content.getHeaders().forEach(responseHeaders::set);
 	}
 

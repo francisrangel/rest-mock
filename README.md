@@ -512,8 +512,8 @@ something else; an explicit stub always wins.
 ## Browser-driven tests (CORS)
 
 If the code under test runs in a browser, rest-mock answers the preflight for
-you. Stub the route you actually care about; the `OPTIONS` call is handled from
-whatever methods you registered for that path:
+you. Stub the route you actually care about; the `OPTIONS` call that comes
+before it is granted:
 
 ```java
 RestMock.whenGet("/api/data").thenReturnJSON("{\"ok\":true}");
@@ -526,14 +526,18 @@ OPTIONS /api/data
 ->
   204
   Access-Control-Allow-Origin: http://localhost:3000
-  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Access-Control-Allow-Methods: GET
   Access-Control-Allow-Credentials: true
 ```
 
 The origin you send is echoed back rather than `*`, so credentialed requests
 work, and `Access-Control-Request-Headers` is mirrored, so posting JSON with an
-`Authorization` header passes preflight. Errors carry the headers too: a 404
-reaches the browser as a readable 404 instead of an opaque CORS failure.
+`Authorization` header passes preflight. Headers you set with `withHeader()` are
+exposed, so the page can read a `Location` or an `X-Total-Count`.
+
+Errors carry the headers too, and a preflight is granted whatever is stubbed: a
+wrong verb or a mistyped path reaches the browser as the readable 404 above
+instead of an opaque CORS failure.
 
 Requests without an `Origin` get no CORS headers at all, so plain JVM clients
 see clean responses. An explicit `whenOptions()` stub supplies the body and

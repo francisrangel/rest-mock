@@ -91,14 +91,18 @@ public class FrontController implements HttpHandler {
 
 		recorder.accept(request);
 
-		Optional<Match> match = routeManager.lookup(httpMethod, uri.getPath());
+		// Routed on the marked path, recorded above under the decoded one.
+		String path = EncodedSlash.mark(uri.getRawPath());
+		Optional<Match> match = routeManager.lookup(httpMethod, path);
 
 		if (match.isPresent()) {
+			// Before the stub's own headers are written, so one set via withHeader still wins.
+			if (httpMethod == HttpMethod.OPTIONS) applyOptionsHeaders(exchange, routeManager.methodsFor(path));
 			serve(exchange, request, match.get());
 		} else if (httpMethod == HttpMethod.OPTIONS) {
-			answerOptions(exchange, uri.getPath());
+			answerOptions(exchange, path);
 		} else {
-			respondWithNoRoute(exchange, httpMethod, uri.getPath());
+			respondWithNoRoute(exchange, httpMethod, path);
 		}
 	}
 
@@ -114,14 +118,9 @@ public class FrontController implements HttpHandler {
 			}
 		}
 
-		// Before writeResponseHeaders, so a header the stub set via withHeader
-		// still overrides what is derived here.
-		if (request.method() == HttpMethod.OPTIONS)
-			applyOptionsHeaders(exchange, routeManager.methodsFor(request.path()));
-
 		writeResponseHeaders(content, exchange);
 
-		byte[] body = content.render(ParameterExtractor.extract(request, match.pathCaptures()));
+		byte[] body = content.render(ParameterExtractor.extract(request, EncodedSlash.restore(match.pathCaptures())));
 
 		send(exchange, content.getResponseStatus(), body);
 	}
@@ -149,7 +148,8 @@ public class FrontController implements HttpHandler {
 	 * answers itself.
 	 */
 	private void respondWithNoRoute(HttpExchange exchange, HttpMethod method, String path) throws IOException {
-		sendText(exchange, HttpURLConnection.HTTP_NOT_FOUND, NoRouteReport.describe(method, path, routeManager.registeredRoutes()));
+		sendText(exchange, HttpURLConnection.HTTP_NOT_FOUND,
+			EncodedSlash.show(NoRouteReport.describe(method, path, routeManager.registeredRoutes())));
 	}
 
 	/**

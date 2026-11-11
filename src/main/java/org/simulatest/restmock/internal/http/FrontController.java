@@ -40,7 +40,8 @@ public class FrontController implements HttpHandler {
 		try (exchange) {
 			try {
 				processRequest(exchange);
-			} catch (RuntimeException failure) {
+			} catch (RuntimeException | Error failure) {
+				// Error too: an assertion failing inside a thenAnswer callback is one.
 				respondWithFailure(exchange, failure);
 			}
 		}
@@ -52,7 +53,7 @@ public class FrontController implements HttpHandler {
 	 * cause. The mock only ever serves the test that started it, so putting the
 	 * failure in the body is the fastest route from symptom to diagnosis.
 	 */
-	private static void respondWithFailure(HttpExchange exchange, RuntimeException failure) {
+	private static void respondWithFailure(HttpExchange exchange, Throwable failure) {
 		try {
 			sendText(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, describe(failure));
 		} catch (IOException | RuntimeException tooLate) {
@@ -60,7 +61,7 @@ public class FrontController implements HttpHandler {
 		}
 	}
 
-	private static String describe(RuntimeException failure) {
+	private static String describe(Throwable failure) {
 		return failure.getMessage() == null ? failure.toString() : failure.getMessage();
 	}
 

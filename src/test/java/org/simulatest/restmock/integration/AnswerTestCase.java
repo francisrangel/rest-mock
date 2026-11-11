@@ -50,6 +50,19 @@ public class AnswerTestCase extends IntegrationTestBase {
 		assertEquals("kaboom", response.body());
 	}
 
+	/** An assertion inside the callback fails with an Error, and its message must reach the test the same way. */
+	@Test
+	public void anAssertionFailingInAnAnswerIsA500CarryingItsMessage() throws Exception {
+		RestMock.whenGet("/checked").thenAnswer((request, respond) -> {
+			throw new AssertionError("expected a tenant header");
+		});
+
+		HttpResponse<String> response = sendRequest("/checked", HttpMethod.GET);
+
+		assertEquals(500, response.statusCode());
+		assertEquals("expected a tenant header", response.body());
+	}
+
 	@Test
 	public void anAnswerThatSetsNothingIsTheUsual501() throws Exception {
 		RestMock.whenGet("/silent").thenAnswer((request, respond) -> { });

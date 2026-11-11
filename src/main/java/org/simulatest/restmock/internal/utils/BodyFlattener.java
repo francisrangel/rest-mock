@@ -49,9 +49,10 @@ public final class BodyFlattener {
 
 	private static void walk(String prefix, JsonNode node, Map<String, String> out) {
 		if (node.isObject()) {
-			for (Map.Entry<String, JsonNode> field : node.properties()) {
-				walk(prefix.isEmpty() ? field.getKey() : prefix + "." + field.getKey(), field.getValue(), out);
-			}
+			// fields(), not properties(): that one arrived in Jackson 2.15, and a
+			// project pinning an older 2.x would crash on every JSON request.
+			node.fields().forEachRemaining(field ->
+				walk(prefix.isEmpty() ? field.getKey() : prefix + "." + field.getKey(), field.getValue(), out));
 		} else if (node.isArray()) {
 			for (int i = 0; i < node.size(); i++) {
 				walk(prefix.isEmpty() ? Integer.toString(i) : prefix + "." + i, node.get(i), out);

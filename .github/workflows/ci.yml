@@ -46,3 +46,9 @@ jobs:
       - name: Test against JUnit 5.8
         if: matrix.os == 'ubuntu-latest' && matrix.java == 17
         run: mvn -B test -Djunit.version=5.8.2
+
+      # The pom promises that a project pinning its own Jackson 2.x still
+      # works; 2.13 is what Spring Boot 2.7 manages, so one leg proves it.
+      - name: Test against Jackson 2.13
+        if: matrix.os == 'ubuntu-latest' && matrix.java == 17
+        run: mvn -B test -Djackson.version=2.13.5

@@ -1,5 +1,8 @@
 package org.simulatest.restmock;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 import org.simulatest.restmock.internal.http.FrontController;
 import org.simulatest.restmock.internal.routing.Route;
 import org.simulatest.restmock.internal.routing.RouteManager;
@@ -34,6 +37,9 @@ public final class HttpMock {
 	private final RouteManager routeManager = new RouteManager();
 	private final RequestLog requestLog = new RequestLog();
 	private final RestMockServer server = new RestMockServer(new FrontController(routeManager, requestLog::add));
+
+	/** The routes as each open scope found them, innermost first. */
+	private final Deque<RouteManager.Snapshot> scopes = new ArrayDeque<>();
 
 	/** Stubs a GET response for {@code uri}. Chain a {@code thenReturn*} to set the body. */
 	public RestMockResponse whenGet(String uri) {
@@ -71,8 +77,9 @@ public final class HttpMock {
 	}
 
 	/**
-	 * Every request this mock has received since the last {@link #clean()}.
-	 * Use it to assert that the system under test made the calls you expected.
+	 * Every request this mock has received since the log was last emptied, by
+	 * {@link #clean()} or by {@link RestMockExtension} around each test. Use it
+	 * to assert that the system under test made the calls you expected.
 	 */
 	public RequestLog requests() {
 		return requestLog;
@@ -96,14 +103,40 @@ public final class HttpMock {
 	}
 
 	/** Stops this mock and clears its routes and recorded requests. No-op if not running. */
-	public void stopServer() {
+	public synchronized void stopServer() {
 		server.stop();
+		scopes.clear();
 		clean();
 	}
 
 	/** Removes this mock's stubbed routes and clears its request log. The server keeps running. */
 	public void clean() {
 		routeManager.clean();
+		requestLog.clear();
+	}
+
+	/**
+	 * Opens a scope: what is stubbed from here on lasts until {@link #endScope()}.
+	 * Scopes nest; each starts with every sequence at its first response and an
+	 * empty request log.
+	 */
+	synchronized void beginScope() {
+		RouteManager.Snapshot found = routeManager.snapshot();
+		scopes.push(found);
+		returnTo(found);
+	}
+
+	/**
+	 * Ends the innermost scope, leaving the routes as that scope found them.
+	 * With no scope open it does nothing: JUnit still runs an "after" callback
+	 * when the "before" it pairs with was skipped by an earlier failure.
+	 */
+	synchronized void endScope() {
+		if (!scopes.isEmpty()) returnTo(scopes.pop());
+	}
+
+	private void returnTo(RouteManager.Snapshot routes) {
+		routeManager.restore(routes);
 		requestLog.clear();
 	}
 

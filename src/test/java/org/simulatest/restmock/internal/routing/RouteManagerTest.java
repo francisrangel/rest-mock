@@ -254,4 +254,57 @@ public class RouteManagerTest {
 		assertTrue(manager.lookup(HttpMethod.GET, "/test").isEmpty());
 	}
 
+	@Test
+	public void restoringASnapshotDropsWhatWasStubbedSince() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/before"), new TextPlain("kept"));
+		RouteManager.Snapshot snapshot = manager.snapshot();
+		manager.registerRoute(new Route(HttpMethod.GET, "/after"), new TextPlain("dropped"));
+
+		manager.restore(snapshot);
+
+		assertEquals("kept", body(manager.lookup(HttpMethod.GET, "/before").orElseThrow()));
+		assertTrue(manager.lookup(HttpMethod.GET, "/after").isEmpty());
+	}
+
+	@Test
+	public void restoringASnapshotBringsBackAStubThatWasReplaced() {
+		RouteManager manager = new RouteManager();
+		Route route = new Route(HttpMethod.GET, "/users/1");
+		manager.registerRoute(route, new TextPlain("original"));
+		RouteManager.Snapshot snapshot = manager.snapshot();
+		manager.registerRoute(route, new TextPlain("replacement"));
+
+		manager.restore(snapshot);
+
+		assertEquals("original", body(manager.lookup(HttpMethod.GET, "/users/1").orElseThrow()));
+	}
+
+	/** Otherwise the requests made since would have used up responses that are owed again. */
+	@Test
+	public void restoringASnapshotStartsEachSequenceOver() {
+		RouteManager manager = new RouteManager();
+		Route route = new Route(HttpMethod.GET, "/flaky");
+		manager.registerRoute(route, new TextPlain("first"));
+		manager.appendRoute(route, new TextPlain("second"));
+		RouteManager.Snapshot snapshot = manager.snapshot();
+		manager.lookup(HttpMethod.GET, "/flaky");
+
+		manager.restore(snapshot);
+
+		assertEquals("first", body(manager.lookup(HttpMethod.GET, "/flaky").orElseThrow()));
+	}
+
+	@Test
+	public void restoringASnapshotBringsBackWhatCleanRemoved() {
+		RouteManager manager = new RouteManager();
+		manager.registerRoute(new Route(HttpMethod.GET, "/test"), new TextPlain("ok"));
+		RouteManager.Snapshot snapshot = manager.snapshot();
+		manager.clean();
+
+		manager.restore(snapshot);
+
+		assertEquals("ok", body(manager.lookup(HttpMethod.GET, "/test").orElseThrow()));
+	}
+
 }

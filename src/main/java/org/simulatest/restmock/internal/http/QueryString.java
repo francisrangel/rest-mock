@@ -54,7 +54,7 @@ public final class QueryString {
 		}
 	}
 
-	private static String decode(String value) {
+	static String decode(String value) {
 		return URLDecoder.decode(value, StandardCharsets.UTF_8);
 	}
 

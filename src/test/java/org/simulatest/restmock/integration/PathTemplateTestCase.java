@@ -51,6 +51,25 @@ public class PathTemplateTestCase extends IntegrationTestBase {
 		assertEquals(404, response.statusCode());
 	}
 
+	/** %2F is a slash inside a segment: it belongs to the capture and does not split the path in two. */
+	@Test
+	public void anEncodedSlashStaysInsideItsCapture() throws Exception {
+		RestMock.whenGet("/files/{name}").thenReturnText("file ${name}");
+
+		assertResponseBody("/files/reports%2F2024.pdf", "file reports/2024.pdf", HttpMethod.GET);
+		assertResponseBody("/files/a%20b+c%2fd", "file a b+c/d", HttpMethod.GET);
+	}
+
+	@Test
+	public void anEncodedSlashIsShownAsSentWhenNothingMatches() throws Exception {
+		RestMock.whenGet("/files/{name}").thenReturnText("file ${name}");
+
+		HttpResponse<String> response = sendRequest("/docs/reports%2F2024.pdf", HttpMethod.GET);
+
+		assertEquals(404, response.statusCode());
+		assertEquals("No stub for GET /docs/reports%2F2024.pdf", response.body().lines().findFirst().orElseThrow());
+	}
+
 	@Test
 	public void pathCapturesCombineWithQueryParameters() throws Exception {
 		RestMock.whenGet("/users/{id}").thenReturnText("user ${id} aka ${nickname}");

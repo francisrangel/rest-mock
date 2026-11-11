@@ -17,6 +17,11 @@ public class ResourceParserTest {
 		assertEquals(expected, Resource.dataFromResource("example.txt"));
 	}
 
+	@Test
+	public void aLeadingSlashNamesTheSameResource() {
+		assertEquals(Resource.dataFromResource("example.txt"), Resource.dataFromResource("/example.txt"));
+	}
+
 	/** A missing fixture is a test bug, so it fails unchecked rather than forcing a catch. */
 	@Test
 	public void unexistentFile() {

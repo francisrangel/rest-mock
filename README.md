@@ -588,8 +588,8 @@ whichever port you landed on:
 ```java
 RestMock.startServer();
 
-RestMock.baseUrl();          // http://localhost:54321
-RestMock.url("/users/42");   // http://localhost:54321/users/42
+RestMock.baseUrl();          // http://127.0.0.1:54321
+RestMock.url("/users/42");   // http://127.0.0.1:54321/users/42
 ```
 
 `port()` returns `-1` while stopped, and both `baseUrl()` and `url()` fail on the

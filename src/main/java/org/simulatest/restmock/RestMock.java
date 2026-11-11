@@ -129,8 +129,8 @@ public final class RestMock {
 	}
 
 	/**
-	 * Where the server is listening, for example {@code http://localhost:54321}.
-	 * Saves every caller from writing {@code "http://localhost:" + RestMock.port()},
+	 * Where the server is listening, for example {@code http://127.0.0.1:54321}.
+	 * Saves every caller from writing {@code "http://127.0.0.1:" + RestMock.port()},
 	 * which is the only line of plumbing a test using this library still needs.
 	 *
 	 * Throws {@link IllegalStateException} when the server is not running: there

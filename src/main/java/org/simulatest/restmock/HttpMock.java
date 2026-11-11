@@ -113,7 +113,7 @@ public final class HttpMock {
 	}
 
 	/**
-	 * Where this mock is listening, for example {@code http://localhost:54321}.
+	 * Where this mock is listening, for example {@code http://127.0.0.1:54321}.
 	 *
 	 * Throws {@link IllegalStateException} when it is not running: there is no
 	 * honest URL to return, and a placeholder would fail later as a connection
@@ -125,7 +125,7 @@ public final class HttpMock {
 				"This mock is not running, so it has no base URL. Call startServer() "
 					+ "or register RestMockExtension on a static field.");
 
-		return "http://localhost:" + port();
+		return "http://" + server.host() + ":" + port();
 	}
 
 	/**

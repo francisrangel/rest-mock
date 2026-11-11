@@ -95,6 +95,23 @@ public class RestMockExtensionTest {
 		assertEquals(-1, own.port());
 	}
 
+	/** JUnit fires the class callbacks for a @Nested class too; its end is not the end of the class that owns the server. */
+	@Test
+	public void aNestedClassEndingLeavesTheServerRunning() {
+		RestMockExtension extension = new RestMockExtension(own);
+		extension.beforeAll(null);
+		int port = own.port();
+
+		extension.beforeAll(null);
+		extension.afterAll(null);
+
+		assertEquals(port, own.port());
+
+		extension.afterAll(null);
+
+		assertEquals(-1, own.port());
+	}
+
 	/** A port nothing holds right now, so the next bind gets it. */
 	private static int freePort() throws Exception {
 		try (ServerSocket socket = new ServerSocket(0)) {

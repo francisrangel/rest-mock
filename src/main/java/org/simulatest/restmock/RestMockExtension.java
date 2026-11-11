@@ -1,6 +1,7 @@
 package org.simulatest.restmock;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -36,6 +37,9 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 	private final HttpMock mock;
 	private final int port;
 	private boolean autoClean = true;
+
+	/** JUnit fires the class callbacks for each {@code @Nested} class too, so the server stops only when the outermost one ends. */
+	private final AtomicInteger openClasses = new AtomicInteger();
 
 	/** Drives the default mock on an OS-assigned port. */
 	public RestMockExtension() {
@@ -122,12 +126,13 @@ public class RestMockExtension implements BeforeAllCallback, AfterAllCallback, A
 
 	@Override
 	public void beforeAll(ExtensionContext context) {
+		openClasses.incrementAndGet();
 		mock.startServer(port);
 	}
 
 	@Override
 	public void afterAll(ExtensionContext context) {
-		mock.stopServer();
+		if (openClasses.decrementAndGet() == 0) mock.stopServer();
 	}
 
 	@Override

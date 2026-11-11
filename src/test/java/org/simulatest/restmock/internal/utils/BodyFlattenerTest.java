@@ -54,6 +54,13 @@ public class BodyFlattenerTest {
 	}
 
 	@Test
+	public void anXmlElementWithAttributesKeepsItsTextUnderItsOwnName() {
+		Map<String, String> result = BodyFlattener.flattenXml("<order id=\"7\"><price currency=\"USD\">10</price></order>");
+
+		assertEquals(Map.of("id", "7", "price", "10", "price.currency", "USD"), result);
+	}
+
+	@Test
 	public void malformedJsonYieldsNothing() {
 		assertTrue(BodyFlattener.flattenJson("{not json").isEmpty());
 	}
